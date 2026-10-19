@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Runs the plugin's Unity-free core (src/Plugin/Core) against fake game classes shaped like the
+    real client's. The core takes its version as a parameter, so BuildInfo is not needed here.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\Plugin\Core\*.cs" Link="Core\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

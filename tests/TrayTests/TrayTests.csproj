@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Runs the tray's platform-neutral logic (src/Tray/Logic) on .NET 8, against temp folders and the
+    real BepInEx zip in cache/, and against the plugin's own core (src/Plugin/Core), the real
+    BepInEx.dll (lib/) and tools/*.py where the two sides meet. No test framework: a console app
+    that exits non-zero on failure.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>PtcglAutoBattleLog.Tray.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/Tray/Logic/**/*.cs" Link="Logic/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- The plugin's Unity-free core, for the cross-part checks (CrossTests.cs): the plugin writes, the tray reads. -->
+    <Compile Include="../../src/Plugin/Core/*.cs" Link="PluginCore/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <Import Project="$(RepoRoot)build/BuildInfo.targets" />
+</Project>

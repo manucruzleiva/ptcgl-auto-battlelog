@@ -1,0 +1,60 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+// Shapes copied from the real client: global-namespace MatchManager behind a generic singleton,
+// static NetworkMatchController, and the exporter with a static OnExport event.
+
+public class MonoSingleton<T> where T : class
+{
+    public static T instance { get; set; }
+}
+
+public class MatchManager : MonoSingleton<MatchManager>
+{
+    public List<_Rainier.Scripts.BattleLog.IBattleLogData> Entries = new List<_Rainier.Scripts.BattleLog.IBattleLogData>();
+    public IEnumerable<_Rainier.Scripts.BattleLog.IBattleLogData> BattleLogExportData => Entries.Count == 0 ? null : Entries;
+}
+
+public class MatchBoard { public string matchID; }
+
+public class MatchInfo
+{
+    public bool gameOver;
+    public int winner;
+    public bool isPlayer1;
+    public string accountID = "me-123";
+    public string matchID;                      // fallback when the board has none
+    public MatchBoard board = new MatchBoard();
+    public MatchBoard GetBoardState() => board;
+}
+
+public class DeckInfo { public string deckName; }
+public class PlayerDetail { public string playerId; public string playerName; public DeckInfo deckInfo; }
+
+public static class NetworkMatchController
+{
+    public static MatchInfo currentMatchInfo { get; set; }
+    public static List<PlayerDetail> playerDetails;
+}
+
+namespace _Rainier.Scripts.BattleLog
+{
+    public interface IBattleLogData { string Line { get; } }
+    public class Entry : IBattleLogData { public string Line { get; set; } }
+
+    public class BattleLogExporter
+    {
+        public static event Action<string> OnExport;
+        public static string Clipboard = "player clipboard";
+        public static int Exports;
+
+        public void ExportBattleLog(IEnumerable<IBattleLogData> data)
+        {
+            Exports++;
+            var text = string.Join("\n", data.Select(d => d.Line));
+            Clipboard = text;
+            OnExport?.Invoke(text);
+        }
+    }
+}

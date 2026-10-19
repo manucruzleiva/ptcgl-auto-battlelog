@@ -1,0 +1,439 @@
+<p align="center">
+  <img src="docs/icon.png" width="96" height="96" alt="PTCGL Auto Battle Log icon">
+</p>
+
+<h1 align="center">PTCGL Auto Battle Log</h1>
+
+<p align="center">
+  Saves the battle log of every Pokémon TCG Live match to a folder on your PC, automatically. No clicks.
+</p>
+
+<p align="center">
+  <a href="https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/manucruzleiva/ptcgl-auto-battlelog?sort=semver"></a>
+  <a href="https://github.com/manucruzleiva/ptcgl-auto-battlelog/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/manucruzleiva/ptcgl-auto-battlelog/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="Platform: Windows" src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-lightgrey.svg">
+</p>
+
+> [!WARNING]
+> **Unofficial mod. Use it at your own risk.** Installing it is each player's own decision.
+> Modifying the game client may violate the game's Terms of Service, and the authors are **not
+> responsible** for warnings, suspensions or bans of your account, or for any other consequence.
+> It only automates obtaining data the game already gives you (the text of the Battle Log's
+> **Export** button). It does not take part in the battle: during a match it reads the match
+> details the client already holds (match id, both players' names and account ids, your deck, the
+> seats and the winner) to name, index and seal the log; account ids are stored only as hashes.
+> Please read the full **[disclaimer](DISCLAIMER.md)** before installing.
+
+## Contents
+
+- [Features](#features)
+- [Download and install](#download-and-install)
+- [Portable version](#portable-version)
+- [Where your logs are](#where-your-logs-are)
+- [The tray menu](#the-tray-menu)
+- [Automatic updates](#automatic-updates)
+- [Sealed logs and leaderboards](#sealed-logs-and-leaderboards)
+- [Uninstall](#uninstall)
+- [FAQ](#faq)
+- [Troubleshooting](#troubleshooting)
+- [How it works](#how-it-works)
+- [Building from source](#building-from-source) · [Releasing](#releasing) · [Forking](#forking)
+- [Credits](#credits) · [License](#license)
+
+## Features
+
+- **Every match saved, automatically.** When a match ends, the exact text that the in-game
+  Export button would give you is written to `Documents\PTCGL Battle Logs`, one `.txt` file per
+  match, named by date, result and opponent: `2026-10-19 21.34.05 - VICTORY vs Gary.txt`.
+- **A spreadsheet of your matches.** `index.csv` gets one row per match (date, result, opponent,
+  your name, deck, duration, match id, file), ready for Excel or Google Sheets.
+- **Your own Export clicks too.** Pressing Export yourself still works and is saved as well.
+- **One small download, no admin rights.** A single `.exe` installs everything for your Windows
+  user in a few seconds. A portable version is available too.
+- **Repairs itself.** Game updates can remove the mod; the tray app puts it back as soon as the
+  game is closed.
+- **Updates itself.** New versions are downloaded from this project's GitHub releases and checked
+  before they are installed. You can turn this off.
+- **Notifications.** "VICTORY vs Gary — battle log saved", click to open it.
+- **Sealed logs.** Each log carries a signed seal, so edits made after saving are detectable
+  (for a future online leaderboard). See [Sealed logs](#sealed-logs-and-leaderboards).
+- **Private.** Nothing is uploaded anywhere. The only network traffic is the update check
+  against GitHub. Free and open source (MIT).
+
+## Download and install
+
+Requirements: Windows 10 (version 1903 or later) or Windows 11, 64-bit, with Pokémon TCG Live
+installed. Nothing else: the app uses .NET Framework 4.8, which those Windows versions include.
+
+| Download | For |
+|---|---|
+| [`PtcglAutoBattleLog.exe`](https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/latest/download/PtcglAutoBattleLog.exe) | **Most players.** Installs for your Windows user, starts with Windows, appears in Apps & Features. |
+| [`PtcglAutoBattleLog-portable.zip`](https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/latest/download/PtcglAutoBattleLog-portable.zip) | Players who don't want an installation. See [Portable version](#portable-version). |
+
+Both are on the [latest release](https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/latest)
+page, together with `SHA256SUMS.txt` if you want to check the files.
+
+1. **Run `PtcglAutoBattleLog.exe`** (double-click it; not with "Run as administrator", which the
+   installer refuses: it installs for your Windows user only). The exe is not code-signed, so
+   Windows SmartScreen may say "Windows protected your PC". Click **More info**, then **Run
+   anyway**. (Every release is built from this repository's source by GitHub Actions; see
+   [SECURITY.md](SECURITY.md).)
+2. **Read the disclaimer** that the app shows and choose **I understand, install**, or **Cancel**
+   to leave without changing anything.
+3. The installer then, **without administrator rights** (no UAC prompt):
+   - copies itself to `%LOCALAPPDATA%\PtcglAutoBattleLog\`;
+   - finds the game (it asks for the folder if it cannot; the folder is the one that contains
+     `Pokemon TCG Live.exe`);
+   - installs [BepInEx 5](https://github.com/BepInEx/BepInEx) and the plugin into the game folder
+     (right away if the game is closed, otherwise as soon as you close it). Existing BepInEx files
+     and other mods are never overwritten;
+   - creates the logs folder, a Start menu entry, a desktop shortcut to your logs, the "Start with
+     Windows" entry and an Apps & Features entry;
+   - starts the tray app (look for the icon in the notification area, next to the clock).
+4. **Start Pokémon TCG Live and play.** At the end of each match a notification tells you the log
+   was saved.
+
+Upgrading from the 1.0 PowerShell version? Just run the new exe: it stops and removes the old
+watchdog and its files, reuses its game folder, and keeps your logs. The `index.csv` header and
+its Spanish result labels are converted to English; existing file names are left as they are.
+
+## Portable version
+
+Same app, no installation. Extract `PtcglAutoBattleLog-portable.zip` anywhere (a folder you
+sync, a USB stick) and run `PtcglAutoBattleLog\PtcglAutoBattleLog.exe`. The file `portable.txt`
+next to the exe is what makes it portable; if you delete it, the next start installs the app
+normally. (Starting the exe with `--portable` has the same effect as the file.) The zip also
+holds `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt` and `licenses\LGPL-2.1.txt`, the licenses of the
+app and of the BepInEx files it carries.
+
+> [!TIP]
+> Windows may show a security warning the first time the extracted exe starts (files from a
+> downloaded zip carry a "Mark of the Web"). Once you have accepted the disclaimer, the app removes
+> that mark from its own exe, like the installer does, so later starts and "Start with Windows" do
+> not warn. To avoid even the first warning: right-click the zip → **Properties** → tick
+> **Unblock** → **OK** before extracting.
+
+**Kept in the portable folder:** `data\settings.json`, `data\tray.log` and `data\updates\`. If the
+folder is read-only, they go to `%LOCALAPPDATA%\PtcglAutoBattleLog\portable-data\` instead and the
+tray menu says so.
+
+**Not done in portable mode:** no copy of the exe in `%LOCALAPPDATA%`, no Start menu or desktop
+shortcuts, no Apps & Features entry. "Start with Windows" is off unless you turn it on in the
+menu. Updates replace the portable exe in place.
+
+**Unavoidable, even in portable mode,** because the mod has to run inside the game:
+
+- BepInEx (`winhttp.dll`, `doorstop_config.ini`, `.doorstop_version`, `changelog.txt`, `BepInEx\`)
+  and the plugin (`BepInEx\plugins\PtcglAutoBattleLog\`) in the game folder;
+- `%LOCALAPPDATA%\PtcglAutoBattleLog\plugin-status.json` (the plugin's heartbeat, which the tray
+  reads) and `%LOCALAPPDATA%\PtcglAutoBattleLog\identity\` (the key that seals your logs);
+- your logs folder.
+
+The installed and the portable app never run at the same time: starting one while the other is
+running just shows the running one. (Running a downloaded `PtcglAutoBattleLog.exe` to install is
+the exception: it closes whichever copy is running, then installs. If a newer version is already
+installed, an older download installs nothing and starts the installed one instead.)
+
+## Where your logs are
+
+By default in **`Documents\PTCGL Battle Logs`** (wherever Windows keeps your Documents folder,
+which may be inside OneDrive). Use **Change logs folder...** in the tray menu to pick another one.
+
+- One file per match: `yyyy-MM-dd HH.mm.ss - RESULT vs OPPONENT.txt`, in your local time of the
+  match end. `RESULT` is `VICTORY`, `DEFEAT`, `NO-RESULT` (no winner known, e.g. a disconnection)
+  or `EXPORTED` (you pressed Export outside a tracked match). A second file with the same name
+  gets ` (2)`.
+- The content is exactly the text the game's Export button produces (UTF-8). If the result
+  becomes known only later (for example after a reconnect), the file is updated and renamed, so a
+  `NO-RESULT` file can become `VICTORY` or `DEFEAT`.
+- `index.csv` (UTF-8, opens directly in Excel) has the columns
+  `Date, Result, Opponent, Player, Deck, Duration (min), MatchId, File`.
+- **The seal footer.** By default each `.txt` ends with a block like this, after the log:
+
+  ```
+  -----BEGIN PTCGL-ABL SEAL v1-----
+  {"v":1,"app":"PTCGL Auto Battle Log",...}
+  kq3Vx...==
+  -----END PTCGL-ABL SEAL v1-----
+  ```
+
+  Everything before that block is the original log. If another tool chokes on it, remove those
+  lines from a *copy*, or switch the tray menu's **Battle log seal** to **Sidecar** (the seal then
+  goes to a `.seal` file next to the `.txt`) or **Off**. Editing a sealed file breaks its seal;
+  that is the point of it.
+
+## The tray menu
+
+Right-click the icon in the notification area (it may be hidden behind the `^` arrow).
+Double-click it to open your logs folder.
+
+| Item | What it does |
+|---|---|
+| Status lines | Version (and "portable"), what the app is doing, the last saved log, the logs folder. |
+| Open logs folder · Open last log | |
+| Change logs folder... | New logs go there (from the next game start if the game is running). Folders whose path contains `'` or `"`, and network paths (`\\server\...`), are not supported by BepInEx's settings file. Folders inside the game's `BepInEx` folder or the app's own folders are refused, because uninstalling removes those. |
+| Use the default logs folder | Back to `Documents\PTCGL Battle Logs` (only shown when you changed it). |
+| Notify when a log is saved | Turns the "battle log saved" notifications on or off. |
+| Install updates automatically · Check for updates now | See [Automatic updates](#automatic-updates). |
+| Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
+| Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
+| Repair now | Puts back any missing BepInEx or plugin file (with the game closed). |
+| Battle log seal ▸ | Footer (default), Sidecar or Off. Takes effect the next time the game starts. |
+| Diagnostics ▸ | Open the app log, the BepInEx log, the game folder or the app data folder; choose the game folder; copy diagnostic info for a bug report. |
+| Project page · View disclaimer · Licenses | Licenses shows this app's license and those of BepInEx and the other files it carries. |
+| Uninstall... (portable: Remove mod from game...) | See [Uninstall](#uninstall). |
+| Exit | Closes the tray app. Logs are still saved while it is closed (the plugin runs inside the game), but nothing is repaired or updated. |
+
+The icon shows the state at a glance: **green dot** = the game is running with the mod; **no
+dot** = idle, all good; **amber** = needs attention (repair pending, the game is running without
+the mod, or the game was not found); **red** = error (the mod reported a problem, or a repair
+failed). Hover over it or open the menu for details.
+
+## Automatic updates
+
+The tray app checks one minute after it starts and then every 6 hours (or when you click **Check
+for updates now**) by reading
+`https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/latest/download/update.json`.
+
+An update is installed only if **all** of these hold:
+
+- its version is strictly newer than yours (pre-release versions are ignored);
+- the download address is exactly a release download of this repository on `https://github.com`;
+- the downloaded file has exactly the size and the SHA-256 hash that `update.json` states.
+
+Anything else is discarded and written to the app log. The new exe replaces the old one and
+restarts; the plugin inside the game is updated the next time the game is closed.
+
+**To turn it off**, untick **Install updates automatically**. You then get one notification per
+new version and can install it from the menu (**Update vX available ▸ Install now**), read
+**What's new**, or **Skip this version**.
+
+These checks protect against corrupted downloads and against files from anywhere other than this
+repository's releases. They cannot protect against a compromise of the repository itself; see
+[SECURITY.md](SECURITY.md) for how releases are made.
+
+## Sealed logs and leaderboards
+
+Every saved log carries a **seal**: one line of metadata about the match (match id, result, both
+players' names, deck, times, a hash of the log text) signed with an RSA key that belongs to your
+Windows account, and chained to your previous seal (`seq`, `prev`). The goal is a future online
+leaderboard that can tell edited or made-up logs from real ones.
+
+Anyone can check a log with the reference verifier (Python 3.8+, no packages needed). In
+PowerShell, from a copy of this repository, with the folder that **Open logs folder** in the tray
+menu shows (it may be inside OneDrive, or a folder you chose):
+
+```
+py tools\verify_log.py "2026-10-19 21.34.05 - VICTORY vs Gary.txt"
+py tools\verify_log.py --chain "$env:USERPROFILE\Documents\PTCGL Battle Logs"
+```
+
+(In `cmd.exe` write the folder as `"%USERPROFILE%\Documents\PTCGL Battle Logs"`; on Linux or macOS
+run `python3 tools/verify_log.py`.) Each `OK` line shows the `key` that made the seal. To check a
+log someone shared with you, add `--key <their keyId>`: a log that was edited and sealed again
+with another key is then reported as invalid.
+
+**What a seal can and cannot do.** The key lives on your own PC, and the plugin is open source,
+so a seal **cannot prove that a match took place**: someone determined to cheat can sign
+anything with their own key. What it does prove is that the file has not changed since it was
+sealed **by that key**: anyone can edit a log and seal it again with a key of their own, so
+compare the seal's full `keyId` with the player's known one (`--key`). It also gives each install
+an ordered, pseudonymous history in which deleted or rewritten results leave gaps or forks. A leaderboard has to add server-side checks on top, above all
+matching the seals of *both* players of a match. The full format, threat model and server-side
+guidance are in [docs/LOG-SEAL.md](docs/LOG-SEAL.md).
+
+**Privacy.** Nothing is uploaded: the seal is just text in your files. Players are identified in
+the seal by an `accountHash` (SHA-256 of `ptcgl-abl:v1:` + the game's account id), a pseudonym that
+lets the two seals of one match name the same accounts without writing the raw ids. It is not
+encryption: anyone who knows an account id can compute its hash. Your logs (sealed or not)
+contain your opponents' names, as the Export text does; keep that in mind before sharing them.
+
+**Your key** is `%LOCALAPPDATA%\PtcglAutoBattleLog\identity\signing-key.xml`. Anyone with a copy can
+sign as you, so do not share it. It is kept when you uninstall, so a reinstall continues the same
+chain. Set **Battle log seal ▸ Off** if you do not want seals.
+
+## Uninstall
+
+**Installed app:** *Settings → Apps → Installed apps → PTCGL Auto Battle Log → Uninstall*, or
+**Uninstall...** in the tray menu. Close the game first (the uninstaller waits for it; a silent
+uninstall, `--uninstall --quiet`, stops with exit code 1 and changes nothing while the game runs).
+This removes:
+
+- the plugin and its settings from the game folder, and BepInEx too if this app installed it and
+  no other mod uses it;
+- the app, its Start menu and desktop shortcuts, "Start with Windows" and the Apps & Features
+  entry, and `%LOCALAPPDATA%\PtcglAutoBattleLog\` except its `identity\` folder.
+
+**Portable app:** tray menu → **Remove mod from game...** (same removal from the game folder, and
+"Start with Windows" off), then delete the portable folder yourself.
+
+**Always kept:** your battle logs, and `%LOCALAPPDATA%\PtcglAutoBattleLog\identity\` (your seal key).
+Delete that folder by hand for a complete cleanup; a later install then starts a new key.
+
+If some of the mod's files cannot be removed from the game (still in use, or locked by an
+antivirus), the uninstall stops there and tells you which: the app stays installed, so close
+whatever holds them and uninstall again.
+
+## FAQ
+
+**Can I get banned for using this?**
+Nobody can promise that you won't. Please read the [disclaimer](DISCLAIMER.md); in short:
+
+- Modifying the game client may violate the game's Terms of Service. The Pokémon Company can
+  change its rules or its detection at any time.
+- Using it is entirely your decision and at your own risk. The authors are not responsible for
+  any consequence, including warnings, suspensions or bans.
+- It only automates obtaining data the game already gives you: the Battle Log's Export text.
+- It does not take part in the battle. During a match it reads match details the client already
+  holds (the match id, both players' display names and account ids, your deck name, the seats and
+  the winner) to name, index and seal the log; account ids are stored only as hashes. It shows you
+  nothing, automates no game action, and does not change cards, decks, matches or results.
+- It sends nothing to The Pokémon Company. Its only network traffic is the update check against
+  this project's GitHub releases.
+
+**My antivirus complains / what is `winhttp.dll`?**
+BepInEx, the standard mod loader for Unity games, is started by a small `winhttp.dll` (Unity
+Doorstop) placed in the game folder; Windows loads it when the game starts. Some antivirus
+products flag DLLs like this, unsigned executables, or apps that install other files, as
+suspicious. You can check the downloaded files against `SHA256SUMS.txt`, read the source, or
+build it yourself. If you trust it, report the false positive to your antivirus vendor. If the
+antivirus removed `winhttp.dll`, use **Repair now** after allowing it.
+
+**Does it work on Mac, iPhone/iPad, Android or a Chromebook?**
+No. Windows only (Windows 10/11, 64-bit).
+
+**The game updated and logs stopped being saved.**
+Game updates can delete the mod's files. With the tray app running, the mod is put back
+automatically as soon as the game is closed. If the game was already running you get a
+"Restart Pokémon TCG Live" notification: let the game finish updating, close it and start it
+again. If the icon turns red after a game update, the game's internals may have changed; check
+for an update of this app.
+
+**I already use other BepInEx mods.**
+That's fine: an existing BepInEx is used as it is (never overwritten), and uninstalling leaves
+BepInEx in place when other mods are installed.
+
+**Does the tray app have to run for logs to be saved?**
+No, the plugin runs inside the game. The tray app adds notifications, repairs after game
+updates and updates.
+
+## Troubleshooting
+
+Start with **Diagnostics ▸ Copy diagnostic info** in the tray menu and paste it into a
+[bug report](https://github.com/manucruzleiva/ptcgl-auto-battlelog/issues/new/choose). The files
+worth looking at:
+
+| File | What it tells you |
+|---|---|
+| `%LOCALAPPDATA%\PtcglAutoBattleLog\tray.log` (portable: `data\tray.log`) | What the tray app did: install, repairs, updates, errors. |
+| `<game folder>\BepInEx\LogOutput.log` | The game-side log, rewritten at every game start. The plugin's lines are tagged `PTCGL Auto Battle Log`, e.g. `[Info   :PTCGL Auto Battle Log]`. If this file is not updated when you start the game, BepInEx is not loading: use **Repair now** with the game closed and check your antivirus. |
+| `%LOCALAPPDATA%\PtcglAutoBattleLog\plugin-status.json` | The plugin's heartbeat while the game runs (refreshed at least every 30 seconds): `state` (`starting`, `ok` or `error`), `message`, the logs folder and the last saved file. |
+
+Common cases:
+
+- **"Battle logs are not being saved"** notification: the game is running without the mod. Close
+  the game; the tray app repairs it; start the game again.
+- **Amber icon, "game not found"**: use **Choose the game folder...** and select the folder that
+  contains `Pokemon TCG Live.exe` (by default `%USERPROFILE%\The Pokémon Company International\Pokémon Trading Card Game Live`).
+- **No notification but a file was saved**: check **Notify when a log is saved** and Windows'
+  notification settings (Focus assist / Do not disturb).
+
+## How it works
+
+Pokémon TCG Live is a Unity game. The plugin, loaded by BepInEx 5 inside the game, watches for
+the end of a match and then calls the game's own battle-log exporter, the code behind the Export
+button, and writes its text to disk (reading it again a few seconds later and keeping the longest
+version, in case the last lines arrive late). Everything is found by reflection, so the plugin
+does not ship any game code and a game update does not require a rebuild unless the client's
+classes change. While the plugin calls the exporter, a Harmony patch keeps it from overwriting
+your clipboard.
+
+The tray app (a .NET Framework 4.8 WinForms exe with the plugin and BepInEx embedded) installs,
+repairs and updates the mod. The two never talk directly; they share files on disk. The full
+design, file formats and rules are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Building from source
+
+You need the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) version that
+[`global.json`](global.json) names (exactly that one, so that a build is reproducible) and Python
+3.8+. Windows is not required: the .NET Framework exe is built against reference assemblies, and
+the tests run on .NET 8 on any OS.
+
+```
+./build.sh                                                      # Linux, macOS, Git Bash
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1  # Windows (or pwsh)
+```
+
+The script downloads BepInEx 5.4.23.3 once (into `cache/`, checked against a pinned SHA-256),
+runs the plugin core tests (`tests/CoreTests`) and the tray logic and cross-part tests (`tests/TrayTests`),
+checks the plugin's sealed sample logs with `tools/verify_log.py` (and that tampered copies are
+rejected), builds the exe and writes `dist/`:
+
+```
+dist/PtcglAutoBattleLog.exe            the app (installer, tray, updater)
+dist/PtcglAutoBattleLog-portable.zip   PtcglAutoBattleLog/PtcglAutoBattleLog.exe + portable.txt + license texts
+dist/update.json                       the update manifest
+dist/SHA256SUMS.txt                    hashes of the exe and the zip
+```
+
+Pass a version as `./build.sh 1.2.0` (default: `Version` in `Directory.Build.props`). Run a single
+test suite with `dotnet run --project tests/CoreTests -c Release` (or `tests/TrayTests`), and the
+verifier's own tests with `python3 tools/verify_log.py --self-test`. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+```
+src/Plugin/        BepInEx plugin (net472)
+src/Tray/          tray app (net48 WinForms); Logic/ is platform-neutral and unit-tested
+tests/             CoreTests (plugin core vs fake game classes), TrayTests (tray logic, and the
+                   cross-part checks: what the plugin writes, the tray and the real BepInEx read)
+tools/             verify_log.py (seal verifier), make-manifest.py (release manifest)
+docs/              ARCHITECTURE.md, LOG-SEAL.md
+```
+
+## Releasing
+
+1. Add a `## [X.Y.Z] - YYYY-MM-DD` section to [CHANGELOG.md](CHANGELOG.md) (it becomes the top of
+   the release notes) and, optionally, bump `Version` in `Directory.Build.props`. Commit and push.
+2. Tag and push the tag:
+
+   ```
+   git tag v1.2.0
+   git push origin v1.2.0
+   ```
+
+The [Release workflow](.github/workflows/release.yml) checks that the tag is `vMAJOR.MINOR.PATCH`,
+builds with that version (all tests included), and publishes a GitHub release marked **latest**
+with the four files from `dist/`. Installed apps pick it up within 6 hours. Releases are never
+drafts or pre-releases, because the apps read `releases/latest/download/update.json`; pre-release
+tags (`v1.2.0-beta`) are refused. Versions must always increase: a tag lower than the latest
+published release fails, and re-running an older tag's workflow replaces its files without making
+it the latest again. Tag runs are serialized. A published version should never be re-tagged with
+different content. The release notes name the commit, .NET SDK and Python that built the files.
+
+## Forking
+
+The exe trusts updates only from `github.com/{RepoOwner}/{RepoName}`. Releases built by a fork's
+own workflows automatically use the fork's owner and name, so a fork's builds update from the
+fork's releases. For local builds, change `RepoOwner` and `RepoName` in `Directory.Build.props`,
+or set the `REPO_OWNER` and `REPO_NAME` environment variables for `build.sh` / `build.ps1`. Please
+also change the product name if you publish a fork that behaves differently.
+
+## Credits
+
+- [BepInEx](https://github.com/BepInEx/BepInEx) (MIT), the mod loader, with
+  [HarmonyX](https://github.com/BepInEx/HarmonyX), [MonoMod](https://github.com/MonoMod/MonoMod),
+  [Mono.Cecil](https://github.com/jbevain/cecil) and [Unity Doorstop](https://github.com/NeighTools/UnityDoorstop).
+- [PtcglLeaderboard](https://github.com/Jxkobyte/PtcglLeaderboard) by Jxkobyte (MIT), for
+  identifying the client's battle-log classes that this plugin uses.
+
+Licenses and notices of the bundled components: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+## License
+
+[MIT](LICENSE) © 2026 PTCGL Auto Battle Log contributors. BepInEx and the other bundled components
+keep their own licenses (see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)).
+
+This is an unofficial fan project. It is not affiliated with, endorsed, sponsored or approved by
+Nintendo, The Pokémon Company, The Pokémon Company International, Creatures Inc. or GAME FREAK inc.
+Pokémon and Pokémon TCG Live are trademarks of their respective owners.

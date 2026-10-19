@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+dist/
+
+# Downloaded / extracted by build.sh and build.ps1 (BepInEx zip, compile references)
+cache/
+lib/
+
+# Editors and tools
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+
+# Temporary files of the build scripts
+*.partial
+*.tmp

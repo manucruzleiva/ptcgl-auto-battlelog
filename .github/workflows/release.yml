@@ -1,0 +1,177 @@
+# Pushing a tag vMAJOR.MINOR.PATCH publishes a release: build.sh with the tag's version (all tests
+# included), then a GitHub release with the four assets. The tray apps read
+# releases/latest/download/update.json, so the release is published right away (never a draft or
+# a pre-release) and marked as the latest one - unless a higher version is already published:
+# a new lower tag fails, and re-running an older tag's workflow replaces its assets without making
+# it the latest (that would point every tray and the README's download links back at it).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+# One release at a time, repository-wide: two tags pushed together must not race for "latest".
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: '1'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check the tag
+        id: tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          # UpdateChecker.TryParseVersion: three numbers without leading zeros. The tray ignores
+          # pre-releases, so a tag like v1.2.0-beta must not become the latest release.
+          if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$ ]]; then
+            echo "::error::Release tags must be vMAJOR.MINOR.PATCH (e.g. v1.2.0), got '$TAG'. Delete the tag and push a valid one."
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether this release becomes the latest
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          # The highest published vX.Y.Z (drafts and pre-releases never count), compared numerically.
+          highest="$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 1000 \
+                       --json tagName --jq '.[].tagName' \
+                     | grep -E '^v(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$' | sed 's/^v//' | sort -V | tail -n 1 || true)"
+          rerun=false
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then rerun=true; fi
+          latest=true
+          if [ -n "$highest" ] && [ "$(printf '%s\n%s\n' "$highest" "$VERSION" | sort -V | tail -n 1)" != "$VERSION" ]; then
+            if [ "$rerun" != true ]; then
+              echo "::error::$TAG is lower than the published v$highest. Versions must always increase: the tray apps never install a lower one. Delete the tag and push a higher one."
+              exit 1
+            fi
+            echo "::warning::Re-running $TAG while v$highest is published: its assets are replaced, but it does not become the latest release."
+            latest=false
+          fi
+          echo "Highest published: ${highest:-none}; re-run: $rerun; latest: $latest"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json   # the exact SDK: reproducible builds
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      # No cache here: a release downloads BepInEx from its official release (build.sh checks the
+      # pinned SHA-256 either way).
+      - name: Test, build and package
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          # The release is published in this repository, so the exe updates from it and
+          # update.json points at it (forks included).
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: ./build.sh
+
+      - name: Release notes
+        env:
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          notes="$RUNNER_TEMP/notes.md"
+          base="https://github.com/$GITHUB_REPOSITORY"
+          # This version's section of CHANGELOG.md, without its heading, with wrapped lines joined
+          # (release notes keep single line breaks).
+          section="$(python3 - "$VERSION" <<'PY'
+          import re, sys
+          head = "## [%s]" % sys.argv[1]
+          out, on = [], False
+          for line in open("CHANGELOG.md", encoding="utf-8").read().splitlines():
+              if not on:
+                  on = line.startswith(head)
+                  continue
+              if line.startswith("## ") or re.match(r"\[[^\]]+\]: ", line):
+                  break
+              block = re.match(r"\s*([-*+] |\d+\. |#|>|```|\|)", line)
+              if out and line.strip() and out[-1].strip() and not block and not out[-1].lstrip().startswith(("#", "```", "|")):
+                  out[-1] = out[-1].rstrip() + " " + line.strip()
+              else:
+                  out.append(line)
+          print("\n".join(out).strip())
+          PY
+          )"
+          if [ -z "$(printf '%s' "$section" | tr -d '[:space:]')" ]; then
+            echo "::warning::CHANGELOG.md has no '## [$VERSION]' section; the notes only list the commits."
+          fi
+          # What a rebuild must use to get the same bytes (SECURITY.md, "How releases are built").
+          built="Built from $(git rev-parse HEAD) on Linux with the .NET SDK $(dotnet --version) and $(python3 --version 2>&1)."
+          {
+            echo "## Download"
+            echo
+            echo "- **[PtcglAutoBattleLog.exe]($base/releases/download/$TAG/PtcglAutoBattleLog.exe)**: run it to install (no administrator rights). Already installed? The app updates itself."
+            echo "- **[PtcglAutoBattleLog-portable.zip]($base/releases/download/$TAG/PtcglAutoBattleLog-portable.zip)**: the portable version, no installation."
+            echo
+            echo "Windows 10/11 only. The exe is not code-signed: if SmartScreen appears, click **More info**, then **Run anyway**. \`SHA256SUMS.txt\` has the files' hashes."
+            echo
+            echo "> **Unofficial mod, use at your own risk.** Modifying the game client may violate the game's Terms of Service, and the authors are not responsible for bans. Read the [disclaimer]($base/blob/$TAG/DISCLAIMER.md) first."
+            echo
+            if [ -n "$section" ]; then
+              echo "## What's new"
+              echo
+              printf '%s\n' "$section"
+              echo
+            fi
+            echo "<sub>$built</sub>"
+            echo
+          } > "$notes"
+          cat "$notes"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          LATEST: ${{ steps.latest.outputs.latest }}
+        run: |
+          assets=(dist/PtcglAutoBattleLog.exe dist/PtcglAutoBattleLog-portable.zip dist/update.json dist/SHA256SUMS.txt)
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # A re-run of this workflow: replace the assets and make sure the release is public (and the
+            # latest, unless a higher version has been published since).
+            gh release upload "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false "--latest=$LATEST"
+          else
+            gh release create "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" --generate-notes "--latest=$LATEST"
+          fi
+
+      - name: Check what the tray apps will see
+        if: steps.latest.outputs.latest == 'true'
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          # The exact URL the tray reads must now serve this release's update.json.
+          url="https://github.com/$GITHUB_REPOSITORY/releases/latest/download/update.json"
+          for _ in 1 2 3 4 5 6; do
+            if curl -fsSL "$url" -o "$RUNNER_TEMP/latest.json" && cmp -s "$RUNNER_TEMP/latest.json" dist/update.json; then
+              echo "$url serves v$VERSION."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$url does not serve this release's update.json (is a newer release marked as latest?)."
+          exit 1

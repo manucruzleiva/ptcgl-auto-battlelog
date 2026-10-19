@@ -1,0 +1,30 @@
+<Project>
+  <!--
+    Generates PtcglAutoBattleLog.BuildInfo with the build's version and update source as
+    compile-time constants (BepInPlugin needs a const version string). Import from any project
+    that needs them.
+  -->
+  <Target Name="GenerateBuildInfo" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <_BuildInfoFile>$(IntermediateOutputPath)BuildInfo.g.cs</_BuildInfoFile>
+      <_BuildInfoText>// &lt;auto-generated /&gt;
+namespace PtcglAutoBattleLog
+{
+    internal static class BuildInfo
+    {
+        public const string Version = "$(Version)"%3B
+        public const string RepoOwner = "$(RepoOwner)"%3B
+        public const string RepoName = "$(RepoName)"%3B
+        public const string BepInExVersion = "$(BepInExVersion)"%3B
+        public const string BepInExZip = "$(BepInExZip)"%3B
+    }
+}
+</_BuildInfoText>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_BuildInfoFile)" Lines="$(_BuildInfoText)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(_BuildInfoFile)" />
+      <FileWrites Include="$(_BuildInfoFile)" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,0 +1,31 @@
+PTCGL Auto Battle Log - portable version
+========================================
+Version @VERSION@. Project page: @PROJECT_URL@
+
+This file is the portable-mode marker. While a file named portable.txt sits next to
+PtcglAutoBattleLog.exe, the app runs from this folder instead of installing itself:
+
+- Its settings, its log (tray.log) and downloaded updates are kept in the "data" folder next to
+  the exe. If this folder cannot be written to, they go to
+  %LOCALAPPDATA%\PtcglAutoBattleLog\portable-data instead (the tray menu says so).
+- It does not copy itself anywhere, does not add an Apps & Features entry and does not create
+  shortcuts. "Start with Windows" stays off unless you turn it on in the tray menu.
+- Updates replace this exe in place.
+
+Some things cannot be portable, because the mod has to run inside the game:
+- BepInEx and the plugin are installed into the Pokemon TCG Live game folder.
+- The plugin keeps its status file and its signing key (identity folder) in
+  %LOCALAPPDATA%\PtcglAutoBattleLog.
+- Battle logs are saved in Documents\PTCGL Battle Logs (or the folder you choose).
+
+If you delete this file, the next start of PtcglAutoBattleLog.exe installs the app normally.
+
+LICENSE.txt, THIRD-PARTY-NOTICES.txt and licenses\LGPL-2.1.txt are the licenses of this app and of
+BepInEx and the other files it carries (also shown by the tray menu's "Licenses").
+
+To remove the mod: right-click the tray icon, choose "Remove mod from game...", then delete this
+folder. Your battle logs are kept. You may also delete %LOCALAPPDATA%\PtcglAutoBattleLog (that
+also deletes the key that seals your logs).
+
+Use at your own risk. Read the disclaimer before using this app:
+@PROJECT_URL@/blob/main/DISCLAIMER.md

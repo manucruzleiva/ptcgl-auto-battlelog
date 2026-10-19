@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Windows tray app: installer, repair daemon and updater in one PtcglAutoBattleLog.exe.
+    .NET Framework 4.8 ships with Windows 10/11, so players install nothing else. The plugin DLL and
+    the BepInEx zip are embedded as resources: the exe is the only file anyone downloads, and it
+    must never need a DLL next to it (framework references only, no runtime NuGet packages).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>PtcglAutoBattleLog</AssemblyName>
+    <RootNamespace>PtcglAutoBattleLog.Tray</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 64-bit on 64-bit Windows: the game is x64, and a 32-bit process cannot read its path. -->
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>none</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PluginPayload>$(MSBuildThisFileDirectory)../Plugin/bin/$(Configuration)/PtcglAutoBattleLog.Plugin.dll</PluginPayload>
+    <BepInExPayload>$(RepoRoot)cache/$(BepInExZip)</BepInExPayload>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Management" />
+  </ItemGroup>
+
+  <!-- Built first so its DLL can be embedded; never referenced as an assembly. -->
+  <ItemGroup>
+    <ProjectReference Include="../Plugin/PtcglAutoBattleLog.Plugin.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PluginPayload)" LogicalName="payload/PtcglAutoBattleLog.Plugin.dll" WithCulture="false" Link="payload/PtcglAutoBattleLog.Plugin.dll" />
+    <EmbeddedResource Include="$(BepInExPayload)" LogicalName="payload/BepInEx.zip" WithCulture="false" Link="payload/BepInEx.zip" />
+    <!-- Also as a managed resource: the status icons are drawn from its small frames. -->
+    <EmbeddedResource Include="app.ico" LogicalName="app.ico" WithCulture="false" />
+    <!-- The consent dialog's text: DISCLAIMER.md at the repository root is its single source. -->
+    <EmbeddedResource Include="$(RepoRoot)DISCLAIMER.md" LogicalName="DISCLAIMER.md" WithCulture="false" Link="DISCLAIMER.md" />
+    <!-- The tray's "Licenses" window: the exe redistributes BepInEx (MIT) and Unity Doorstop (LGPL-2.1). -->
+    <EmbeddedResource Include="$(RepoRoot)THIRD-PARTY-NOTICES.md" LogicalName="THIRD-PARTY-NOTICES.md" WithCulture="false" Link="licenses/THIRD-PARTY-NOTICES.md" />
+    <EmbeddedResource Include="$(RepoRoot)LICENSE" LogicalName="LICENSE" WithCulture="false" Link="licenses/LICENSE" />
+    <EmbeddedResource Include="$(RepoRoot)licenses/LGPL-2.1.txt" LogicalName="licenses/LGPL-2.1.txt" WithCulture="false" Link="licenses/LGPL-2.1.txt" />
+  </ItemGroup>
+
+  <Target Name="CheckPayload" BeforeTargets="CoreCompile">
+    <Error Condition="!Exists('$(PluginPayload)')" Text="Plugin not built: $(PluginPayload). Build src/Plugin with -c $(Configuration) first." />
+    <Error Condition="!Exists('$(BepInExPayload)')" Text="BepInEx zip not found: $(BepInExPayload). Run build.sh or build.ps1 once to download it." />
+    <Error Condition="!Exists('$(RepoRoot)DISCLAIMER.md')" Text="DISCLAIMER.md not found at the repository root." />
+    <Error Condition="!Exists('$(RepoRoot)THIRD-PARTY-NOTICES.md') Or !Exists('$(RepoRoot)LICENSE') Or !Exists('$(RepoRoot)licenses/LGPL-2.1.txt')"
+           Text="THIRD-PARTY-NOTICES.md, LICENSE or licenses/LGPL-2.1.txt not found: the exe must carry its license notices." />
+  </Target>
+
+  <Import Project="$(RepoRoot)build/BuildInfo.targets" />
+
+</Project>
