@@ -42,7 +42,7 @@ jobs:
           python-version: '3.x'
 
       # The pinned BepInEx zip; build.sh verifies its SHA-256 whether it comes from here or GitHub.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: cache
           key: bepinex-5.4.23.3-win-x64
@@ -74,7 +74,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: cache
           key: bepinex-5.4.23.3-win-x64
