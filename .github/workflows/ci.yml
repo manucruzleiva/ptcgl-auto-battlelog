@@ -37,7 +37,7 @@ jobs:
         with:
           global-json-file: global.json   # the exact SDK: reproducible builds
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
@@ -70,7 +70,7 @@ jobs:
         with:
           global-json-file: global.json   # the exact SDK: reproducible builds
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
