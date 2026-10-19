@@ -421,6 +421,7 @@ also change the product name if you publish a fork that behaves differently.
 
 ## Credits
 
+- Created and maintained by [@manucruzleiva](https://github.com/manucruzleiva).
 - [BepInEx](https://github.com/BepInEx/BepInEx) (MIT), the mod loader, with
   [HarmonyX](https://github.com/BepInEx/HarmonyX), [MonoMod](https://github.com/MonoMod/MonoMod),
   [Mono.Cecil](https://github.com/jbevain/cecil) and [Unity Doorstop](https://github.com/NeighTools/UnityDoorstop).
@@ -431,7 +432,7 @@ Licenses and notices of the bundled components: [THIRD-PARTY-NOTICES.md](THIRD-P
 
 ## License
 
-[MIT](LICENSE) © 2026 PTCGL Auto Battle Log contributors. BepInEx and the other bundled components
+[MIT](LICENSE) © 2026 manucruzleiva and PTCGL Auto Battle Log contributors. BepInEx and the other bundled components
 keep their own licenses (see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)).
 
 This is an unofficial fan project. It is not affiliated with, endorsed, sponsored or approved by

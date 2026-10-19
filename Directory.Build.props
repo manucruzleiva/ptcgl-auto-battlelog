@@ -6,8 +6,8 @@
   <PropertyGroup>
     <Version Condition="'$(Version)' == ''">1.1.0</Version>
     <Product>PTCGL Auto Battle Log</Product>
-    <Company>PTCGL Auto Battle Log contributors</Company>
-    <Copyright>Copyright (c) 2026 PTCGL Auto Battle Log contributors. MIT License.</Copyright>
+    <Company>manucruzleiva</Company>
+    <Copyright>Copyright (c) 2026 manucruzleiva and PTCGL Auto Battle Log contributors. MIT License.</Copyright>
     <LangVersion>latest</LangVersion>
     <Deterministic>true</Deterministic>
 

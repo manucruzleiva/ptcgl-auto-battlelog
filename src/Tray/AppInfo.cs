@@ -7,7 +7,7 @@ namespace PtcglAutoBattleLog.Tray
     {
         public const string ProductName = "PTCGL Auto Battle Log";
         public const string Version = BuildInfo.Version;
-        public const string Publisher = "PTCGL Auto Battle Log contributors";
+        public const string Publisher = "manucruzleiva";
         public const string ProjectUrl = "https://github.com/" + BuildInfo.RepoOwner + "/" + BuildInfo.RepoName;
         public const string ReleasesUrl = ProjectUrl + "/releases";
         public const string GameName = "Pokémon TCG Live";
