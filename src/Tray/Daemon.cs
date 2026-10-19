@@ -36,6 +36,7 @@ namespace PtcglAutoBattleLog.Tray
         private readonly object _repairGate = new object();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly AutoResetEvent _wake = new AutoResetEvent(false);
+        private PluginStatus _lastStatus;   // only touched by Tick, on the daemon thread
         private Task _loop;
         private DateTime _lastFindUtc = DateTime.MinValue;
         private string _lastError;
@@ -111,7 +112,8 @@ namespace PtcglAutoBattleLog.Tray
                 observation.Missing = game.Missing(_session.Payload);
                 observation.PluginFilePresent = File.Exists(game.PluginPath);
             }
-            observation.Status = report.Status = PluginStatus.TryRead(_session.Paths.PluginStatusFile);
+            _lastStatus = PluginStatus.TryReadKeeping(_session.Paths.PluginStatusFile, _lastStatus);
+            observation.Status = report.Status = _lastStatus;
 
             DaemonDecision decision;
             lock (_repairGate)   // the monitor is shared with RepairNow

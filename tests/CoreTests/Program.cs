@@ -586,6 +586,7 @@ static partial class Program
                 try { using (JsonDocument.Parse(File.ReadAllBytes(path))) reads++; }
                 catch (JsonException) { bad++; }
                 catch (IOException) { }
+                catch (UnauthorizedAccessException) { }   // Windows: the file is mid-replace for an instant
             }
         });
         reader.Start();

@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Runtime.Serialization;
 
 namespace PtcglAutoBattleLog.Tray.Logic
@@ -40,6 +41,21 @@ namespace PtcglAutoBattleLog.Tray.Logic
             if (string.IsNullOrWhiteSpace(text)) return null;
             try { return Json.Read<PluginStatus>(text); }
             catch (Exception) { return null; }
+        }
+
+        /// <summary>
+        /// <see cref="TryRead"/>, but keeps <paramref name="previous"/> while the file exists and
+        /// cannot be read. The plugin replaces the file every 20 s, and on Windows a read that lands on
+        /// the replace fails for an instant (access denied); treating that as "no plugin" would flash
+        /// the icon and could raise a false "game running without the mod" notice. A kept value still
+        /// ages out through <see cref="IsAlive"/>.
+        /// </summary>
+        public static PluginStatus TryReadKeeping(string path, PluginStatus previous)
+        {
+            var status = TryRead(path);
+            if (status != null) return status;
+            try { return File.Exists(path) ? previous : null; }
+            catch (Exception) { return previous; }
         }
 
         public DateTime? HeartbeatUtcValue => ParseUtc(HeartbeatUtc);

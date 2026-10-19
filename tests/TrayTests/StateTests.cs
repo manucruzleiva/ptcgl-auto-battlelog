@@ -129,6 +129,14 @@ static partial class Program
         var nulls = PluginStatus.TryRead(path);
         Check(nulls != null && nulls.ProcessId == 0 && nulls.SavedThisSession == 0 && nulls.IsAlive(hb), "null numbers read as 0, not as a corrupt file");
         Check(PluginStatus.TryRead(dir) == null && PluginStatus.TryRead(null) == null, "folder or null path -> null");
+
+        File.WriteAllText(path, ContractStatusJson, new UTF8Encoding(false));
+        var good = PluginStatus.TryReadKeeping(path, null);
+        Check(good != null && good.ProcessId == 12345, "keeping read: fresh value when readable");
+        File.WriteAllText(path, "{");
+        Check(ReferenceEquals(PluginStatus.TryReadKeeping(path, good), good), "keeping read: unreadable but present -> previous kept");
+        File.Delete(path);
+        Check(PluginStatus.TryReadKeeping(path, good) == null, "keeping read: file gone -> null");
     }
 
     static void LogFileNameTests()
