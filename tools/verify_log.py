@@ -434,7 +434,22 @@ def _range(a, b):
 # ---------------------------------------------------------------------------------- main
 
 
+def _attach_key_values(argv):
+    """Turn "--key VALUE" into "--key=VALUE". A keyId is base64url, so about one key in 64 starts
+    with "-", and argparse would take such a value for an option and stop with a usage error."""
+    out, i = [], 0
+    while i < len(argv):
+        if argv[i] == "--key" and i + 1 < len(argv):
+            out.append("--key=" + argv[i + 1])
+            i += 2
+        else:
+            out.append(argv[i])
+            i += 1
+    return out
+
+
 def run(argv):
+    argv = _attach_key_values(list(argv))
     parser = argparse.ArgumentParser(
         prog="verify_log.py",
         description="Verify the seals of PTCGL Auto Battle Log battle logs (docs/LOG-SEAL.md).")
@@ -759,6 +774,9 @@ def self_test():
         code, out = quiet(["--key", other.key_id, "--key", key.key_id, "--chain", chain])
         check(code == 0, "--key is repeatable")
         check(quiet(["--key", "not-a-key-id", paths[0]])[0] == 2, "--key with something that is not a keyId -> exit 2")
+        dash = "-" + "A" * 42   # a well-formed keyId that starts with "-" (about one real key in 64)
+        code, out = quiet(["--key", dash, paths[0]])
+        check(code == 1 and "another key" in out, "--key accepts a keyId starting with '-'")
 
         # Chains: a gap is a warning, a fork or a broken link an error.
         def chain_dir(name, blocks):
