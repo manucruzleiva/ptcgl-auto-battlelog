@@ -19,3 +19,7 @@ __pycache__/
 # Temporary files of the build scripts
 *.partial
 *.tmp
+
+# Private planning notes (kept out of the shared repo)
+GOAL.MD
+GOAL.md
