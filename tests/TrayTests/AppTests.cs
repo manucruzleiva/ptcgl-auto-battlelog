@@ -57,7 +57,7 @@ static partial class Program
     static void DisclaimerTests()
     {
         Console.WriteLine("17. Disclaimer");
-        Check(Disclaimer.Version == 1, "version 1");
+        Check(Disclaimer.Version == 2, "version 2");
         var md = File.ReadAllText(Path.Combine(RepoRoot(), "DISCLAIMER.md"));
         var plain = Disclaimer.ToPlainText(md);
         var paragraphs = plain.Split(new[] { "\r\n\r\n" }, StringSplitOptions.None);

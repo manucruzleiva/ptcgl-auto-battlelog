@@ -13,7 +13,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
     public static class Disclaimer
     {
         /// <summary>Bump when the text changes in substance: everyone is asked again (settings.disclaimerAccepted).</summary>
-        public const int Version = 1;
+        public const int Version = 2;
 
         private const string NewLine = "\r\n";   // what a WinForms TextBox needs
 

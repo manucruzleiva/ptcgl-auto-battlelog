@@ -313,8 +313,9 @@ leaderboard has to come from the server-side checks below.
 
 ## Server-side verification guide (future leaderboard)
 
-Nothing in this project uploads anything today. This section is guidance for a future online
-leaderboard that accepts sealed logs.
+The plugin uploads nothing. The tray app sends sealed logs only to tcgkb.app, and only when the
+player connects a tcgkb account and claims a PTCGL account (see [TCGKB-API.md](TCGKB-API.md)).
+This section is guidance for the server side, or any online leaderboard, that accepts sealed logs.
 
 1. **Verify every submission exactly as in §6**, with the exact bytes received, including the size
    and key bounds (checked before any RSA arithmetic, so a crafted submission cannot tie up the
@@ -366,8 +367,9 @@ leaderboard that accepts sealed logs.
    weight, and upgrade it if the other side's seal arrives later. Never treat a single seal as proof.
 8. **Privacy and consent.**
    * Upload only after the player has explicitly opted in, in the tray app, with a clear
-     explanation. Today the plugin sends nothing, and `DISCLAIMER.md` says so. Any upload feature
-     must change that text and ask again (`Disclaimer.Version`).
+     explanation. The plugin sends nothing; the tray's tcgkb claim is the only upload, and
+     `DISCLAIMER.md` says so (version 2). Any new upload feature must change that text and ask
+     again (`Disclaimer.Version`).
    * A log contains the opponent's display name and their plays. Publish only what the
      leaderboard needs, and show opponents' names only for players who also opted in.
    * Use `accountHash` as the join key and never ask for raw account ids. It is specific to this
