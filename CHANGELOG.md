@@ -11,6 +11,10 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ### Added
 
+- **Upload my matches automatically** (tray menu, tcgkb account, off until you turn it on): every
+  tracked match of the PTCGL accounts you claimed is sent to tcgkb.app, older ones included, so
+  tcgkb can show your winrate, decks and the global meta. Each log is sent once; when tcgkb cannot
+  be reached the app tries again later. **Upload matches now** sends what is pending at once.
 - **Pokematch** (tray menu, optional, off by default): set your Pokematch API token and the app
   uploads each finished match (VICTORY or DEFEAT) to Pokematch about two minutes after it is
   saved: the battle log text, result, opponent, deck and end time. "Upload past battle logs..."
@@ -20,8 +24,8 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ### Changed
 
-- **Disclaimer updated** (version 3): it now explains the optional Pokematch uploads and what they
-  send. Installed apps ask for consent again after updating.
+- **Disclaimer updated** (version 3): it now explains the optional automatic tcgkb uploads and the
+  optional Pokematch uploads, and what they send. Installed apps ask for consent again after updating.
 
 ## [1.2.0] - 2026-10-21
 

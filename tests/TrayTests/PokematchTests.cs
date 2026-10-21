@@ -30,7 +30,7 @@ static partial class Program
 
     static async Task PokematchApiTests()
     {
-        Console.WriteLine("36. PokematchApi: add and replace matches against a fake Pokematch");
+        Console.WriteLine("37. PokematchApi: add and replace matches against a fake Pokematch");
         Check(PokematchApi.CleanToken("  abc.DEF-123_x  ") == "abc.DEF-123_x", "token trimmed");
         Check(PokematchApi.CleanToken("Bearer abc123") == "abc123", "\"Bearer \" dropped");
         Check(PokematchApi.CleanToken("") == null && PokematchApi.CleanToken(null) == null, "empty: no token");
@@ -90,7 +90,7 @@ static partial class Program
 
     static async Task PokematchUploaderTests()
     {
-        Console.WriteLine("37. PokematchUploader + PokematchTokenStore: what goes to Pokematch, once");
+        Console.WriteLine("38. PokematchUploader + PokematchTokenStore: what goes to Pokematch, once");
 
         // Token store: encrypted with the given functions, corrupt = gone.
         var dataDir = TempDir();

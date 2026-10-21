@@ -30,8 +30,11 @@ optional and off by default. Connecting signs this computer in to your tcgkb acc
 sees your tcgkb password. When you claim a PTCGL account there, the app sends tcgkb.app that
 account's 3 newest battle logs with their seals, as proof that the account is yours. Those logs
 contain both players' display names, your deck name, the match id, the plays of the match and the
-hashed account ids. Nothing is sent before you connect and claim, and you can disconnect at any
-time.
+hashed account ids. If you also turn on
+"Upload my matches automatically", the app sends tcgkb.app every tracked match of the accounts you
+claimed, the same way, so tcgkb can show your statistics and the global meta. Nothing is sent
+before you connect and claim, uploads are off until you turn them on, and you can turn them off or
+disconnect at any time.
 
 Pokematch (pokematch-vslogger.onrender.com) is a separate site, not part of this app, and uploading
 to it is optional and off by default. If you set a Pokematch API token and turn uploads on, the app

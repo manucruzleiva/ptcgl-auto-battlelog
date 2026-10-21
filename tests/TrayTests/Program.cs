@@ -96,6 +96,7 @@ static partial class Program
             SealSummaryTests();
             await TcgkbApiTests();
             await TcgkbConnectionTests();
+            await LogUploaderTests();
             await PokematchApiTests();
             await PokematchUploaderTests();
         }
