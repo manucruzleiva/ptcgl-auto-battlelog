@@ -60,8 +60,9 @@
 - **Sealed logs.** Each log carries a signed seal, so edits made after saving are detectable
   (for a future online leaderboard). See [Sealed logs](#sealed-logs-and-leaderboards).
 - **Private.** Nothing is uploaded anywhere unless you connect a [tcgkb](https://tcgkb.app)
-  account and claim your PTCGL accounts (see [tcgkb account](#tcgkb-account)). Otherwise the only
-  network traffic is the update check against GitHub. Free and open source (MIT).
+  account and claim your PTCGL accounts (see [tcgkb account](#tcgkb-account)), or turn on
+  uploads to Pokematch (see [Pokematch](#pokematch)). Otherwise the only network traffic is the
+  update check against GitHub. Free and open source (MIT).
 
 ## Download and install
 
@@ -183,6 +184,7 @@ Double-click it to open your logs folder.
 | Repair now | Puts back any missing BepInEx or plugin file (with the game closed). |
 | Battle log seal ▸ | Footer (default), Sidecar or Off. Takes effect the next time the game starts. |
 | tcgkb account ▸ | Optional. Connect to tcgkb, claim or release your PTCGL accounts, disconnect. See [tcgkb account](#tcgkb-account). |
+| Pokematch ▸ | Optional. Set your Pokematch API token, upload new battle logs automatically, upload past ones, remove the token. See [Pokematch](#pokematch). |
 | Diagnostics ▸ | Open the app log, the BepInEx log, the game folder or the app data folder; choose the game folder; copy diagnostic info for a bug report. |
 | Project page · View disclaimer · Licenses | Licenses shows this app's license and those of BepInEx and the other files it carries. |
 | Uninstall... (portable: Remove mod from game...) | See [Uninstall](#uninstall). |
@@ -246,7 +248,7 @@ an ordered, pseudonymous history in which deleted or rewritten results leave gap
 matching the seals of *both* players of a match. The full format, threat model and server-side
 guidance are in [docs/LOG-SEAL.md](docs/LOG-SEAL.md).
 
-**Privacy.** Nothing is uploaded unless you claim an account on tcgkb (below): the seal is just text in your files. Players are identified in
+**Privacy.** Nothing is uploaded unless you claim an account on tcgkb or turn on Pokematch uploads (below): the seal is just text in your files. Players are identified in
 the seal by an `accountHash` (SHA-256 of `ptcgl-abl:v1:` + the game's account id), a pseudonym that
 lets the two seals of one match name the same accounts without writing the raw ids. It is not
 encryption: anyone who knows an account id can compute its hash. Your logs (sealed or not)
@@ -275,6 +277,31 @@ Nothing is sent until you connect and claim. **Disconnect** ends the connection 
 remove the computer from your tcgkb profile). The connection is kept encrypted for your Windows
 user in `%LOCALAPPDATA%\PtcglAutoBattleLog\tcgkb-connection.dat`. The details are in
 [docs/TCGKB-API.md](docs/TCGKB-API.md).
+
+## Pokematch
+
+Optional, and independent of tcgkb. If you keep your match history on Pokematch, the app can
+upload your battle logs there for you:
+
+1. On Pokematch, make an API token (**API Tokens**, for example named "PTCGL uploader").
+2. Tray menu → **Pokematch ▸ Set API token...**, paste it and save. The app then asks whether to
+   upload new battle logs automatically.
+3. From then on, each finished match (VICTORY or DEFEAT) is sent about two minutes after it is
+   saved (the plugin may still improve the log right after the match). If Pokematch is down or
+   asleep, it is tried again later. **Upload past battle logs...** sends the older ones once.
+
+What is sent for each match: the battle log text exactly as the game's Export gives it (both
+players' display names and every play; not the seal), the result, your opponent's display name,
+your deck name and when the match ended. NO-RESULT and EXPORTED logs stay on your computer.
+A match is never sent twice: if the plugin rewrites a log after it was sent, the copy on Pokematch
+is replaced, and a match you delete on Pokematch is not sent again. What was sent is listed in
+`%LOCALAPPDATA%\PtcglAutoBattleLog\pokematch-uploads.json`.
+
+The token is kept encrypted for your Windows user in
+`%LOCALAPPDATA%\PtcglAutoBattleLog\pokematch-token.dat` and sent only to Pokematch. Changing your
+Pokematch password revokes its tokens: the app tells you, and you set a new one. Turn **Upload new
+battle logs automatically** off, or **Remove API token**, at any time. Details:
+[docs/POKEMATCH-API.md](docs/POKEMATCH-API.md).
 
 ## Uninstall
 
@@ -313,7 +340,8 @@ Nobody can promise that you won't. Please read the [disclaimer](DISCLAIMER.md); 
   the winner) to name, index and seal the log; account ids are stored only as hashes. It shows you
   nothing, automates no game action, and does not change cards, decks, matches or results.
 - It sends nothing to The Pokémon Company. Its only network traffic is the update check against
-  this project's GitHub releases and, only if you connect a tcgkb account, requests to tcgkb.app.
+  this project's GitHub releases and, only if you choose them, requests to tcgkb.app and to
+  Pokematch.
 
 **My antivirus complains / what is `winhttp.dll`?**
 BepInEx, the standard mod loader for Unity games, is started by a small `winhttp.dll` (Unity

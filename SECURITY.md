@@ -35,7 +35,11 @@ BepInEx or the game itself (report those to their authors).
   No telemetry and nothing uploaded, unless the player connects a tcgkb account: then HTTPS
   requests to `https://tcgkb.app` only (no redirects), with a bearer token kept encrypted with DPAPI
   for the Windows user, and battle logs sent only for the PTCGL accounts the player claims
-  ([docs/TCGKB-API.md](docs/TCGKB-API.md)). "Project page" and "What's new" open your browser.
+  ([docs/TCGKB-API.md](docs/TCGKB-API.md)). If the player sets a Pokematch API token, HTTPS requests
+  to `https://pokematch-vslogger.onrender.com` only (no redirects), with that token as the bearer
+  token, kept encrypted with DPAPI for the Windows user, and the battle logs of finished matches sent
+  only while the player has uploads on, or on request ([docs/POKEMATCH-API.md](docs/POKEMATCH-API.md)).
+  "Project page" and "What's new" open your browser.
 - **Uninstall** removes files that are still in use (the running exe) after the uninstaller exits,
   with a hidden Windows PowerShell whose script is a constant (the folder is passed in an
   environment variable, never inside the script).

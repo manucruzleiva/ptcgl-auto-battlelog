@@ -29,12 +29,19 @@ namespace PtcglAutoBattleLog.Tray.Logic
         private static readonly Regex ResultField = new Regex(@",""result"":""(VICTORY|DEFEAT|NO-RESULT|EXPORTED)""");
         private static readonly Regex SealedField = new Regex(@",""sealedUtc"":""(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)""");
         private static readonly Regex KeyIdField = new Regex(@",""keyId"":""([A-Za-z0-9_-]{1,128})""");
+        private static readonly Regex OpponentField = new Regex(@",""opponent"":\{""name"":(?:null|" + JsonString + @"),""accountHash"":");
+        private static readonly Regex DeckField = new Regex(@",""deck"":(?:null|" + JsonString + ")");
+        private static readonly Regex EndedField = new Regex(@",""endedUtc"":(?:null|""(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)"")");
 
         /// <summary>The .txt the seal belongs to, and its sidecar when the seal is in one.</summary>
         public string LogFile, SealFile;
         public string PlayerName, PlayerAccountHash;
         public string MatchId, Result, KeyId;
+        /// <summary>The opponent's display name and the player's deck name; null when the seal has none.</summary>
+        public string OpponentName, Deck;
         public DateTime SealedUtc;
+        /// <summary>When the plugin saw the match end; null for EXPORTED.</summary>
+        public DateTime? EndedUtc;
 
         /// <summary>
         /// The seal of a battle log .txt: its footer, else &lt;name&gt;.seal beside it. Null when the log is
@@ -74,6 +81,9 @@ namespace PtcglAutoBattleLog.Tray.Logic
             if (!player.Success || !sealedUtc.Success || !keyId.Success) return null;
             var matchId = MatchIdField.Match(json);
             var result = ResultField.Match(json);
+            var opponent = OpponentField.Match(json);
+            var deck = DeckField.Match(json);
+            var ended = EndedField.Match(json);
             return new SealSummary
             {
                 LogFile = logFile,
@@ -83,10 +93,15 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 MatchId = matchId.Success && matchId.Groups[1].Success ? Unescape(matchId.Groups[1].Value) : null,
                 Result = result.Success ? result.Groups[1].Value : null,
                 KeyId = keyId.Groups[1].Value,
-                SealedUtc = DateTime.ParseExact(sealedUtc.Groups[1].Value, "yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture,
-                                                DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal),
+                OpponentName = opponent.Success && opponent.Groups[1].Success ? Unescape(opponent.Groups[1].Value) : null,
+                Deck = deck.Success && deck.Groups[1].Success ? Unescape(deck.Groups[1].Value) : null,
+                SealedUtc = ParseUtc(sealedUtc.Groups[1].Value),
+                EndedUtc = ended.Success && ended.Groups[1].Success ? ParseUtc(ended.Groups[1].Value) : (DateTime?)null,
             };
         }
+
+        private static DateTime ParseUtc(string s) =>
+            DateTime.ParseExact(s, "yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
 
         /// <summary>The body of a JSON string literal as the seal writes it (ASCII, \u escapes) → its text. Null when malformed.</summary>
         internal static string Unescape(string s)

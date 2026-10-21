@@ -22,8 +22,13 @@ namespace PtcglAutoBattleLog.Tray.Logic
         /// the name has none; it may itself contain " vs ". A path is accepted too. Temp files
         /// (.txt.tmp) and anything else do not parse.
         /// </summary>
-        public static bool TryParse(string fileName, out string result, out string opponent)
+        public static bool TryParse(string fileName, out string result, out string opponent) =>
+            TryParse(fileName, out result, out opponent, out _);
+
+        /// <summary>The same, with the date in the name: the match's end, local time of the computer that saved it.</summary>
+        public static bool TryParse(string fileName, out string result, out string opponent, out DateTime localTime)
         {
+            localTime = default(DateTime);
             result = null;
             opponent = null;
             if (string.IsNullOrEmpty(fileName)) return false;
@@ -35,17 +40,18 @@ namespace PtcglAutoBattleLog.Tray.Logic
             name = name.Substring(0, name.Length - 4);
             // An opponent may itself end in " (2)": when the name does not parse without it, it was part of the name.
             var stripped = StripDuplicateSuffix(name);
-            return TryParseStem(stripped, out result, out opponent) ||
-                   (!ReferenceEquals(stripped, name) && TryParseStem(name, out result, out opponent));
+            return TryParseStem(stripped, out result, out opponent, out localTime) ||
+                   (!ReferenceEquals(stripped, name) && TryParseStem(name, out result, out opponent, out localTime));
         }
 
-        private static bool TryParseStem(string name, out string result, out string opponent)
+        private static bool TryParseStem(string name, out string result, out string opponent, out DateTime localTime)
         {
             result = null;
             opponent = null;
+            localTime = default(DateTime);
             if (name.Length < DateFormat.Length + Separator.Length) return false;
             if (!DateTime.TryParseExact(name.Substring(0, DateFormat.Length), DateFormat, CultureInfo.InvariantCulture,
-                                        DateTimeStyles.None, out _)) return false;
+                                        DateTimeStyles.AssumeLocal, out localTime)) return false;
             if (string.CompareOrdinal(name, DateFormat.Length, Separator, 0, Separator.Length) != 0) return false;
 
             var rest = name.Substring(DateFormat.Length + Separator.Length);

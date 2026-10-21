@@ -87,6 +87,7 @@ namespace PtcglAutoBattleLog.Tray
                 _tray.Visible = true;
                 _daemon.Start();
                 _updates.Start();
+                StartPokematch();
                 Welcome(cli, firstRun, setupPending);
             }
             catch
@@ -140,6 +141,7 @@ namespace PtcglAutoBattleLog.Tray
         {
             _lastSavedFile = path;
             _lastSavedLabel = result + (opponent != null ? " vs " + opponent : "") + ", " + DateTime.Now.ToString("t");
+            OnSavedForPokematch();
             if (!_session.Read(s => s.NotifyOnSave)) return;
             Balloon(result + (opponent != null ? " vs " + opponent : "") + " — battle log saved",
                     "Saved in " + PathUtil.Friendly(Path.GetDirectoryName(path)) + ". Click to open it.",
@@ -295,6 +297,7 @@ namespace PtcglAutoBattleLog.Tray
             Run("stop listeners", () => { _exitListener?.Dispose(); _showListener?.Dispose(); });
             Run("stop updates", () => _updates?.Dispose());
             Run("stop tcgkb", () => _tcgkb?.Dispose());
+            Run("stop Pokematch", () => { _pokematchTimer?.Stop(); _pokematchTimer?.Dispose(); _pokematch?.Dispose(); });
             Run("stop watcher", () => _watcher?.Dispose());
             Run("stop daemon", () => _daemon?.Dispose());
         }

@@ -21,6 +21,10 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "skippedVersion", Order = 6)] public string SkippedVersion;
         /// <summary>The Disclaimer.Version the user accepted; 0 = never. Asked again when it is lower.</summary>
         [DataMember(Name = "disclaimerAccepted", Order = 7)] public int DisclaimerAccepted;
+        /// <summary>Send new battle logs to Pokematch (only with a token set; off by default).</summary>
+        [DataMember(Name = "pokematchAutoUpload", Order = 8)] public bool PokematchAutoUpload;
+        /// <summary>When automatic Pokematch uploads were turned on: older logs go only with "Upload past logs...". UTC, "o".</summary>
+        [DataMember(Name = "pokematchSinceUtc", Order = 9)] public string PokematchSinceUtc;
 
         // The serializer skips constructors and field initializers; without this, a field missing
         // from the file would read as false instead of its default.
