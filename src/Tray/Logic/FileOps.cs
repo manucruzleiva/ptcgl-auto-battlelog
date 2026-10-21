@@ -44,6 +44,24 @@ namespace PtcglAutoBattleLog.Tray.Logic
             }
         }
 
+        /// <summary>WriteAllTextAtomic for bytes.</summary>
+        internal static void WriteAllBytesAtomic(string path, byte[] bytes)
+        {
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            var tmp = path + ".tmp";
+            try
+            {
+                File.WriteAllBytes(tmp, bytes);
+                ReplaceWith(tmp, path);
+            }
+            catch
+            {
+                TryDelete(tmp);
+                throw;
+            }
+        }
+
         /// <summary>
         /// Reads a small text file another process may be replacing at the same moment. Detects a
         /// BOM. Returns null when the file is absent, unreadable or larger than <paramref name="maxBytes"/>.

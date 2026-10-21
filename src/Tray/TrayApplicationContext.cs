@@ -294,6 +294,7 @@ namespace PtcglAutoBattleLog.Tray
             _menu?.Close();
             Run("stop listeners", () => { _exitListener?.Dispose(); _showListener?.Dispose(); });
             Run("stop updates", () => _updates?.Dispose());
+            Run("stop tcgkb", () => _tcgkb?.Dispose());
             Run("stop watcher", () => _watcher?.Dispose());
             Run("stop daemon", () => _daemon?.Dispose());
         }

@@ -93,6 +93,9 @@ static partial class Program
             UninstallFlowTests();
             WatchedFolderTests();
             LogsFolderSafetyTests();
+            SealSummaryTests();
+            await TcgkbApiTests();
+            await TcgkbConnectionTests();
         }
         catch (Exception e)
         {

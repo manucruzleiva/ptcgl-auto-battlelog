@@ -32,7 +32,10 @@ BepInEx or the game itself (report those to their authors).
 - **Network**: the tray app's only connections are HTTPS requests to `github.com` for this
   repository's releases (`releases/latest/download/update.json`, then the exe it names, following
   GitHub's redirect to its download servers), with the `User-Agent` `PtcglAutoBattleLog/<version>`.
-  No telemetry, no accounts, nothing uploaded. "Project page" and "What's new" open your browser.
+  No telemetry and nothing uploaded, unless the player connects a tcgkb account: then HTTPS
+  requests to `https://tcgkb.app` only (no redirects), with a bearer token kept encrypted with DPAPI
+  for the Windows user, and battle logs sent only for the PTCGL accounts the player claims
+  ([docs/TCGKB-API.md](docs/TCGKB-API.md)). "Project page" and "What's new" open your browser.
 - **Uninstall** removes files that are still in use (the running exe) after the uninstaller exits,
   with a hidden Windows PowerShell whose script is a constant (the folder is passed in an
   environment variable, never inside the script).

@@ -9,6 +9,14 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **tcgkb account** (tray menu, optional): connect this computer to a tcgkb.app account with a
+  code approved in the browser (OAuth device flow; the app never sees the password), then claim
+  the PTCGL accounts found in your sealed logs. One tcgkb account can own several PTCGL accounts.
+  A claim sends that account's 3 newest sealed logs as proof. Nothing is sent until you connect
+  and claim. Contract: `docs/TCGKB-API.md`.
+
 ## [1.1.0] - 2026-10-19
 
 The first public release: a Windows tray app replaces the 1.0 PowerShell installer, and
