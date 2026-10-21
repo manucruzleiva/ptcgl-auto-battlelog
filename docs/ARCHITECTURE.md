@@ -44,6 +44,7 @@ Everything below is a contract: both sides, the tests and the release pipeline d
 | `plugin-status.json` | plugin | heartbeat and last saved log (below) |
 | `tray.log` (+ `tray.log.1`) | tray | diagnostic log, rotated at 512 KB |
 | `updates\` | tray | downloaded update files |
+| `tcgkb-connection.dat` | tray | the tcgkb connection, only once the player connects (see "tcgkb account"); in portable mode in the data folder like `settings.json` |
 
 Leftovers of the 1.0 PowerShell installer (`payload\`, `watchdog.ps1`, `common.ps1`,
 `uninstall.ps1`, `game-dir.txt`, `bepinex-installed-by-us.flag`, `watchdog.log`) are migrated and
@@ -212,7 +213,8 @@ Install updates automatically · Check for updates now · Update vX available �
 new, Skip this version) · Start with Windows · Repair now · Battle log seal ▸ ("Footer (in the log
 file, default)", "Sidecar (separate .seal file)", "Off": writes `[Metadata] Mode`, effective at the
 next game start) · Diagnostics ▸ (app log, BepInEx log, game folder, app data folder, choose game
-folder, copy diagnostic info) · Project page · View disclaimer · Licenses (the embedded
+folder, copy diagnostic info) · tcgkb account ▸ ("Not connected" / "Connected as <name>", Connect to
+tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") · Project page · View disclaimer · Licenses (the embedded
 `THIRD-PARTY-NOTICES.md`, `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from
 game... · Exit.
 
@@ -301,6 +303,33 @@ game... · Exit.
   default protocols (`SystemDefault`, TLS 1.2/1.3); TLS 1.2 is added when a machine policy pins an
   older explicit list.
 
+## tcgkb account
+
+Optional and off until the player connects: a tray that was never connected sends nothing to
+tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
+
+* **Connect to tcgkb...** asks first (what is sent, and when), then runs the OAuth device flow
+  (`TcgkbConnection.ConnectAsync`): a code from `POST /api/device/code`, the browser opened on the
+  `https://tcgkb.app/` page tcgkb names (any other address is refused), the code shown in a dialog,
+  `POST /api/device/token` polled at tcgkb's interval until approved, declined, expired or
+  cancelled. The app never sees the tcgkb password, and Google sign-in works too. The connection
+  is saved only once `GET /api/ptcgl/accounts` has returned the user's name; otherwise the refresh
+  token is revoked.
+* `tcgkb-connection.dat` (in `AppPaths.Root`): `TcgkbTokens` as JSON, encrypted with DPAPI
+  (`CurrentUser`, with app-specific entropy), written atomically. A file that does not decrypt or
+  parse is deleted (= not connected). The access token is refreshed a minute before it expires and
+  once more after a 401; a refused refresh (`invalid_grant`) deletes the file.
+* **My PTCGL accounts...** lists the accounts `PtcglAccountScanner` finds in the logs folder (the
+  plugin's `.txt` names only; their seal's `player.accountHash`, grouped, newest name, match count)
+  next to the user's accounts on tcgkb, with **Claim** and **Release**. A claim asks first, then
+  sends the account's newest 3 tracked matches (`matchId` set, result not `EXPORTED`, each file at
+  most 1 MiB) exactly as on disk, `.seal` included. tcgkb verifies the seals; the tray does not.
+* **Disconnect** forgets the connection here, then revokes it on tcgkb (best effort: offline, the
+  balloon says to remove the computer in the tcgkb profile).
+* HTTP: its own `HttpClient`, `https://tcgkb.app` only, no redirects, no cookies, 30 s per request,
+  responses capped at 1 MiB, `User-Agent` `PtcglAutoBattleLog/<version>`.
+* The plugin is unchanged: it still makes no network connection.
+
 ## Code layout
 
 ```
@@ -323,6 +352,7 @@ build/BuildInfo.targets         generated BuildInfo constants
 build/portable.txt              the portable zip's marker file text (@VERSION@, @PROJECT_URL@ filled in by the build)
 tools/make-manifest.py          writes update.json + SHA256SUMS.txt for a release
 tools/verify_log.py             checks sealed logs (python3, stdlib only; see docs/LOG-SEAL.md)
+docs/TCGKB-API.md               the tcgkb connection and PTCGL account claims, client and server contract
 licenses/LGPL-2.1.txt           Unity Doorstop's license text (embedded in the exe, packaged in the zip)
 global.json                     the exact .NET SDK (rollForward: disable): reproducible builds
 build.sh / build.ps1            test + build + package into dist/
@@ -517,6 +547,39 @@ public static class Disclaimer
 //   WatchedFolder          (path).StillThere(): the folder at the path is still the one a watcher was opened on
 //   SaveNotificationQueue  Add(path, now) / TakeDue(now, exists): one "battle log saved" per file
 //   IcoFile                TryGetPngFrame(ico, size, out png, out frameSize): the status icons' artwork
+
+public sealed class TcgkbApi   // docs/TCGKB-API.md; HTTP injected, like UpdateChecker
+{
+    public const string BaseUrl = "https://tcgkb.app";
+    public TcgkbApi(Func<TcgkbRequest, CancellationToken, Task<TcgkbResponse>> send);
+    public Task<DeviceAuthorization> StartDeviceAuthorizationAsync(string deviceName, CancellationToken ct);
+    public Task<TcgkbTokenResponse> WaitForApprovalAsync(DeviceAuthorization a, Func<TimeSpan, CancellationToken, Task> delay,
+                                                         Func<DateTime> utcNow, CancellationToken ct);
+    public Task<TcgkbTokenResponse> RefreshAsync(string refreshToken, CancellationToken ct);  // invalid_grant → TcgkbAuthException
+    public Task RevokeAsync(string refreshToken, CancellationToken ct);
+    public Task<TcgkbAccounts> GetAccountsAsync(string accessToken, CancellationToken ct);
+    public Task<TcgkbAccount> ClaimAsync(string accessToken, ClaimRequest claim, CancellationToken ct);
+    public Task ReleaseAsync(string accessToken, string accountHash, CancellationToken ct);
+    public static bool IsOwnPage(string url);   // the only pages the tray opens for tcgkb
+}
+
+public sealed class TcgkbConnection   // TcgkbApi + TcgkbTokenStore (protect/unprotect injected: DPAPI in the tray)
+{
+    public Task<string> ConnectAsync(string deviceName, Action<DeviceAuthorization> show, Func<TimeSpan, CancellationToken, Task> delay, CancellationToken ct);
+    public Task<bool> DisconnectAsync(CancellationToken ct);
+    public Task<T> CallAsync<T>(Func<string, CancellationToken, Task<T>> call, CancellationToken ct);   // refresh + one retry on 401
+    public static ClaimRequest BuildClaim(DetectedAccount account);
+}
+
+public static class PtcglAccountScanner
+{
+    public static List<DetectedAccount> Scan(string logsFolder);   // by player.accountHash, most matches first; never throws
+}
+
+public sealed class SealSummary
+{
+    public static SealSummary TryRead(string logFile);   // footer, else .seal sidecar; reads, never verifies
+}
 
 public static class LogFileName
 {

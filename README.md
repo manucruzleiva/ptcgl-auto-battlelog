@@ -34,6 +34,7 @@
 - [The tray menu](#the-tray-menu)
 - [Automatic updates](#automatic-updates)
 - [Sealed logs and leaderboards](#sealed-logs-and-leaderboards)
+- [tcgkb account](#tcgkb-account)
 - [Uninstall](#uninstall)
 - [FAQ](#faq)
 - [Troubleshooting](#troubleshooting)
@@ -58,8 +59,9 @@
 - **Notifications.** "VICTORY vs Gary — battle log saved", click to open it.
 - **Sealed logs.** Each log carries a signed seal, so edits made after saving are detectable
   (for a future online leaderboard). See [Sealed logs](#sealed-logs-and-leaderboards).
-- **Private.** Nothing is uploaded anywhere. The only network traffic is the update check
-  against GitHub. Free and open source (MIT).
+- **Private.** Nothing is uploaded anywhere unless you connect a [tcgkb](https://tcgkb.app)
+  account and claim your PTCGL accounts (see [tcgkb account](#tcgkb-account)). Otherwise the only
+  network traffic is the update check against GitHub. Free and open source (MIT).
 
 ## Download and install
 
@@ -180,6 +182,7 @@ Double-click it to open your logs folder.
 | Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
 | Repair now | Puts back any missing BepInEx or plugin file (with the game closed). |
 | Battle log seal ▸ | Footer (default), Sidecar or Off. Takes effect the next time the game starts. |
+| tcgkb account ▸ | Optional. Connect to tcgkb, claim or release your PTCGL accounts, disconnect. See [tcgkb account](#tcgkb-account). |
 | Diagnostics ▸ | Open the app log, the BepInEx log, the game folder or the app data folder; choose the game folder; copy diagnostic info for a bug report. |
 | Project page · View disclaimer · Licenses | Licenses shows this app's license and those of BepInEx and the other files it carries. |
 | Uninstall... (portable: Remove mod from game...) | See [Uninstall](#uninstall). |
@@ -243,7 +246,7 @@ an ordered, pseudonymous history in which deleted or rewritten results leave gap
 matching the seals of *both* players of a match. The full format, threat model and server-side
 guidance are in [docs/LOG-SEAL.md](docs/LOG-SEAL.md).
 
-**Privacy.** Nothing is uploaded: the seal is just text in your files. Players are identified in
+**Privacy.** Nothing is uploaded unless you claim an account on tcgkb (below): the seal is just text in your files. Players are identified in
 the seal by an `accountHash` (SHA-256 of `ptcgl-abl:v1:` + the game's account id), a pseudonym that
 lets the two seals of one match name the same accounts without writing the raw ids. It is not
 encryption: anyone who knows an account id can compute its hash. Your logs (sealed or not)
@@ -252,6 +255,26 @@ contain your opponents' names, as the Export text does; keep that in mind before
 **Your key** is `%LOCALAPPDATA%\PtcglAutoBattleLog\identity\signing-key.xml`. Anyone with a copy can
 sign as you, so do not share it. It is kept when you uninstall, so a reinstall continues the same
 chain. Set **Battle log seal ▸ Off** if you do not want seals.
+
+## tcgkb account
+
+Optional. [tcgkb.app](https://tcgkb.app) is a separate site by the same author, for decks and,
+later, leaderboards built from sealed logs. If you have an account there, **tcgkb account ▸ Connect
+to tcgkb...** links this computer to it:
+
+1. Your browser opens tcgkb.app and the app shows a short code. Sign in there as usual (Google or
+   password), check that the code matches and approve. The app never sees your password.
+2. **My PTCGL accounts...** lists the PTCGL accounts that played on this computer (found in your
+   sealed logs) and the ones your tcgkb account already owns. **Claim** the ones that are yours: you
+   can own several, and each keeps its own stats.
+3. A claim sends tcgkb that account's 3 newest battle logs, sealed, as proof. They contain your
+   opponents' display names, as the Export text does. A claim is "not verified" until an opponent
+   who also uses tcgkb uploads the same match; then it is "verified".
+
+Nothing is sent until you connect and claim. **Disconnect** ends the connection (you can also
+remove the computer from your tcgkb profile). The connection is kept encrypted for your Windows
+user in `%LOCALAPPDATA%\PtcglAutoBattleLog\tcgkb-connection.dat`. The details are in
+[docs/TCGKB-API.md](docs/TCGKB-API.md).
 
 ## Uninstall
 
@@ -290,7 +313,7 @@ Nobody can promise that you won't. Please read the [disclaimer](DISCLAIMER.md); 
   the winner) to name, index and seal the log; account ids are stored only as hashes. It shows you
   nothing, automates no game action, and does not change cards, decks, matches or results.
 - It sends nothing to The Pokémon Company. Its only network traffic is the update check against
-  this project's GitHub releases.
+  this project's GitHub releases and, only if you connect a tcgkb account, requests to tcgkb.app.
 
 **My antivirus complains / what is `winhttp.dll`?**
 BepInEx, the standard mod loader for Unity games, is started by a small `winhttp.dll` (Unity

@@ -22,7 +22,8 @@ hashes, in the seal.
 What it does not do: it does not take part in the battle. It does not show you any information,
 does not automate any game action, and does not change cards, decks, matches or results. It sends
 nothing to The Pokémon Company. Its only network traffic is the tray app checking this project's
-GitHub releases for updates.
+GitHub releases for updates and, only if you connect a tcgkb.app account and claim a PTCGL account,
+sending tcgkb.app the battle logs you choose.
 
 This project is not affiliated with, endorsed, sponsored or approved by Nintendo, The Pokémon
 Company, The Pokémon Company International, Creatures Inc. or GAME FREAK inc. Pokémon and Pokémon

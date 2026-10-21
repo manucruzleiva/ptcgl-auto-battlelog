@@ -81,7 +81,7 @@ namespace PtcglAutoBattleLog.Tray
                 new ToolStripSeparator(),
                 openLogs, _openLastItem, _changeFolderItem, _defaultFolderItem,
                 new ToolStripSeparator(),
-                _notifyItem, _autoUpdateItem, checkNow, _updateItem, _startupItem, _repairItem, _sealItem, diagnostics,
+                _notifyItem, _autoUpdateItem, checkNow, _updateItem, _startupItem, _repairItem, _sealItem, BuildTcgkbMenu(), diagnostics,
                 new ToolStripSeparator(),
                 Item("Project page", () => Shell.Open(AppInfo.ProjectUrl)),
                 Item("View disclaimer", ViewDisclaimer),
@@ -150,6 +150,7 @@ namespace PtcglAutoBattleLog.Tray
 
             _bepInExLogItem.Enabled = game != null && File.Exists(game.BepInExLogPath);
             _gameFolderItem.Enabled = game != null;
+            RefreshTcgkbItems();
         }
 
         private void RefreshUpdateItems()
