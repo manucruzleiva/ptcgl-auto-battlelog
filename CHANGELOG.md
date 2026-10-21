@@ -9,6 +9,8 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-21
+
 ### Added
 
 - **tcgkb account** (tray menu, optional): connect this computer to a tcgkb.app account with a
@@ -16,6 +18,13 @@ The section of a version becomes the top of its GitHub release notes, so add one
   the PTCGL accounts found in your sealed logs. One tcgkb account can own several PTCGL accounts.
   A claim sends that account's 3 newest sealed logs as proof. Nothing is sent until you connect
   and claim. Contract: `docs/TCGKB-API.md`.
+
+### Changed
+
+- **Disclaimer updated** (version 2): it now explains the optional tcgkb connection, what a claim
+  sends and what those logs contain. Installed apps ask for consent again after updating, with a
+  notification; until it is accepted the mod is not repaired or updated.
+- `docs/LOG-SEAL.md` no longer says that nothing is uploaded.
 
 ## [1.1.0] - 2026-10-19
 
@@ -77,5 +86,6 @@ First version, never published: the BepInEx plugin, a Spanish PowerShell install
 (`Instalar.bat`, `Desinstalar.bat`) with a hidden watchdog that restored the mod after game
 updates, and Spanish file names and documentation.
 
-[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/tag/v1.1.0

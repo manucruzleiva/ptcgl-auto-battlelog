@@ -73,12 +73,12 @@ static partial class Program
         full.Save(path);
         var back = Settings.Load(path, log);
         Check(back.GameDir == full.GameDir && back.BepInExInstalledByUs && !back.AutoUpdate && !back.NotifyOnSave &&
-              back.LastUpdateCheckUtc == full.LastUpdateCheckUtc && back.SkippedVersion == "1.2.0" && back.DisclaimerAccepted == 1, "save/load round trip");
+              back.LastUpdateCheckUtc == full.LastUpdateCheckUtc && back.SkippedVersion == "1.2.0" && back.DisclaimerAccepted == Disclaimer.Version, "save/load round trip");
         var raw = File.ReadAllBytes(path);
         var json = Encoding.UTF8.GetString(raw);
         Check(raw[0] == (byte)'{', "UTF-8 without BOM");
         Check(json.IndexOf("\"gameDir\"") < json.IndexOf("\"bepInExInstalledByUs\"") && json.IndexOf("\"lastUpdateCheckUtc\"") < json.IndexOf("\"skippedVersion\"") &&
-              json.IndexOf("\"skippedVersion\"") < json.IndexOf("\"disclaimerAccepted\": 1"), "fields in contract order");
+              json.IndexOf("\"skippedVersion\"") < json.IndexOf("\"disclaimerAccepted\": " + Disclaimer.Version), "fields in contract order");
         File.WriteAllText(path, "{\"disclaimerAccepted\":7}");
         Check(Settings.Load(path, log).DisclaimerAccepted == 7, "disclaimerAccepted read as given (a newer version's acceptance counts)");
         logged.Clear();

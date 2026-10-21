@@ -633,7 +633,7 @@ it as the resource `DISCLAIMER.md`.
 * Before the first install (installed mode) and before the first run (portable mode) the tray shows
   the disclaimer in a dialog with "I understand, install" / "I understand, continue" and "Cancel".
   Cancel exits without changing anything.
-* Acceptance is stored as `settings.disclaimerAccepted` = `Disclaimer.Version` (an int, currently 1).
+* Acceptance is stored as `settings.disclaimerAccepted` = `Disclaimer.Version` (an int, currently 2).
   The dialog is shown again only when `Disclaimer.Version` increases. `--background`,
   `--updated-from` and `--uninstall` never show it; a tray started that way after a bump shows a
   notification instead, whose click (or launching the app again, or "Repair now") opens the dialog.
