@@ -9,6 +9,8 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-21
+
 ### Added
 
 - **Upload my matches automatically** (tray menu, tcgkb account, off until you turn it on): every
@@ -19,13 +21,14 @@ The section of a version becomes the top of its GitHub release notes, so add one
   adds each finished match (VICTORY or DEFEAT) to your Pokematch TCG logs about two minutes after
   it is saved: your deck, the result and the date (opponent deck "Unknown"; no names, no log
   text). "Upload past battle logs..." sends older ones. Never sent twice: a corrected result
-  updates the log on Pokematch, and a match deleted there is not sent again. The token is kept encrypted with DPAPI. Contract:
-  `docs/POKEMATCH-API.md`.
+  updates the log on Pokematch, and a match deleted there is not sent again. The token is kept
+  encrypted with DPAPI. Contract: `docs/POKEMATCH-API.md`.
 
 ### Changed
 
 - **Disclaimer updated** (version 3): it now explains the optional automatic tcgkb uploads and the
-  optional Pokematch uploads, and what they send. Installed apps ask for consent again after updating.
+  optional Pokematch uploads, and what they send. Installed apps ask for consent again after
+  updating, with a notification; until it is accepted the mod is not repaired or updated.
 
 ## [1.2.0] - 2026-10-21
 
@@ -104,6 +107,7 @@ First version, never published: the BepInEx plugin, a Spanish PowerShell install
 (`Instalar.bat`, `Desinstalar.bat`) with a hidden watchdog that restored the mod after game
 updates, and Spanish file names and documentation.
 
-[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/tag/v1.1.0
