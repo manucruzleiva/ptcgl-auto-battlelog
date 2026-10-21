@@ -65,7 +65,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         }
 
         /// <summary>A tracked match (it has a match id and a result other than EXPORTED) whose files are small enough to send.</summary>
-        private static bool IsEvidence(SealSummary s)
+        public static bool IsEvidence(SealSummary s)
         {
             if (string.IsNullOrEmpty(s.MatchId) || s.Result == null || s.Result == "EXPORTED" || string.IsNullOrEmpty(s.PlayerName)) return false;
             try

@@ -166,6 +166,9 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public Task<bool> ReleaseAsync(string accountHash, CancellationToken ct) =>
             CallAsync(async (access, c) => { await _api.ReleaseAsync(access, accountHash, c).ConfigureAwait(false); return true; }, ct);
 
+        public Task<UploadResponse> UploadLogAsync(ClaimEvidence log, CancellationToken ct) =>
+            CallAsync((access, c) => _api.UploadLogAsync(access, log, c), ct);
+
         private async Task<string> AccessTokenAsync(bool forceRefresh, CancellationToken ct)
         {
             await _lock.WaitAsync(ct).ConfigureAwait(false);
@@ -213,18 +216,25 @@ namespace PtcglAutoBattleLog.Tray.Logic
             {
                 try
                 {
-                    claim.Evidence.Add(new ClaimEvidence
-                    {
-                        FileName = Path.GetFileName(s.LogFile),
-                        Log = Convert.ToBase64String(ReadCapped(s.LogFile)),
-                        Seal = s.SealFile == null ? null : Convert.ToBase64String(ReadCapped(s.SealFile)),
-                    });
+                    claim.Evidence.Add(BuildEvidence(s));
                 }
                 catch (IOException) { }   // moved or deleted since the scan: the others may do
                 catch (UnauthorizedAccessException) { }
             }
             if (claim.Evidence.Count == 0) throw new IOException("None of this account's battle logs could be read.");
             return claim;
+        }
+
+        /// <summary>A sealed log as tcgkb takes it: the .txt and the .seal sidecar (if any), exactly as on disk.</summary>
+        public static ClaimEvidence BuildEvidence(SealSummary s)
+        {
+            if (s == null) throw new ArgumentNullException(nameof(s));
+            return new ClaimEvidence
+            {
+                FileName = Path.GetFileName(s.LogFile),
+                Log = Convert.ToBase64String(ReadCapped(s.LogFile)),
+                Seal = s.SealFile == null ? null : Convert.ToBase64String(ReadCapped(s.SealFile)),
+            };
         }
 
         private static byte[] ReadCapped(string path)
