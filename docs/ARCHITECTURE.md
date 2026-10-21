@@ -45,6 +45,7 @@ Everything below is a contract: both sides, the tests and the release pipeline d
 | `tray.log` (+ `tray.log.1`) | tray | diagnostic log, rotated at 512 KB |
 | `updates\` | tray | downloaded update files |
 | `tcgkb-connection.dat` | tray | the tcgkb connection, only once the player connects (see "tcgkb account"); in portable mode in the data folder like `settings.json` |
+| `tcgkb-uploads.json` | tray | the match logs already sent to tcgkb, only once the player turns on automatic uploads (see "tcgkb account") |
 
 Leftovers of the 1.0 PowerShell installer (`payload\`, `watchdog.ps1`, `common.ps1`,
 `uninstall.ps1`, `game-dir.txt`, `bepinex-installed-by-us.flag`, `watchdog.log`) are migrated and
@@ -324,6 +325,14 @@ tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
   next to the user's accounts on tcgkb, with **Claim** and **Release**. A claim asks first, then
   sends the account's newest 3 tracked matches (`matchId` set, result not `EXPORTED`, each file at
   most 1 MiB) exactly as on disk, `.seal` included. tcgkb verifies the seals; the tray does not.
+* **Upload my matches automatically** (`Settings.TcgkbAutoUpload`, asked once after the first
+  accounts dialog, off by default): `LogUploader.SyncAsync` lists the user's accounts on tcgkb,
+  then sends `POST /api/ptcgl/logs` for each tracked match of those accounts not yet in
+  `tcgkb-uploads.json` (`AppPaths.Root`; keys `matchId|accountHash|keyId`, accepted and rejected),
+  newest first, at most 50 per run (another run follows at once when more are left). It runs at
+  start, after each saved log and every 30 minutes; `not_claimed` leaves the log for later,
+  `invalid_log` records it as rejected, any other error ends the run until the next one. One run
+  at a time. **Upload matches now** runs it on demand; **Last upload** shows the newest result.
 * **Disconnect** forgets the connection here, then revokes it on tcgkb (best effort: offline, the
   balloon says to remove the computer in the tcgkb profile).
 * HTTP: its own `HttpClient`, `https://tcgkb.app` only, no redirects, no cookies, 30 s per request,

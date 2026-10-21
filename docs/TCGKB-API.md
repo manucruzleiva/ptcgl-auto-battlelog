@@ -103,3 +103,21 @@ deletes its saved connection. A reused refresh token should revoke the whole gra
 
 `DELETE /api/ptcgl/accounts/<accountHash>` → `204` (also `404` when it is not the user's): the
 user gives the account up; its matches stay, unowned.
+
+## Match uploads
+
+`POST /api/ptcgl/logs` (scope `logs:upload`), `application/json`:
+```json
+{"fileName":"2026-10-19 21.34.05 - VICTORY vs Gary.txt","log":"<base64>","seal":null}
+```
+* One tracked match of an account the user has claimed, as in a claim's `evidence`: the `.txt` and
+  the `.seal` sidecar exactly as on disk, each at most 1 MiB. tcgkb runs the same checks as for a
+  claim, except that `player.accountHash` must be one of the user's accounts (claimed or verified).
+* The tray sends it only after the player turned on **Upload my matches automatically**; it sends
+  each log once (`tcgkb-uploads.json`), newest first, at most 50 per run.
+* → `200 {"added":true,"account":{"accountHash","name","status"},"playerDeck":"Dragapult ex","opponentDeck":"Gardevoir ex"}`.
+  `added` is false when tcgkb already had this log (same match, seat and key): not an error. The
+  decks are tcgkb's guess from the cards seen in the log (Limitless archetype names), or null.
+* `403 {"error":"not_claimed"}`: the account is not the user's (released, or never claimed).
+  `422 {"error":"invalid_log","message":"…"}`: the log failed a check; sending it again would fail
+  again. `429 {"error":"rate_limited"}`.

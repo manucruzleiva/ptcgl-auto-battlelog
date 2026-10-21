@@ -9,6 +9,13 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **Upload my matches automatically** (tray menu, tcgkb account, off until you turn it on): every
+  tracked match of the PTCGL accounts you claimed is sent to tcgkb.app, older ones included, so
+  tcgkb can show your winrate, decks and the global meta. Each log is sent once; when tcgkb cannot
+  be reached the app tries again later. **Upload matches now** sends what is pending at once.
+
 ## [1.2.0] - 2026-10-21
 
 ### Added

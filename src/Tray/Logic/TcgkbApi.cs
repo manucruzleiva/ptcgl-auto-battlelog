@@ -122,11 +122,22 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "account")] public TcgkbAccount Account;
     }
 
+    /// <summary>tcgkb's answer to one uploaded battle log: whether it was new, and the decks it read from it.</summary>
+    [DataContract]
+    public sealed class UploadResponse
+    {
+        [DataMember(Name = "added")] public bool Added;
+        [DataMember(Name = "account")] public TcgkbAccount Account;
+        [DataMember(Name = "playerDeck")] public string PlayerDeck;
+        [DataMember(Name = "opponentDeck")] public string OpponentDeck;
+    }
+
     public enum DevicePollState { Pending, SlowDown, Granted, Denied, Expired }
 
     /// <summary>
     /// The tcgkb API the tray uses (docs/TCGKB-API.md): the OAuth 2.0 device authorization grant
-    /// (RFC 8628) to connect without the app ever seeing a password, and the PTCGL account claims.
+    /// (RFC 8628) to connect without the app ever seeing a password, the PTCGL account claims, and
+    /// the upload of each match of a claimed account.
     /// HTTP is injected (send), as in UpdateChecker: the tray passes HttpClient, tests a fake server.
     /// </summary>
     public sealed class TcgkbApi
@@ -243,6 +254,21 @@ namespace PtcglAutoBattleLog.Tray.Logic
             return account;
         }
 
+        /// <summary>
+        /// Uploads one sealed battle log of a claimed account (scope logs:upload). tcgkb checks the seal;
+        /// a log it already has is accepted again, so a retry is harmless.
+        /// </summary>
+        public async Task<UploadResponse> UploadLogAsync(string accessToken, ClaimEvidence log, CancellationToken ct)
+        {
+            if (log == null || string.IsNullOrEmpty(log.Log)) throw new ArgumentException("A battle log is required.", nameof(log));
+            var r = await SendAsync(new TcgkbRequest
+            {
+                Method = "POST", Path = "/api/ptcgl/logs", Bearer = accessToken,
+                ContentType = "application/json", Body = Json.Write(log),
+            }, ct).ConfigureAwait(false);
+            return Ok<UploadResponse>(r);
+        }
+
         /// <summary>Gives a claimed account up. One that is not the player's (any more) is not an error.</summary>
         public async Task ReleaseAsync(string accessToken, string accountHash, CancellationToken ct)
         {
@@ -331,6 +357,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
             {
                 case "claimed_by_other": text = "This PTCGL account already belongs to another tcgkb user."; break;
                 case "invalid_evidence": text = "tcgkb could not check these battle logs."; break;
+                case "invalid_log": text = "tcgkb could not check this battle log."; break;
+                case "not_claimed": text = "This PTCGL account is not claimed on tcgkb by you."; break;
                 case "rate_limited": text = "tcgkb is busy. Try again in a few minutes."; break;
                 default:
                     text = r.Status == 404 ? "tcgkb does not offer this yet (HTTP 404)."
