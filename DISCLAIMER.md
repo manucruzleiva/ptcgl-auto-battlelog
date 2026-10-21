@@ -22,8 +22,8 @@ hashes, in the seal.
 What it does not do: it does not take part in the battle. It does not show you any information,
 does not automate any game action, and does not change cards, decks, matches or results. It sends
 nothing to The Pokémon Company. Its only network traffic is the tray app checking this project's
-GitHub releases for updates and, only if you choose to connect a tcgkb.app account, requests to
-tcgkb.app.
+GitHub releases for updates and, only if you choose them, requests to tcgkb.app (when you connect a
+tcgkb account) and to Pokematch (when you set a Pokematch API token).
 
 tcgkb.app is a separate site by the same author, not part of this app, and connecting to it is
 optional and off by default. Connecting signs this computer in to your tcgkb account; the app never
@@ -35,6 +35,14 @@ hashed account ids. If you also turn on
 claimed, the same way, so tcgkb can show your statistics and the global meta. Nothing is sent
 before you connect and claim, uploads are off until you turn them on, and you can turn them off or
 disconnect at any time.
+
+Pokematch (pokematch-vslogger.onrender.com) is a separate site, not part of this app, and uploading
+to it is optional and off by default. If you set a Pokematch API token and turn uploads on, the app
+adds each finished match from then on (victory or defeat) to your Pokematch logs: your deck name,
+the result and the date. Your opponent's name and the battle log text are not sent. Older matches
+are sent only if you choose "Upload past battle logs". The token is kept encrypted on your computer
+and sent only to Pokematch. You can turn uploads off or remove the token at any time; logs already on Pokematch are
+then managed there.
 
 This project is not affiliated with, endorsed, sponsored or approved by Nintendo, The Pokémon
 Company, The Pokémon Company International, Creatures Inc. or GAME FREAK inc. Pokémon and Pokémon

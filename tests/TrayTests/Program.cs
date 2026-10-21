@@ -97,6 +97,8 @@ static partial class Program
             await TcgkbApiTests();
             await TcgkbConnectionTests();
             await LogUploaderTests();
+            await PokematchApiTests();
+            await PokematchUploaderTests();
         }
         catch (Exception e)
         {

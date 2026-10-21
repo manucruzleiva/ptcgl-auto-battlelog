@@ -23,6 +23,10 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "disclaimerAccepted", Order = 7)] public int DisclaimerAccepted;
         /// <summary>Upload each match of the claimed PTCGL accounts to tcgkb: null = not asked yet, then the player's answer.</summary>
         [DataMember(Name = "tcgkbAutoUpload", Order = 8, EmitDefaultValue = false)] public bool? TcgkbAutoUpload;
+        /// <summary>Send new battle logs to Pokematch (only with a token set; off by default).</summary>
+        [DataMember(Name = "pokematchAutoUpload", Order = 9)] public bool PokematchAutoUpload;
+        /// <summary>When automatic Pokematch uploads were turned on: older logs go only with "Upload past logs...". UTC, "o".</summary>
+        [DataMember(Name = "pokematchSinceUtc", Order = 10)] public string PokematchSinceUtc;
 
         // The serializer skips constructors and field initializers; without this, a field missing
         // from the file would read as false instead of its default.

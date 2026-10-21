@@ -57,9 +57,10 @@ static partial class Program
     static void DisclaimerTests()
     {
         Console.WriteLine("17. Disclaimer");
-        Check(Disclaimer.Version == 2, "version 2");
+        Check(Disclaimer.Version == 3, "version 3");
         var md = File.ReadAllText(Path.Combine(RepoRoot(), "DISCLAIMER.md"));
         var plain = Disclaimer.ToPlainText(md);
+        Check(md.Contains("Pokematch") && md.Contains("tcgkb.app"), "it names every place the app can send logs to");
         var paragraphs = plain.Split(new[] { "\r\n\r\n" }, StringSplitOptions.None);
         Check(paragraphs[0] == "Disclaimer", "heading without '#': " + paragraphs[0]);
         Check(!plain.Contains("#") && !plain.Contains("**") && !plain.Contains("`"), "no Markdown marks left");

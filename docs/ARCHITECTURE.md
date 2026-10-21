@@ -46,6 +46,8 @@ Everything below is a contract: both sides, the tests and the release pipeline d
 | `updates\` | tray | downloaded update files |
 | `tcgkb-connection.dat` | tray | the tcgkb connection, only once the player connects (see "tcgkb account"); in portable mode in the data folder like `settings.json` |
 | `tcgkb-uploads.json` | tray | the match logs already sent to tcgkb, only once the player turns on automatic uploads (see "tcgkb account") |
+| `pokematch-token.dat` | tray | the Pokematch API token, DPAPI-encrypted, only once the player sets one (see "Pokematch") |
+| `pokematch-uploads.json` | tray | what was sent to Pokematch: per match, its key, Pokematch's id and the hash of what was sent (see "Pokematch") |
 
 Leftovers of the 1.0 PowerShell installer (`payload\`, `watchdog.ps1`, `common.ps1`,
 `uninstall.ps1`, `game-dir.txt`, `bepinex-installed-by-us.flag`, `watchdog.log`) are migrated and
@@ -115,7 +117,9 @@ running".
   "notifyOnSave": true,
   "lastUpdateCheckUtc": null,
   "skippedVersion": null,
-  "disclaimerAccepted": 0
+  "disclaimerAccepted": 0,
+  "pokematchAutoUpload": false,
+  "pokematchSinceUtc": null
 }
 ```
 
@@ -215,7 +219,9 @@ new, Skip this version) · Start with Windows · Repair now · Battle log seal �
 file, default)", "Sidecar (separate .seal file)", "Off": writes `[Metadata] Mode`, effective at the
 next game start) · Diagnostics ▸ (app log, BepInEx log, game folder, app data folder, choose game
 folder, copy diagnostic info) · tcgkb account ▸ ("Not connected" / "Connected as <name>", Connect to
-tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") · Project page · View disclaimer · Licenses (the embedded
+tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") · Pokematch ▸ ("Not set up" / a status line, Set API token... /
+Change API token..., Upload new battle logs automatically, Upload past battle logs..., Remove API
+token; see "Pokematch") · Project page · View disclaimer · Licenses (the embedded
 `THIRD-PARTY-NOTICES.md`, `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from
 game... · Exit.
 
@@ -339,6 +345,42 @@ tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
   responses capped at 1 MiB, `User-Agent` `PtcglAutoBattleLog/<version>`.
 * The plugin is unchanged: it still makes no network connection.
 
+## Pokematch
+
+Optional and off until the player sets an API token: a tray without one sends nothing to
+Pokematch. The wire contract is [docs/POKEMATCH-API.md](POKEMATCH-API.md).
+
+* **Set API token...** checks the token with `GET /api/v1/me` (refused: say so, keep nothing;
+  not reached: keep it anyway) after taking the token the player made on Pokematch's API Tokens page
+  (`PokematchApi.CleanToken`: trimmed, a pasted `Bearer ` dropped, printable ASCII without spaces,
+  at most 512 characters) and saves it in `pokematch-token.dat` (DPAPI `CurrentUser`, app-specific
+  entropy, written atomically; a file that does not decrypt or parse is deleted). Then it offers to
+  turn automatic uploads on.
+* **Upload new battle logs automatically** asks first (what is sent), then sets
+  `pokematchAutoUpload` and, the first time, `pokematchSinceUtc` = now: automatic runs only send
+  matches that ended at or after it. "Upload past battle logs..." counts what Pokematch lacks in the
+  whole logs folder, asks, and sends it.
+* A run (`PokematchUploader.SyncAsync`, one at a time) takes the plugin's `.txt` files named
+  `VICTORY` or `DEFEAT` (never `NO-RESULT` or `EXPORTED`), at most 1 MiB, not written in the last
+  2 minutes (the plugin may still rewrite a log with a longer read or move it to its corrected name),
+  oldest first, at most 25 per run (a manual run repeats until done). A match's key is
+  `match:<the seal's matchId>`, else `file:<file name>`. What is sent is a Pokematch TCG log: the
+  seal's deck (else "Unknown"), opponent deck "Unknown", Bo1 with one game of the result, the
+  local date of the match end (seal, else file name), a note and the tag `ptcgl-auto-battle-log`.
+  No names, account hashes or log text. `pokematch-uploads.json` keeps, per
+  key, Pokematch's id and the SHA-256 of the JSON sent: an unchanged log is never sent again; a
+  changed one is sent with `PUT /:id` (or `POST` again if it was refused before); a `PUT` answered
+  404 marks the match deleted on Pokematch and it is never sent again.
+* Answers: 401/403 stop the run and pause automatic uploads until a new token is set (balloon);
+  network failures, timeouts (90 s: the host sleeps when idle), 408, 429 and 5xx stop the run and
+  retry it 30 minutes later; any other refusal is recorded for that log (balloon once per kind of
+  refusal) and the run goes on.
+* When: 1 minute after start, 2 min 15 s after each "battle log saved", then every 10 minutes while
+  automatic uploads are on and the current disclaimer is accepted. **Remove API token** deletes the
+  file and turns automatic uploads off.
+* HTTP: its own `HttpClient`, `https://pokematch-vslogger.onrender.com` only, no redirects, no
+  cookies, responses capped at 1 MiB, `User-Agent` `PtcglAutoBattleLog/<version>`.
+
 ## Code layout
 
 ```
@@ -362,6 +404,7 @@ build/portable.txt              the portable zip's marker file text (@VERSION@, 
 tools/make-manifest.py          writes update.json + SHA256SUMS.txt for a release
 tools/verify_log.py             checks sealed logs (python3, stdlib only; see docs/LOG-SEAL.md)
 docs/TCGKB-API.md               the tcgkb connection and PTCGL account claims, client and server contract
+docs/POKEMATCH-API.md           what the tray sends to Pokematch's /api/v1/tcg-matches
 licenses/LGPL-2.1.txt           Unity Doorstop's license text (embedded in the exe, packaged in the zip)
 global.json                     the exact .NET SDK (rollForward: disable): reproducible builds
 build.sh / build.ps1            test + build + package into dist/
@@ -642,7 +685,7 @@ it as the resource `DISCLAIMER.md`.
 * Before the first install (installed mode) and before the first run (portable mode) the tray shows
   the disclaimer in a dialog with "I understand, install" / "I understand, continue" and "Cancel".
   Cancel exits without changing anything.
-* Acceptance is stored as `settings.disclaimerAccepted` = `Disclaimer.Version` (an int, currently 2).
+* Acceptance is stored as `settings.disclaimerAccepted` = `Disclaimer.Version` (an int, currently 3).
   The dialog is shown again only when `Disclaimer.Version` increases. `--background`,
   `--updated-from` and `--uninstall` never show it; a tray started that way after a bump shows a
   notification instead, whose click (or launching the app again, or "Repair now") opens the dialog.

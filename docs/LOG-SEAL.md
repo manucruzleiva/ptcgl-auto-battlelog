@@ -315,6 +315,7 @@ leaderboard has to come from the server-side checks below.
 
 The plugin uploads nothing. The tray app sends sealed logs only to tcgkb.app, and only when the
 player connects a tcgkb account and claims a PTCGL account (see [TCGKB-API.md](TCGKB-API.md)).
+Pokematch uploads ([POKEMATCH-API.md](POKEMATCH-API.md)) send no log text and no seal, only the deck, result and date.
 This section is guidance for the server side, or any online leaderboard, that accepts sealed logs.
 
 1. **Verify every submission exactly as in §6**, with the exact bytes received, including the size
