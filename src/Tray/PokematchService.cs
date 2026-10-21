@@ -32,9 +32,11 @@ namespace PtcglAutoBattleLog.Tray
             Tokens = new PokematchTokenStore(session.Paths.Root,
                 data => ProtectedData.Protect(data, Entropy, DataProtectionScope.CurrentUser),
                 data => ProtectedData.Unprotect(data, Entropy, DataProtectionScope.CurrentUser));
-            Uploader = new PokematchUploader(new PokematchApi(SendAsync), Path.Combine(session.Paths.Root, PokematchUploadState.FileName));
+            Api = new PokematchApi(SendAsync);
+            Uploader = new PokematchUploader(Api, Path.Combine(session.Paths.Root, PokematchUploadState.FileName));
         }
 
+        public PokematchApi Api { get; }
         public PokematchTokenStore Tokens { get; }
         public PokematchUploader Uploader { get; }
 

@@ -38,11 +38,10 @@ disconnect at any time.
 
 Pokematch (pokematch-vslogger.onrender.com) is a separate site, not part of this app, and uploading
 to it is optional and off by default. If you set a Pokematch API token and turn uploads on, the app
-sends Pokematch each finished match from then on (victory or defeat): the battle log text, the
-result, your opponent's display name, your deck name and when the match ended. The log text
-contains both players' display names and every play of the match. Older logs are sent only if you
-choose "Upload past battle logs". The token is kept encrypted on your computer and sent only to
-Pokematch. You can turn uploads off or remove the token at any time; logs already on Pokematch are
+adds each finished match from then on (victory or defeat) to your Pokematch logs: your deck name,
+the result and the date. Your opponent's name and the battle log text are not sent. Older matches
+are sent only if you choose "Upload past battle logs". The token is kept encrypted on your computer
+and sent only to Pokematch. You can turn uploads off or remove the token at any time; logs already on Pokematch are
 then managed there.
 
 This project is not affiliated with, endorsed, sponsored or approved by Nintendo, The Pokémon

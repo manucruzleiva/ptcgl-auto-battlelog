@@ -350,7 +350,8 @@ tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
 Optional and off until the player sets an API token: a tray without one sends nothing to
 Pokematch. The wire contract is [docs/POKEMATCH-API.md](POKEMATCH-API.md).
 
-* **Set API token...** takes the token the player made on Pokematch's API Tokens page
+* **Set API token...** checks the token with `GET /api/v1/me` (refused: say so, keep nothing;
+  not reached: keep it anyway) after taking the token the player made on Pokematch's API Tokens page
   (`PokematchApi.CleanToken`: trimmed, a pasted `Bearer ` dropped, printable ASCII without spaces,
   at most 512 characters) and saves it in `pokematch-token.dat` (DPAPI `CurrentUser`, app-specific
   entropy, written atomically; a file that does not decrypt or parse is deleted). Then it offers to
@@ -363,9 +364,10 @@ Pokematch. The wire contract is [docs/POKEMATCH-API.md](POKEMATCH-API.md).
   `VICTORY` or `DEFEAT` (never `NO-RESULT` or `EXPORTED`), at most 1 MiB, not written in the last
   2 minutes (the plugin may still rewrite a log with a longer read or move it to its corrected name),
   oldest first, at most 25 per run (a manual run repeats until done). A match's key is
-  `match:<the seal's matchId>`, else `file:<file name>`. What is sent is the Export text (the
-  `.txt` without BOM and without a footer seal, docs/LOG-SEAL.md §2) with the result, opponent,
-  deck and end time from the seal (else from the file name). `pokematch-uploads.json` keeps, per
+  `match:<the seal's matchId>`, else `file:<file name>`. What is sent is a Pokematch TCG log: the
+  seal's deck (else "Unknown"), opponent deck "Unknown", Bo1 with one game of the result, the
+  local date of the match end (seal, else file name), a note and the tag `ptcgl-auto-battle-log`.
+  No names, account hashes or log text. `pokematch-uploads.json` keeps, per
   key, Pokematch's id and the SHA-256 of the JSON sent: an unchanged log is never sent again; a
   changed one is sent with `PUT /:id` (or `POST` again if it was refused before); a `PUT` answered
   404 marks the match deleted on Pokematch and it is never sent again.

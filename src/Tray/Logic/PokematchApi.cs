@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -42,16 +43,36 @@ namespace PtcglAutoBattleLog.Tray.Logic
             : base("Pokematch does not accept the API token. Make a new one in Pokematch (changing your password revokes them) and set it again.", status) { }
     }
 
-    /// <summary>A match as Pokematch's /api/v1/tcg-matches takes it (docs/POKEMATCH-API.md).</summary>
+    [DataContract]
+    public sealed class PokematchDeck
+    {
+        [DataMember(Name = "name")] public string Name;
+    }
+
+    [DataContract]
+    public sealed class PokematchGame
+    {
+        /// <summary>"win", "loss" or "tie".</summary>
+        [DataMember(Name = "result")] public string Result;
+    }
+
+    /// <summary>A TCG log as Pokematch's POST /api/v1/tcg-matches takes it (docs/POKEMATCH-API.md).</summary>
     [DataContract]
     public sealed class PokematchMatch
     {
-        [DataMember(Name = "result", Order = 1)] public string Result;
-        [DataMember(Name = "opponent", Order = 2, EmitDefaultValue = false)] public string Opponent;
-        [DataMember(Name = "deck", Order = 3, EmitDefaultValue = false)] public string Deck;
-        [DataMember(Name = "playedAt", Order = 4, EmitDefaultValue = false)] public string PlayedAt;
-        [DataMember(Name = "log", Order = 5)] public string Log;
-        [DataMember(Name = "source", Order = 6)] public string Source;
+        public const string Unknown = "Unknown";
+        /// <summary>Lowercase, at most 30 characters: Pokematch's tag rules.</summary>
+        public const string Tag = "ptcgl-auto-battle-log";
+
+        [DataMember(Name = "activeDeck", Order = 1)] public PokematchDeck ActiveDeck;
+        [DataMember(Name = "opponentDeck", Order = 2)] public string OpponentDeck;
+        /// <summary>"Bo1", "Bo3" or "Bo5".</summary>
+        [DataMember(Name = "format", Order = 3)] public string Format;
+        [DataMember(Name = "games", Order = 4)] public List<PokematchGame> Games;
+        /// <summary>"yyyy-MM-dd".</summary>
+        [DataMember(Name = "date", Order = 5)] public string Date;
+        [DataMember(Name = "notes", Order = 6, EmitDefaultValue = false)] public string Notes;
+        [DataMember(Name = "tags", Order = 7, EmitDefaultValue = false)] public List<string> Tags;
     }
 
     /// <summary>Pokematch's answer to a POST: the new match's id, at the top or under "match" or "data".</summary>
@@ -85,6 +106,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
     {
         public const string BaseUrl = "https://pokematch-vslogger.onrender.com";
         public const string MatchesPath = "/api/v1/tcg-matches";
+        public const string MePath = "/api/v1/me";
         /// <summary>The page where players make API tokens.</summary>
         public const string TokensPage = BaseUrl + "/";
         public const string Source = "PTCGL Auto Battle Log";
@@ -110,6 +132,14 @@ namespace PtcglAutoBattleLog.Tray.Logic
             foreach (var c in t)
                 if (c <= ' ' || c >= 0x7F) return null;
             return t;
+        }
+
+        /// <summary>GET /api/v1/me: true when Pokematch accepts the token; PokematchAuthException when it does not.</summary>
+        public async Task<bool> CheckTokenAsync(string token, CancellationToken ct)
+        {
+            var r = await SendAsync(new PokematchRequest { Method = "GET", Path = MePath, Token = token }, ct).ConfigureAwait(false);
+            if (r.Status < 200 || r.Status > 299) throw Failure(r);
+            return true;
         }
 
         /// <summary>Adds the match; returns Pokematch's id for it, or null when the answer names none.</summary>

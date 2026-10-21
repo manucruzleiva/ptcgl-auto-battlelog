@@ -79,11 +79,23 @@ namespace PtcglAutoBattleLog.Tray
             _pokematchTimer.Start();
         }
 
-        private void SetPokematchToken()
+        private async void SetPokematchToken()
         {
             string token;
             using (Modal()) token = PokematchTokenDialog.Ask();
             if (token == null) return;
+            try { await Task.Run(() => Pokematch.Api.CheckTokenAsync(token, CancellationToken.None)); }
+            catch (PokematchAuthException)
+            {
+                using (Modal()) Dialogs.Warning("Pokematch does not accept this token. Copy it again from Pokematch (Profile Settings > Account > API Tokens), or make a new one.");
+                return;
+            }
+            catch (Exception e)
+            {
+                // Pokematch may be asleep or down: keep the token, the uploads find out later.
+                Log.Info("Could not check the Pokematch token now: " + e.Message);
+            }
+            if (_exiting) return;
             Pokematch.Tokens.Save(new PokematchToken { Token = token, SetUtc = DateTime.UtcNow });
             _pokematchTokenRejected = false;
             _pokematchWarned = null;
@@ -105,9 +117,9 @@ namespace PtcglAutoBattleLog.Tray
             bool yes;
             using (Modal())
                 yes = Dialogs.Confirm("Upload your new battle logs to Pokematch automatically?\n\n" +
-                                      "After each finished match (victory or defeat), the app sends Pokematch the battle log text, the result, " +
-                                      "your opponent's display name, your deck name and when the match ended. The log text contains both players' " +
-                                      "names and every play of the match.\n\n" +
+                                      "After each finished match (victory or defeat), the app adds it to your Pokematch logs: your deck name, " +
+                                      "the result and the date. Your opponent's deck shows as \"Unknown\": fill it in on Pokematch if you like. " +
+                                      "Your opponent's name and the battle log text stay on this computer.\n\n" +
                                       "Only matches played from now on are sent; \"Upload past battle logs...\" sends older ones. " +
                                       "Turn this off at any time in the Pokematch menu.", MessageBoxIcon.Question);
             if (!yes) return;
@@ -136,8 +148,8 @@ namespace PtcglAutoBattleLog.Tray
                     return;
                 }
                 yes = Dialogs.Confirm("Upload " + count + " battle log" + (count == 1 ? "" : "s") + " from your logs folder to Pokematch?\n\n" +
-                                      "Each one sends the battle log text (both players' names and every play), the result, your opponent's " +
-                                      "name, your deck name and when the match ended. Matches already on Pokematch are not sent again.",
+                                      "Each one adds your deck name, the result and the date to your Pokematch logs. " +
+                                      "Matches already on Pokematch are not sent again.",
                                       MessageBoxIcon.Question);
             }
             if (yes) RunPokematch(manual: true);

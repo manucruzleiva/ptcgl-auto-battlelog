@@ -25,34 +25,41 @@ followed. A 401 or 403 means the token is no longer accepted.
 
 | Request | Used for | Success | Other answers |
 |---|---|---|---|
-| `POST /api/v1/tcg-matches` | add a match | any 2xx; the body's `id` or `_id` (also under `match` or `data`) is kept to replace the match later | 401/403: token refused. 408, 429, 5xx, no answer: retried later. Anything else: this log is refused, until the plugin rewrites it. |
-| `PUT /api/v1/tcg-matches/:id` | replace a match this app added, after the plugin rewrote its log | any 2xx | 404 or 410: the player deleted it on Pokematch; it is never sent again. Otherwise as `POST`. |
+| `GET /api/v1/me` | check a token when it is set | any 2xx | 401: the token is refused and not kept. |
+| `POST /api/v1/tcg-matches` | add a match | any 2xx; the body's `_id` (or `id`, also under `match` or `data`) is kept to replace the match later | 401/403: token refused. 408, 429, 5xx, no answer: retried later. Anything else: this log is refused until what it would send changes. |
+| `PUT /api/v1/tcg-matches/:id` | update a match this app added, when what it would send changed (a corrected result) | any 2xx | 404 or 410: the player deleted it on Pokematch; it is never sent again. Otherwise as `POST`. |
 
 An error body's `message` (or `error`) string, if any, is shown to the player and written to the
 app log.
 
 ## Body
 
-<!-- TODO: confirm the field names against Pokematch's own form/export before release. -->
+Pokematch's TCG log, as its API docs define it (Pokematch → API Docs):
 
 ```json
 {
-  "result": "win",
-  "opponent": "Gary",
-  "deck": "Charizard ex",
-  "playedAt": "2026-10-20T19:12:00Z",
-  "log": "Setup\nAsh drew 7 cards for the opening hand.\n...",
-  "source": "PTCGL Auto Battle Log"
+  "activeDeck": { "name": "Charizard ex" },
+  "opponentDeck": "Unknown",
+  "format": "Bo1",
+  "games": [ { "result": "win" } ],
+  "date": "2026-10-20",
+  "notes": "Added by PTCGL Auto Battle Log.",
+  "tags": [ "ptcgl-auto-battle-log" ]
 }
 ```
 
 | Field | Value |
 |---|---|
-| `result` | `"win"` for a `VICTORY` log, `"loss"` for `DEFEAT`. Other logs are not sent. |
-| `opponent` | The opponent's display name: the seal's `opponent.name`, else the name in the file name. Left out when unknown. |
-| `deck` | The player's deck name from the seal. Left out when unknown. |
-| `playedAt` | When the match ended, UTC: the seal's `endedUtc`, else the file name's local time. |
-| `log` | The battle log text exactly as the game's Export button gives it: the `.txt` without its BOM and without a footer seal ([LOG-SEAL.md](LOG-SEAL.md) §2). It contains both players' display names. |
-| `source` | Always `"PTCGL Auto Battle Log"`. |
+| `activeDeck.name` | The player's deck name from the seal, else `"Unknown"`. Required by Pokematch. |
+| `opponentDeck` | Always `"Unknown"`: the client does not tell the player the opponent's archetype. Required by Pokematch; the player can edit it there. |
+| `format` | `"Bo1"`: PTCGL matches are single games. |
+| `games` | One game: `"win"` for a `VICTORY` log, `"loss"` for `DEFEAT`. Other logs are not sent. |
+| `date` | The match end's local date, `yyyy-MM-dd`: the seal's `endedUtc`, else the file name. |
+| `notes` | `"Added by PTCGL Auto Battle Log."` |
+| `tags` | `["ptcgl-auto-battle-log"]` (Pokematch stores tags lowercase, at most 30 characters). |
 
-Nothing else is sent: no account ids or their hashes, no seal, no file paths.
+Nothing else is sent: no player or opponent names, no account ids or hashes, no log text, no seal,
+no file paths. `GET /api/v1/me` is called once when the player sets a token, to check it.
+
+Pokematch's limits: 1000 requests per 15 minutes per IP and 2000 per account (429); a run sends at
+most 25 logs.

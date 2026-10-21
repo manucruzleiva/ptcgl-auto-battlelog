@@ -26,7 +26,11 @@ static partial class Program
         public static PokematchResponse Reply(int status, string body) => new PokematchResponse { Status = status, Body = body };
     }
 
-    static PokematchMatch SampleMatch() => new PokematchMatch { Result = "win", Opponent = "Gary", Log = "Setup\nTurn 1", Source = PokematchApi.Source };
+    static PokematchMatch SampleMatch() => new PokematchMatch
+    {
+        ActiveDeck = new PokematchDeck { Name = "Dragapult ex" }, OpponentDeck = "Gardevoir ex", Format = "Bo1",
+        Games = new List<PokematchGame> { new PokematchGame { Result = "win" } }, Date = "2026-10-21",
+    };
 
     static async Task PokematchApiTests()
     {
@@ -45,7 +49,17 @@ static partial class Program
         var req = fake.Requests.Last();
         Check(id == "65f0c0ffee", "POST: Mongo-style _id read back: " + id);
         Check(req.Method == "POST" && req.Path == "/api/v1/tcg-matches" && req.Token == "tok", "POST /api/v1/tcg-matches with the token");
-        Check(req.Body.Contains("\"log\"") && req.Body.Contains("Setup\\nTurn 1") && req.Body.Contains("\"opponent\""), "body: JSON with the log and the opponent");
+        var body = req.Body.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+        Check(body.Contains("\"activeDeck\":{\"name\":\"Dragapult ex\"}".Replace(" ", "")) && body.Contains("\"opponentDeck\":\"Gardevoirex\"") &&
+              body.Contains("\"games\":[{\"result\":\"win\"}]") && body.Contains("\"format\":\"Bo1\"") && body.Contains("\"date\":\"2026-10-21\""),
+              "body: Pokematch's TCG log fields: " + body);
+        Check(!body.Contains("\"notes\"") && !body.Contains("\"tags\""), "unset optional fields are left out");
+
+        fake.Handle = r => FakePokematch.Reply(200, "{\"userId\":\"u1\",\"tokenName\":\"PTCGL uploader\"}");
+        Check(await api.CheckTokenAsync("pmk_tok", CancellationToken.None) && fake.Requests.Last().Method == "GET" && fake.Requests.Last().Path == "/api/v1/me",
+              "GET /api/v1/me checks the token");
+        fake.Handle = r => FakePokematch.Reply(401, "{\"error\":\"Invalid token\"}");
+        Check(await Catch(() => api.CheckTokenAsync("pmk_tok", CancellationToken.None)) is PokematchAuthException, "/me 401: PokematchAuthException");
 
         fake.Handle = r => FakePokematch.Reply(200, "{\"id\":42}");
         Check(await api.CreateAsync("tok", SampleMatch(), CancellationToken.None) == "42", "numeric id read back");
@@ -110,11 +124,11 @@ static partial class Program
         var mode = SealMode.Footer;
         var store = new LogStore(folder) { Sealer = new LogSealer(identity, "1.2.0", "1.24.0") { Mode = () => mode } };
         var t0 = new DateTime(2026, 10, 20, 18, 0, 0, DateTimeKind.Utc);
-        string Save(int n, bool? won, string matchId, string log, bool manual = false, string existing = null) =>
+        string Save(int n, bool? won, string matchId, string log, bool manual = false, string existing = null, string deck = "Charizard ex") =>
             store.Save(new MatchRecord
             {
                 MatchId = manual ? null : matchId, StartUtc = t0.AddHours(n), EndUtc = manual ? (DateTime?)null : t0.AddHours(n).AddMinutes(12), Won = won,
-                Winner = won == null ? (int?)null : won == true ? 1 : 2, MySeat = 1, MyName = "Ash", MyAccountId = "ash-id", MyDeck = "Charizard ex",
+                Winner = won == null ? (int?)null : won == true ? 1 : 2, MySeat = 1, MyName = "Ash", MyAccountId = "ash-id", MyDeck = deck,
                 OpponentName = "Gary", OpponentAccountId = "gary-id", ManualOnly = manual, Capture = LogSealer.CaptureAuto,
             }, log, existing);
 
@@ -128,18 +142,20 @@ static partial class Program
         var exported = Save(5, null, null, "Setup\nexported", manual: true);
 
         var c = PokematchUploader.Read(win);
-        Check(c != null && c.Key == "match:m-1" && c.Match.Result == "win" && c.Match.Opponent == "Gary" && c.Match.Deck == "Charizard ex",
-              "footer log: key from the seal's match id, result, opponent, deck");
-        Check(c?.Match.Log == "Setup\nAsh wins", "footer log: only the Export text goes (no BOM, no seal): " + c?.Match.Log);
-        Check(c?.Match.PlayedAt == "2026-10-20T19:12:00Z", "playedAt: the seal's endedUtc: " + c?.Match.PlayedAt);
-        Check(c?.Match.Source == PokematchApi.Source, "source names this app");
+        Check(c != null && c.Key == "match:m-1" && c.Match.Games.Single().Result == "win" && c.Match.ActiveDeck.Name == "Charizard ex",
+              "footer log: key from the seal's match id, result, deck");
+        Check(c?.Match.OpponentDeck == PokematchMatch.Unknown && c.Match.Format == "Bo1" && c.Match.Tags.Single() == PokematchMatch.Tag,
+              "opponent deck unknown, Bo1, tagged");
+        var json = c == null ? "" : Json.Write(c.Match);
+        Check(!json.Contains("Gary") && !json.Contains("Ash wins") && !json.Contains("Ash"), "neither the opponent's name nor the log text is sent");
+        Check(PokematchMatch.Tag.Length <= 30 && PokematchMatch.Tag == PokematchMatch.Tag.ToLowerInvariant(), "tag fits Pokematch's rules");
+        var expectedDate = new DateTime(2026, 10, 20, 19, 12, 0, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd");
+        Check(c?.Match.Date == expectedDate, "date: the seal's endedUtc, local date: " + c?.Match.Date);
         c = PokematchUploader.Read(loss);
-        Check(c != null && c.Key == "match:m-2" && c.Match.Result == "loss" && c.Match.Log == "Setup\nGary wins", "sidecar log: same, the .txt is the Export text");
+        Check(c != null && c.Key == "match:m-2" && c.Match.Games.Single().Result == "loss", "sidecar log: same");
         c = PokematchUploader.Read(unsealed);
-        Check(c != null && c.Key == "file:" + Path.GetFileName(unsealed) && c.Match.Deck == null && c.Match.Opponent == "Gary",
-              "unsealed log: key from the file name, opponent from the file name");
-        Check(PokematchUploader.LogText("﻿quoted\n\n" + SealSummary.Begin + "\nx\n\nreal\n\n" + SealSummary.Begin + "\n{}\nsig\n" + SealSummary.End + "\n")
-              == "quoted\n\n" + SealSummary.Begin + "\nx\n\nreal", "a log that quotes a seal: cut at the last seal (docs/LOG-SEAL.md §2)");
+        Check(c != null && c.Key == "file:" + Path.GetFileName(unsealed) && c.Match.ActiveDeck.Name == PokematchMatch.Unknown && c.Match.Games.Single().Result == "win",
+              "unsealed log: key from the file name, deck unknown");
 
         var now = DateTime.UtcNow + TimeSpan.FromMinutes(10);   // every log has settled
         var fake = new FakePokematch();
@@ -168,19 +184,24 @@ static partial class Program
         var r2 = await up.SyncAsync("tok", folder, DateTime.MinValue, CancellationToken.None);
         Check(r2.Uploaded + r2.Updated == 0 && fake.Requests.Count == sent, "second run: nothing sent twice");
 
-        // The plugin rewrites the log with a longer read: the copy on Pokematch is replaced, not duplicated.
+        // The plugin rewrites the log with a longer read: nothing Pokematch keeps changed, nothing is sent.
+        sent = fake.Requests.Count;
         Save(1, true, "m-1", "Setup\nAsh wins\nand a longer read", existing: win);
+        await up.SyncAsync("tok", folder, DateTime.MinValue, CancellationToken.None);
+        Check(fake.Requests.Count == sent, "a longer read of the same match: nothing sent");
+        // ...but a corrected result replaces the copy on Pokematch, not duplicated.
+        win = Save(1, false, "m-1", "Setup\nAsh wins\nand a longer read", existing: win);
         var r3 = await up.SyncAsync("tok", folder, DateTime.MinValue, CancellationToken.None);
         var put = fake.Requests.Last();
-        Check(r3.Updated == 1 && r3.Uploaded == 0 && put.Method == "PUT" && put.Path == "/api/v1/tcg-matches/pm1" && put.Body.Contains("longer read"),
+        Check(r3.Updated == 1 && r3.Uploaded == 0 && put.Method == "PUT" && put.Path == "/api/v1/tcg-matches/pm1" && put.Body.Contains("\"loss\""),
               "rewritten log: PUT on the same Pokematch id");
 
         // Deleted on Pokematch: never sent again, even when rewritten.
         fake.Handle = r => r.Method == "PUT" ? FakePokematch.Reply(404, "{}") : FakePokematch.Reply(201, "{\"_id\":\"pmX\"}");
-        Save(1, true, "m-1", "Setup\nAsh wins\nthird read", existing: win);
+        win = Save(1, true, "m-1", "Setup\nAsh wins\nthird read", existing: win);
         await up.SyncAsync("tok", folder, DateTime.MinValue, CancellationToken.None);
         Check(PokematchUploadState.Load(stateFile).Find("match:m-1")?.Status == PokematchUpload.Deleted, "PUT 404: marked deleted");
-        Save(1, true, "m-1", "Setup\nAsh wins\nfourth read", existing: win);
+        Save(1, false, "m-1", "Setup\nAsh wins\nfourth read", existing: win);
         sent = fake.Requests.Count;
         await up.SyncAsync("tok", folder, DateTime.MinValue, CancellationToken.None);
         Check(fake.Requests.Count == sent, "a match deleted on Pokematch is not sent again");
@@ -188,18 +209,18 @@ static partial class Program
         // Refused (400): kept as refused, retried only when the log changes.
         var refusedFolder = Path.Combine(TempDir(), "logs");
         store = new LogStore(refusedFolder) { Sealer = new LogSealer(identity, "1.2.0", "1.24.0") { Mode = () => mode } };
-        var a = Save(1, true, "r-1", "Setup\nLOG-ONE");
+        var a = Save(1, true, "r-1", "Setup\none", deck: "Bad Deck");
         Save(2, false, "r-2", "Setup\ntwo");
         var stateFile2 = Path.Combine(TempDir(), PokematchUploadState.FileName);
         var up2 = new PokematchUploader(new PokematchApi(fake.Send), stateFile2, () => now);
-        fake.Handle = r => r.Body.Contains("LOG-ONE") ? FakePokematch.Reply(422, "{\"message\":\"bad log\"}") : FakePokematch.Reply(201, "{\"_id\":\"ok\"}");
+        fake.Handle = r => r.Body.Contains("Bad Deck") ? FakePokematch.Reply(422, "{\"message\":\"bad log\"}") : FakePokematch.Reply(201, "{\"_id\":\"ok\"}");
         var r4 = await up2.SyncAsync("tok", refusedFolder, DateTime.MinValue, CancellationToken.None);
         Check(r4.Rejected == 1 && r4.Uploaded == 1 && r4.Error.Contains("bad log"), "a refused log does not stop the others");
         sent = fake.Requests.Count;
         await up2.SyncAsync("tok", refusedFolder, DateTime.MinValue, CancellationToken.None);
         Check(fake.Requests.Count == sent, "refused log: not retried while unchanged");
         fake.Handle = r => FakePokematch.Reply(201, "{\"_id\":\"ok2\"}");
-        Save(1, true, "r-1", "Setup\nLOG-ONE, rewritten", existing: a);
+        Save(1, true, "r-1", "Setup\none, rewritten", existing: a, deck: "Good Deck");
         var r5 = await up2.SyncAsync("tok", refusedFolder, DateTime.MinValue, CancellationToken.None);
         Check(r5.Uploaded == 1 && PokematchUploadState.Load(stateFile2).Find("match:r-1")?.Status == PokematchUpload.Uploaded, "refused log rewritten: sent again");
 

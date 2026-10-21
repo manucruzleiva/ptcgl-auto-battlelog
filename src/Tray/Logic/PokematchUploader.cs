@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +20,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "status", Order = 2)] public string Status;
         /// <summary>Pokematch's id for the match; null when its answer named none (then it is never updated).</summary>
         [DataMember(Name = "id", Order = 3)] public string Id;
-        /// <summary>SHA-256 of the JSON last sent: a log rewritten by the plugin is sent again, once.</summary>
+        /// <summary>SHA-256 of the JSON last sent: when what a log would send changes (a corrected result), it is sent again, once.</summary>
         [DataMember(Name = "sha256", Order = 4)] public string Sha256;
         [DataMember(Name = "file", Order = 5)] public string File;
         [DataMember(Name = "utc", Order = 6)] public DateTime Utc;
@@ -79,8 +79,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
     /// <summary>
     /// Sends the plugin's battle logs to Pokematch (docs/ARCHITECTURE.md, "Pokematch"). Each run reads the
     /// logs folder, picks the finished matches (VICTORY or DEFEAT) of at least SinceUtc that the plugin
-    /// has stopped writing, and adds each one Pokematch does not have yet. A log the plugin rewrote
-    /// later (a longer read, a corrected result) replaces the copy it added before. pokematch-uploads.json
+    /// has stopped writing, and adds each one Pokematch does not have yet. A match whose result the plugin
+    /// corrected later updates the log it added before. pokematch-uploads.json
     /// remembers what was sent, so nothing is sent twice, and a match the player deleted on Pokematch is
     /// not sent again.
     /// </summary>
@@ -92,7 +92,6 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public const int MaxPerRun = 25;
 
         private static readonly string[] Results = { "VICTORY", "DEFEAT" };
-        private const string FooterSeparator = "\n\n" + SealSummary.Begin + "\n";
 
         private readonly PokematchApi _api;
         private readonly string _stateFile;
@@ -198,7 +197,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                     }
                     catch (PokematchException e)
                     {
-                        // Refused for this log: not sent again until the plugin rewrites it.
+                        // Refused for this log: not sent again until what it would send changes.
                         entry.Status = entry.Status ?? PokematchUpload.Rejected;
                         entry.Error = e.Message;
                         result.Rejected++;
@@ -215,38 +214,24 @@ namespace PtcglAutoBattleLog.Tray.Logic
             return result;
         }
 
-        /// <summary>A battle log as Pokematch takes it; null when it cannot be read. Never throws.</summary>
+        /// <summary>A battle log as Pokematch takes it; null when it is not one of the plugin's logs. Never throws.</summary>
         public static PokematchCandidate Read(string logFile)
         {
             try
             {
-                if (!LogFileName.TryParse(logFile, out var result, out var opponent, out var local)) return null;
-                byte[] bytes;
-                using (var fs = new FileStream(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-                {
-                    if (fs.Length > MaxLogBytes) return null;
-                    bytes = new byte[fs.Length];
-                    int read = 0;
-                    while (read < bytes.Length)
-                    {
-                        int n = fs.Read(bytes, read, bytes.Length - read);
-                        if (n <= 0) return null;
-                        read += n;
-                    }
-                }
-                var text = LogText(new UTF8Encoding(false, false).GetString(bytes));
-                if (string.IsNullOrWhiteSpace(text)) return null;
-
+                if (!LogFileName.TryParse(logFile, out var result, out _, out var local) || !File.Exists(logFile)) return null;
                 var seal = SealSummary.TryRead(logFile);
-                var ended = seal?.EndedUtc ?? local.ToUniversalTime();
+                var ended = seal?.EndedUtc?.ToLocalTime() ?? local;
                 var match = new PokematchMatch
                 {
-                    Result = (seal?.Result ?? result) == "VICTORY" ? "win" : "loss",
-                    Opponent = seal?.OpponentName ?? opponent,
-                    Deck = seal?.Deck,
-                    PlayedAt = ended.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture),
-                    Log = text,
-                    Source = PokematchApi.Source,
+                    ActiveDeck = new PokematchDeck { Name = string.IsNullOrWhiteSpace(seal?.Deck) ? PokematchMatch.Unknown : seal.Deck.Trim() },
+                    // The client does not tell the player the opponent's archetype; the player can fill it in on Pokematch.
+                    OpponentDeck = PokematchMatch.Unknown,
+                    Format = "Bo1",
+                    Games = new List<PokematchGame> { new PokematchGame { Result = (seal?.Result ?? result) == "VICTORY" ? "win" : "loss" } },
+                    Date = ended.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    Notes = "Added by " + PokematchApi.Source + ".",
+                    Tags = new List<string> { PokematchMatch.Tag },
                 };
                 return new PokematchCandidate
                 {
@@ -257,14 +242,6 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 };
             }
             catch (Exception) { return null; }
-        }
-
-        /// <summary>The Export text: the .txt without its BOM and without the seal footer (docs/LOG-SEAL.md §2).</summary>
-        public static string LogText(string file)
-        {
-            var text = (file ?? "").TrimStart('﻿');
-            var at = text.LastIndexOf(FooterSeparator, StringComparison.Ordinal);
-            return at >= 0 ? text.Substring(0, at) : text;
         }
 
         private static string Sha256Hex(string s)

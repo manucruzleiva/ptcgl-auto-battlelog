@@ -16,10 +16,10 @@ The section of a version becomes the top of its GitHub release notes, so add one
   tcgkb can show your winrate, decks and the global meta. Each log is sent once; when tcgkb cannot
   be reached the app tries again later. **Upload matches now** sends what is pending at once.
 - **Pokematch** (tray menu, optional, off by default): set your Pokematch API token and the app
-  uploads each finished match (VICTORY or DEFEAT) to Pokematch about two minutes after it is
-  saved: the battle log text, result, opponent, deck and end time. "Upload past battle logs..."
-  sends older ones. Never sent twice: a rewritten log replaces its copy on Pokematch, and a match
-  deleted there is not sent again. The token is kept encrypted with DPAPI. Contract:
+  adds each finished match (VICTORY or DEFEAT) to your Pokematch TCG logs about two minutes after
+  it is saved: your deck, the result and the date (opponent deck "Unknown"; no names, no log
+  text). "Upload past battle logs..." sends older ones. Never sent twice: a corrected result
+  updates the log on Pokematch, and a match deleted there is not sent again. The token is kept encrypted with DPAPI. Contract:
   `docs/POKEMATCH-API.md`.
 
 ### Changed

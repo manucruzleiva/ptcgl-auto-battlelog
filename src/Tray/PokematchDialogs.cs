@@ -35,7 +35,7 @@ namespace PtcglAutoBattleLog.Tray
                 AutoSize = true,
                 MaximumSize = new Size(440, 0),
                 Margin = new Padding(0, 0, 0, 10),
-                Text = "Make a token on Pokematch (API Tokens, for example named \"PTCGL uploader\") and paste it here. " +
+                Text = "Make a token on Pokematch (Profile Settings > Account > API Tokens, for example named \"PTCGL uploader\") and paste it here. " +
                        "It is kept encrypted on this computer for your Windows user, and sent only to Pokematch.\n\n" +
                        "Changing your Pokematch password revokes the token: then set a new one here.",
             };

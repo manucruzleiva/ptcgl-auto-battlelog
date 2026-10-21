@@ -283,18 +283,20 @@ user in `%LOCALAPPDATA%\PtcglAutoBattleLog\tcgkb-connection.dat`. The details ar
 Optional, and independent of tcgkb. If you keep your match history on Pokematch, the app can
 upload your battle logs there for you:
 
-1. On Pokematch, make an API token (**API Tokens**, for example named "PTCGL uploader").
-2. Tray menu → **Pokematch ▸ Set API token...**, paste it and save. The app then asks whether to
-   upload new battle logs automatically.
+1. On Pokematch, make an API token (**Profile Settings → Account → API Tokens**, for example named
+   "PTCGL uploader").
+2. Tray menu → **Pokematch ▸ Set API token...**, paste it and save. The app checks it with
+   Pokematch, then asks whether to upload new battle logs automatically.
 3. From then on, each finished match (VICTORY or DEFEAT) is sent about two minutes after it is
    saved (the plugin may still improve the log right after the match). If Pokematch is down or
    asleep, it is tried again later. **Upload past battle logs...** sends the older ones once.
 
-What is sent for each match: the battle log text exactly as the game's Export gives it (both
-players' display names and every play; not the seal), the result, your opponent's display name,
-your deck name and when the match ended. NO-RESULT and EXPORTED logs stay on your computer.
-A match is never sent twice: if the plugin rewrites a log after it was sent, the copy on Pokematch
-is replaced, and a match you delete on Pokematch is not sent again. What was sent is listed in
+What is sent for each match: a Pokematch TCG log with your deck name, the result (one Bo1 game)
+and the date, tagged `ptcgl-auto-battle-log`. The game does not tell you your opponent's
+archetype, so the opponent deck shows as "Unknown": edit it on Pokematch if you like. Your
+opponent's name and the battle log text stay on your computer, and NO-RESULT and EXPORTED logs
+are not sent. A match is never sent twice: if its result is corrected after it was sent, the log
+on Pokematch is updated, and a match you delete on Pokematch is not sent again. What was sent is listed in
 `%LOCALAPPDATA%\PtcglAutoBattleLog\pokematch-uploads.json`.
 
 The token is kept encrypted for your Windows user in
