@@ -9,6 +9,8 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-22
+
 ### Fixed
 
 - **Pokematch uploads waited silently for the updated disclaimer.** After updating to 1.3.0 the
@@ -116,7 +118,8 @@ First version, never published: the BepInEx plugin, a Spanish PowerShell install
 (`Instalar.bat`, `Desinstalar.bat`) with a hidden watchdog that restored the mod after game
 updates, and Spanish file names and documentation.
 
-[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/tag/v1.1.0
