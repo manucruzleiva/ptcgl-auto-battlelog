@@ -9,6 +9,15 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Fixed
+
+- **Pokematch uploads waited silently for the updated disclaimer.** After updating to 1.3.0 the
+  new disclaimer is only offered by a balloon, and until it was accepted Pokematch uploads (even
+  "Upload past battle logs...") did nothing, without a word. The Pokematch menu now asks for it,
+  automatic uploads say once that they are waiting (balloon and app log) and start as soon as it
+  is accepted, the menu shows "Waiting: accept the updated disclaimer", and a manual upload always
+  writes its result to the app log.
+
 ## [1.3.0] - 2026-10-21
 
 ### Added

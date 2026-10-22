@@ -17,7 +17,7 @@ namespace PtcglAutoBattleLog.Tray
 
         private PokematchService _pokematch;
         private Timer _pokematchTimer;
-        private bool _pokematchBusy, _pokematchTokenRejected;
+        private bool _pokematchBusy, _pokematchTokenRejected, _pokematchConsentWarned;
         private string _pokematchLast, _pokematchWarned;
         private ToolStripMenuItem _pokematchItem, _pokematchInfoItem, _pokematchTokenItem, _pokematchAutoItem, _pokematchPastItem, _pokematchRemoveItem;
 
@@ -56,6 +56,7 @@ namespace PtcglAutoBattleLog.Tray
             string info;
             if (!token) info = "Not set up";
             else if (_pokematchTokenRejected) info = "Pokematch refused the token: set a new one";
+            else if (!HasConsent()) info = "Waiting: accept the updated disclaimer";
             else if (_pokematchBusy) info = "Uploading...";
             else info = _pokematchLast ?? (auto ? "Uploads new battle logs" : "Automatic upload is off");
             _pokematchInfoItem.Text = MenuText(Clip(info, 80));
@@ -79,8 +80,26 @@ namespace PtcglAutoBattleLog.Tray
             _pokematchTimer.Start();
         }
 
+        /// <summary>
+        /// Nothing goes to Pokematch before the disclaimer that covers it is accepted. After an update
+        /// it is only offered by a balloon, so the player is asked here, when they use the menu.
+        /// </summary>
+        private bool EnsurePokematchConsent()
+        {
+            if (!HasConsent()) AskConsent();
+            return HasConsent();
+        }
+
+        /// <summary>The disclaimer was accepted: uploads that were waiting for it start now.</summary>
+        private void OnConsentForPokematch()
+        {
+            _pokematchConsentWarned = false;
+            if (PokematchAutoOn() && !_pokematchTokenRejected) SchedulePokematch(TimeSpan.FromSeconds(5));
+        }
+
         private async void SetPokematchToken()
         {
+            if (!EnsurePokematchConsent()) return;
             string token;
             using (Modal()) token = PokematchTokenDialog.Ask();
             if (token == null) return;
@@ -114,6 +133,7 @@ namespace PtcglAutoBattleLog.Tray
                 return;
             }
             if (!HasPokematchToken()) { SetPokematchToken(); return; }
+            if (!EnsurePokematchConsent()) return;
             bool yes;
             using (Modal())
                 yes = Dialogs.Confirm("Upload your new battle logs to Pokematch automatically?\n\n" +
@@ -136,7 +156,7 @@ namespace PtcglAutoBattleLog.Tray
         private async void UploadPastPokematch()
         {
             if (!HasPokematchToken()) { SetPokematchToken(); return; }
-            if (_pokematchBusy) return;
+            if (_pokematchBusy || !EnsurePokematchConsent()) return;
             var folder = _session.LogsFolder(_session.Game);
             int count = await Task.Run(() => Pokematch.Uploader.CountNew(folder, DateTime.MinValue));
             bool yes;
@@ -177,9 +197,19 @@ namespace PtcglAutoBattleLog.Tray
         private async void RunPokematch(bool manual)
         {
             if (_pokematchBusy || _exiting) return;
+            if (manual && !EnsurePokematchConsent()) return;
             if (!HasConsent())
             {
-                if (!manual && PokematchAutoOn()) SchedulePokematch(PokematchInterval);   // until the updated disclaimer is accepted
+                if (!PokematchAutoOn()) return;
+                if (!_pokematchConsentWarned)
+                {
+                    // Said once: otherwise automatic uploads would wait for the disclaimer without a word.
+                    _pokematchConsentWarned = true;
+                    Log.Info("Pokematch upload waits until the updated disclaimer is accepted.");
+                    Balloon("Pokematch upload is waiting", "Accept the updated disclaimer to upload your battle logs to Pokematch. Click to read it.",
+                            ToolTipIcon.Warning, AskConsent);
+                }
+                SchedulePokematch(PokematchInterval);
                 return;
             }
             if (!manual && (!PokematchAutoOn() || _pokematchTokenRejected)) return;
@@ -212,7 +242,7 @@ namespace PtcglAutoBattleLog.Tray
             finally { _pokematchBusy = false; }
             if (_exiting || r == null) return;
 
-            if (uploaded + updated + rejected > 0 || r.Error != null)
+            if (manual || uploaded + updated + rejected > 0 || r.Error != null)
                 Log.Info("Pokematch: " + uploaded + " uploaded, " + updated + " updated, " + rejected + " refused" + (r.Error != null ? " (" + r.Error + ")" : "") + ".");
             if (uploaded + updated > 0)
                 _pokematchLast = "Last upload: " + (uploaded + updated) + " log" + (uploaded + updated == 1 ? "" : "s") + ", " + DateTime.Now.ToString("t");
