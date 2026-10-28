@@ -71,6 +71,21 @@ namespace PtcglAutoBattleLog.Tray.Logic
             return age.Duration() <= AliveWindow;
         }
 
+        /// <summary>
+        /// The status window's mod line: which plugin version the game has loaded (or last loaded) and
+        /// whether it is the app's. The DLL is only replaced while the game is closed, so after an app
+        /// update a running game keeps the old mod until it restarts.
+        /// </summary>
+        public static string ModVersionLine(PluginStatus status, string appVersion, DateTime nowUtc)
+        {
+            var version = status?.PluginVersion?.Trim().TrimStart('v', 'V');
+            if (string.IsNullOrEmpty(version)) return "Mod in the game: not loaded yet";
+            var same = string.Equals(version, appVersion, StringComparison.OrdinalIgnoreCase);
+            if (status.IsAlive(nowUtc))
+                return "Mod in the game: v" + version + (same ? " (same as the app)" : " · not the app's v" + appVersion + ": restart the game to update it");
+            return "Mod last loaded by the game: v" + version + (same ? "" : " · the game loads v" + appVersion + " the next time it starts");
+        }
+
         private static readonly string[] UtcFormats = { "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF'Z'" };
 
         internal static DateTime? ParseUtc(string s)

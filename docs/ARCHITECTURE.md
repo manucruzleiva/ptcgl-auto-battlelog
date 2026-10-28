@@ -254,7 +254,7 @@ without `--background` when nothing else is shown). It has no state or actions o
 mirrors one menu item (text, `Available`, `Enabled`, `Checked`) and a click is that item's
 `PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become labels, `ToggleTag` check
 boxes, a submenu whose options carry a string tag (seal mode, update channel) radio buttons, any other
-submenu a group box, the rest buttons. Header: the status lines (the red disclaimer item a red bold button); tabs: General (Settings ▸), Updates
+submenu a group box, the rest buttons. Header: the status lines (the red disclaimer item a red bold button), including one only the window shows: the mod version the game has loaded or last loaded (`pluginVersion` from `plugin-status.json`, `PluginStatus.ModVersionLine`) and whether it is the app's; tabs: General (Settings ▸), Updates
 (the waiting update and Updates ▸), Accounts (tcgkb account ▸, Pokematch ▸), Help (Help ▸); footer:
 Open logs folder, Open last log, Close. While it is open every daemon report refreshes the items and
 the window.
