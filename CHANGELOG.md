@@ -9,6 +9,13 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Changed
+
+- **A shorter tray menu** (#30). The top keeps the status, Open logs folder, Open last log, a waiting
+  update, tcgkb and Pokematch; everything else moved into **Settings ▸** (notifications, Start with
+  Windows, logs folder, battle log seal), **Updates ▸** and **Help ▸** (diagnostics, Repair now,
+  project page, disclaimer, licenses, uninstall).
+
 ## [1.3.2-beta.3] - 2026-10-28
 
 A beta with your decklist, queue and format on each match. On the Beta channel it installs itself.
