@@ -9,6 +9,12 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Changed
+
+- **Match fields dump: every value an enum field can take.** An enum field now lists all its
+  values, not only the current one (so one match shows every queue type), and the match details,
+  lobby and direct-match (friend battle) members are expanded too (#14).
+
 ## [1.3.2-beta.1] - 2026-10-28
 
 A beta for testers, to research the queue type (#14) and decklists (#15). Installed apps

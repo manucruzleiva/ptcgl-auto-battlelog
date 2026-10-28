@@ -207,7 +207,7 @@ namespace PtcglAutoBattleLog.Core
 
         /// <summary>Words that suggest a member or type says which queue or format a match is.</summary>
         private static readonly string[] QueueWords =
-            { "queue", "mode", "ranked", "casual", "format", "matchtype", "battletype", "build", "friend", "event", "ladder", "tournament", "rule" };
+            { "queue", "mode", "ranked", "casual", "format", "matchtype", "battletype", "build", "friend", "event", "ladder", "tournament", "rule", "matchdetails", "directmatch", "invitation", "lobby" };
 
         /// <summary>String values of members with these words are left out: names, account ids, tokens.</summary>
         private static readonly string[] PrivateWords =
@@ -302,6 +302,11 @@ namespace PtcglAutoBattleLog.Core
                 if (value is string && HasWord(name, PrivateWords)) text = "<" + text.Length + " chars, hidden>";
                 else if (text.Length > 80) text = text.Substring(0, 80) + "...";
                 sb.Append(" = ").Append(text);
+                // All the values the enum can take: one match shows them all, not just its own.
+                if (value.GetType().IsEnum)
+                {
+                    try { sb.Append(" of { ").Append(string.Join(", ", Enum.GetNames(value.GetType()))).Append(" }"); } catch { }
+                }
             }
             else if (value is ICollection c) sb.Append(" (count ").Append(c.Count).Append(')');
             if (queueLike) sb.Append("   <<");
