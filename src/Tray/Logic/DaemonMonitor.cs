@@ -23,6 +23,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
         RunningWithoutMod,
         /// <summary>The plugin is loaded but says state "error".</summary>
         PluginError,
+        /// <summary>A newer plugin waits for the game to close: what it adds (decks, seal v2...) starts after a restart.</summary>
+        ModUpdateReady,
     }
 
     /// <summary>What the daemon saw on one tick. Gathering it needs Windows; judging it does not.</summary>
@@ -66,12 +68,15 @@ namespace PtcglAutoBattleLog.Tray.Logic
 
         /// <summary>The status while the player has not accepted the current disclaimer and nothing worse is going on.</summary>
         public const string ConsentPendingSummary = "Action needed: accept the updated disclaimer";
+        /// <summary>Added to the status while a newer plugin waits for the game to close.</summary>
+        public const string RestartToUpdateSuffix = " · restart the game to finish the mod update";
 
         private DateTime? _missingSince;
         private DateTime? _retryAfter;
         private DateTime? _runningSince;
         private bool _restartNoticeShown;
         private bool _noModNoticeShown;
+        private bool _updateNoticeShown;
         private int? _errorNoticePid;
         private bool _setupPending;
 
@@ -100,7 +105,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 d.Repair = !o.ConsentPending && now - _missingSince.Value >= RepairDelay && (_retryAfter == null || now >= _retryAfter.Value);
             }
             else _missingSince = null;
-            if (!missing) { LastRepairError = null; _retryAfter = null; _restartNoticeShown = false; _setupPending = false; }
+            if (!missing) { LastRepairError = null; _retryAfter = null; _restartNoticeShown = false; _setupPending = false; _updateNoticeShown = false; }
 
             // Notices, most important first; one per tick.
             if (pluginError && _errorNoticePid != o.Status.ProcessId)
@@ -118,6 +123,13 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 d.Notice = DaemonNotice.RunningWithoutMod;
                 _noModNoticeShown = true;
             }
+            // The old plugin still saves logs, but nothing the new version adds until the game restarts:
+            // said once per episode, or the player keeps playing for hours without it.
+            else if (onlyOutdatedPlugin && o.GameRunning && alive && !_updateNoticeShown && !_setupPending && !o.ConsentPending)
+            {
+                d.Notice = DaemonNotice.ModUpdateReady;
+                _updateNoticeShown = true;
+            }
 
             // Icon and status line.
             if (o.GameDir == null) Set(d, TrayHealth.Attention, "Pokémon TCG Live not found");
@@ -134,7 +146,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 var starting = string.Equals(o.Status.State, PluginStatus.StateStarting, StringComparison.OrdinalIgnoreCase);
                 var saved = o.Status.SavedThisSession;
                 Set(d, TrayHealth.Active, (starting ? "Mod starting..." : "Saving your matches") +
-                                          (saved > 0 ? " · " + saved + (saved == 1 ? " log" : " logs") + " this session" : ""));
+                                          (saved > 0 ? " · " + saved + (saved == 1 ? " log" : " logs") + " this session" : "") +
+                                          (onlyOutdatedPlugin ? RestartToUpdateSuffix : ""));
             }
             else if (o.GameRunning && runningFor >= PluginStatus.AliveWindow) Set(d, TrayHealth.Attention, "Game running without the mod: restart it");
             else if (o.GameRunning) Set(d, TrayHealth.Idle, "Game starting...");

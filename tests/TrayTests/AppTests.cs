@@ -252,13 +252,26 @@ static partial class Program
         d = m.Evaluate(Obs(30, true, all, pluginFile: false));
         Check(d.Notice == DaemonNotice.GameNeedsRestart, "a new episode notifies again");
 
-        // A newer plugin waiting for the game to close is not a problem to report.
+        // A newer plugin waiting for the game to close: still green (logs are saved), but said once (#39).
         m = new DaemonMonitor();
         d = m.Evaluate(Obs(0, true, new[] { InstallPiece.Plugin }, pluginFile: true, status: Beat(t0)));
-        Check(d.Notice == DaemonNotice.None && d.Health == TrayHealth.Active && !d.Repair, "outdated plugin while playing: green, quiet");
+        Check(d.Notice == DaemonNotice.ModUpdateReady && d.Health == TrayHealth.Active && !d.Repair && d.Summary.EndsWith(DaemonMonitor.RestartToUpdateSuffix),
+              "outdated plugin while playing: green, restart asked (" + d.Summary + ")");
+        d = m.Evaluate(Obs(5, true, new[] { InstallPiece.Plugin }, pluginFile: true, status: Beat(t0.AddSeconds(5))));
+        Check(d.Notice == DaemonNotice.None && d.Summary.EndsWith(DaemonMonitor.RestartToUpdateSuffix), "notice once, status keeps saying it");
         d = m.Evaluate(Obs(60, false, new[] { InstallPiece.Plugin }, pluginFile: true));
         Check(!d.Repair && d.Summary.StartsWith("Updating"), "game closed: updating (" + d.Summary + ")");
         Check(m.Evaluate(Obs(65, false, new[] { InstallPiece.Plugin }, pluginFile: true)).Repair, "and replaced after the delay");
+        m.RepairSucceeded();
+        d = m.Evaluate(Obs(70, true, status: Beat(t0.AddSeconds(70))));
+        Check(d.Health == TrayHealth.Active && !d.Summary.Contains("restart"), "updated: normal status (" + d.Summary + ")");
+        d = m.Evaluate(Obs(80, true, new[] { InstallPiece.Plugin }, pluginFile: true, status: Beat(t0.AddSeconds(80))));
+        Check(d.Notice == DaemonNotice.ModUpdateReady, "the next update notifies again");
+        m = new DaemonMonitor();
+        var waiting = Obs(0, true, new[] { InstallPiece.Plugin }, pluginFile: true, status: Beat(t0));
+        waiting.ConsentPending = true;
+        d = m.Evaluate(waiting);
+        Check(d.Notice == DaemonNotice.None && d.Summary.Contains("disclaimer"), "consent pending: the disclaimer first, no restart notice (" + d.Summary + ")");
         m = new DaemonMonitor();
         d = m.Evaluate(Obs(0, true, new[] { InstallPiece.Plugin }, pluginFile: false));
         Check(d.Notice == DaemonNotice.GameNeedsRestart, "plugin file gone while playing: notice");
