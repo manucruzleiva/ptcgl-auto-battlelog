@@ -183,6 +183,7 @@ namespace PtcglAutoBattleLog.Tray
         private Button MirrorButton(ToolStripMenuItem m, Padding margin)
         {
             var button = new Button { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(90, 0), Padding = new Padding(6, 1, 6, 1), Margin = margin };
+            if (!m.ForeColor.IsSystemColor) { button.ForeColor = m.ForeColor; button.Font = _boldFont; }   // an item that needs the player (red in the menu)
             button.Click += (s, e) => _click(m);
             Sync(m, button, () => button.Text = m.Text);
             return button;

@@ -228,7 +228,8 @@ running" and is reported as such, never as a crash.
 ### Menu
 
 Top level, kept short: status lines (version and mode; daemon summary; last saved log; data folder
-when the portable fallback is in use; "Choose the game folder..." while the game is not found) ·
+when the portable fallback is in use; "Choose the game folder..." while the game is not found; a red
+"Review the updated disclaimer..." while consent to the current `Disclaimer.Version` is pending) ·
 **Open logs folder** (also the double-click action) · Open last log · Update vX available ▸ (Install
 now, What's new, Skip this version; only while an update waits) · tcgkb account ▸ ("Not connected" /
 "Connected as <name>", Connect to tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") ·
@@ -243,9 +244,9 @@ settings... · Settings ▸ · Updates ▸ · Help ▸ · Exit.
 * **Updates ▸** Install updates automatically · Update channel ▸ (Stable (recommended), Beta: writes
   `updateChannel` and checks right away) · Check for updates now.
 * **Help ▸** Diagnostics ▸ (app log, BepInEx log, game folder, app data folder, choose game folder,
-  copy diagnostic info) · Repair now · Project page · View disclaimer · Licenses (the embedded
-  `THIRD-PARTY-NOTICES.md`, `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from
-  game....
+  copy diagnostic info) · Repair now · Project page · View disclaimer (the updated one, with its
+  Accept button, while consent is pending) · Licenses (the embedded `THIRD-PARTY-NOTICES.md`,
+  `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from game....
 
 **Status and settings window** (`StatusWindow`): the menu laid out as a window, opened from
 "Status and settings..." and by the show event (the app started again while it runs, or started
@@ -253,7 +254,7 @@ without `--background` when nothing else is shown). It has no state or actions o
 mirrors one menu item (text, `Available`, `Enabled`, `Checked`) and a click is that item's
 `PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become labels, `ToggleTag` check
 boxes, a submenu whose options carry a string tag (seal mode, update channel) radio buttons, any other
-submenu a group box, the rest buttons. Header: the status lines; tabs: General (Settings ▸), Updates
+submenu a group box, the rest buttons. Header: the status lines (the red disclaimer item a red bold button); tabs: General (Settings ▸), Updates
 (the waiting update and Updates ▸), Accounts (tcgkb account ▸, Pokematch ▸), Help (Help ▸); footer:
 Open logs folder, Open last log, Close. While it is open every daemon report refreshes the items and
 the window.
@@ -269,7 +270,9 @@ the window.
   While consent to the current `Disclaimer.Version` is pending (a tray started with `--background`
   or `--updated-from` after a bump), nothing is repaired or updated and no "restart" notice is shown;
   the status reads "Accept the updated disclaimer to keep the mod updated" (see "Disclaimer and
-  consent").
+  consent"). With nothing to repair, a pending consent still shows attention ("Action needed: accept
+  the updated disclaimer"), unless the game is missing or the plugin reports an error. tcgkb and
+  Pokematch uploads wait for it too.
   First install: when a `--first-run` (or first portable) tray starts with pieces missing while the
   game runs (the installer could not finish), the welcome says to close the game once to finish
   installing, the status reads "Close Pokémon TCG Live once to finish installing the mod" and the

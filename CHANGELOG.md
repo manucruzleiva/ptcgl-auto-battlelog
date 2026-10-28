@@ -9,19 +9,26 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **"Review the updated disclaimer..." in the tray menu** (#29). While a newer disclaimer than the
+  one you accepted waits (after an update, it was only offered by a balloon that is easy to miss),
+  the menu shows this item in red under the status line, the status reads "Action needed: accept
+  the updated disclaimer" and the icon shows attention. Help ▸ View disclaimer opens the same window.
+- **Status and settings window** (#30). **Status and settings...** in the tray menu opens a window with
+  the status at the top and the same options in tabs: General, Updates, Accounts (tcgkb and
+  Pokematch) and Help. Starting the app again from the Start menu while it runs now opens this
+  window instead of showing a notification.
+
 ### Changed
 
 - **A shorter tray menu** (#30). The top keeps the status, Open logs folder, Open last log, a waiting
   update, tcgkb and Pokematch; everything else moved into **Settings ▸** (notifications, Start with
   Windows, logs folder, battle log seal), **Updates ▸** and **Help ▸** (diagnostics, Repair now,
   project page, disclaimer, licenses, uninstall).
-
-### Added
-
-- **Status and settings window** (#30). **Status and settings...** in the tray menu opens a window with
-  the status at the top and the same options in tabs: General, Updates, Accounts (tcgkb and
-  Pokematch) and Help. Starting the app again from the Start menu while it runs now opens this
-  window instead of showing a notification.
+- **tcgkb uploads wait for the updated disclaimer**, as Pokematch uploads already did: they now
+  carry your decklist, which the current disclaimer covers. The tcgkb menu says "Waiting: accept
+  the updated disclaimer", "Upload matches now" asks for it, and waiting matches go once you accept.
 
 ## [1.3.2-beta.3] - 2026-10-28
 

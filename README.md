@@ -190,6 +190,7 @@ it too.
 | Item | What it does |
 |---|---|
 | Status lines | Version (and "portable"), what the app is doing, the last saved log. |
+| Review the updated disclaimer... | In red, under the status lines, only when the disclaimer changed since you accepted it. Uploads to tcgkb and Pokematch wait until you accept it. |
 | Open logs folder · Open last log | |
 | Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
 | tcgkb account ▸ | Optional. Connect to tcgkb, claim or release your PTCGL accounts, disconnect. See [tcgkb account](#tcgkb-account). |
