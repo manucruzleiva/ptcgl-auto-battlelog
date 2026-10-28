@@ -1,0 +1,306 @@
+<!doctype html>
+<!--
+  The pictures of the quick-setup guides (docs/quick-setup/). tools/quick-setup/render.mjs opens this
+  page, calls render(step, text, lang) for every step and language and saves docs/quick-setup/images/.
+  Drawn in HTML so the callouts translate; the app's own labels stay in English, as in the app.
+  Open it in a browser to look at one picture: illustrations.html?step=pokematch-set-token&lang=es
+  (from a local web server, so it can read illustration-text.json).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PAB quick-setup illustrations</title>
+<style>
+  :root {
+    --bg: #0E1116; --panel: #151A21; --raise: #1A2029; --line: #1F252F; --edge: #2A3240;
+    --ink: #E8ECF2; --muted: #97A1AF; --accent: #F5C518;
+    --ui: "Segoe UI", Inter, "DejaVu Sans", sans-serif;
+  }
+  html[lang=ja] { --cjk: "Noto Sans CJK JP"; }
+  html[lang=ko] { --cjk: "Noto Sans CJK KR"; }
+  html[lang=zh] { --cjk: "Noto Sans CJK SC"; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); font-family: Inter, var(--cjk, sans-serif), "DejaVu Sans", sans-serif; color: var(--ink); }
+  #stage {
+    position: relative; width: 960px; height: 540px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: #13263D;   /* flat: a gradient makes every PNG several times larger */
+  }
+  .win { border-radius: 8px; background: #fff; font-family: var(--ui), var(--cjk, sans-serif); font-size: 14px; color: #1B1B1B; box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+  .titlebar { border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 8px; background: #F3F3F3; padding: 8px 12px; font-size: 12px; color: #444; }
+  .wbtn { display: inline-flex; height: 32px; min-width: 88px; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid #C9C9C9; background: #FDFDFD; padding: 0 14px; font-size: 13px; position: relative; }
+  .wbtn.primary { border-color: #0067C0; background: #0067C0; color: #fff; }
+  .hl { position: relative; border-radius: 6px; outline: 3px solid var(--accent); outline-offset: 3px; }
+  .tag { position: absolute; white-space: nowrap; border-radius: 999px; background: var(--accent); padding: 4px 10px; font-family: Inter, var(--cjk, sans-serif), sans-serif; font-size: 13px; font-weight: 600; color: #111418; box-shadow: 0 6px 16px rgba(0,0,0,.35); z-index: 5; }
+  .tray { display: inline-flex; height: 22px; width: 22px; align-items: center; justify-content: center; border-radius: 5px; background: var(--accent); font: 700 9px Inter, sans-serif; color: #111418; flex: none; }
+  .tray.small { height: 16px; width: 16px; font-size: 6px; }
+  .taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 16px; background: rgba(20,24,32,.92); font: 12px var(--ui); color: #DDE3EA; }
+  .menu { border-radius: 8px; border: 1px solid #D5D5D5; background: #F9F9F9; padding: 4px; font: 13px var(--ui); color: #1B1B1B; box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+  .menu .it { position: relative; border-radius: 4px; padding: 7px 12px 7px 30px; white-space: nowrap; }
+  .menu .grey { color: #8A8A8A; }
+  .menu .sel { background: #E5F0FB; }
+  .menu .sep { margin: 4px 8px; height: 1px; background: #E2E2E2; }
+  .menu .check { position: absolute; left: 10px; top: 6px; font-size: 12px; }
+  .menu .sub { position: absolute; right: 10px; }
+  .browser { overflow: hidden; border-radius: 10px; border: 1px solid var(--edge); background: var(--bg); box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+  .browser .bar { display: flex; align-items: center; gap: 8px; background: var(--raise); padding: 8px 12px; }
+  .browser .url { flex: 1; border-radius: 6px; background: var(--bg); padding: 4px 10px; font: 12px "DejaVu Sans Mono", monospace; color: var(--muted); }
+  .kb-btn { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; border-radius: 10px; background: var(--accent); padding: 0 18px; font-size: 14px; font-weight: 600; color: #111418; }
+  .kb-ghost { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid var(--edge); padding: 0 16px; font-size: 14px; }
+  .mono { font-family: "DejaVu Sans Mono", monospace; }
+  table { border-collapse: collapse; }
+  .card { width: 92px; height: 128px; border-radius: 8px; border: 3px solid #E8C547; background: linear-gradient(160deg, #3D6FB5, #1F3A66); box-shadow: 0 10px 24px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; font: 700 13px Inter, sans-serif; color: #fff; text-align: center; padding: 6px; }
+  .card.b { background: linear-gradient(160deg, #7B4FB5, #3C2366); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+'use strict';
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const tag = (text, style) => `<span class="tag" style="${style}">${esc(text)}</span>`;
+const tray = (cls = '') => `<span class="tray ${cls}">PAB</span>`;
+const titlebar = (text) => `<div class="titlebar">${tray('small')}${esc(text)}</div>`;
+const taskbar = (highlight = false) => `<div class="taskbar"><span>^</span>${tray(highlight ? 'hl' : '')}<span>ENG</span><span>21:40</span></div>`;
+const browser = (url, width, body) => `<div class="browser" style="width:${width}px"><div class="bar"><span class="url">${esc(url)}</span></div>${body}</div>`;
+
+/** items: a string, null for a separator, or {text, grey, sel, hl, check, sub, tag}. */
+function menu(items, width, style = '') {
+  const rows = items.map((it) => {
+    if (it === null) return '<div class="sep"></div>';
+    const o = typeof it === 'string' ? { text: it } : it;
+    const cls = ['it', o.grey && 'grey', o.sel && 'sel', o.hl && 'hl'].filter(Boolean).join(' ');
+    return `<div class="${cls}">${o.check ? '<span class="check">✓</span>' : ''}${esc(o.text)}${o.sub ? '<span class="sub">›</span>' : ''}` +
+           `${o.tag ? tag(o.tag, 'right:100%;top:2px;margin-right:14px') : ''}</div>`;
+  });
+  return `<div class="menu" style="width:${width}px;${style}">${rows.join('')}</div>`;
+}
+
+const PAB_MENU_TOP = [{ text: 'PTCGL Auto Battle Log', grey: true }, { text: 'Ready · mod installed', grey: true }, null, 'Open logs folder', 'Open last log', null];
+const PAB_MENU_BOTTOM = [null, 'Settings', 'Updates', 'Help', null, 'Exit'];
+
+/** Every picture, by the step ids of docs/quick-setup/steps.json. t: that language's illustration-text.json entry. */
+const PICTURES = {
+  'tcgkb-account': (t) => browser('https://tcgkb.app/login', 600, `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 48px">
+      <div style="font:800 34px Inter,sans-serif;letter-spacing:-.02em">TCG<span style="color:var(--accent)">KB</span></div>
+      <div style="font-size:18px">${esc(t.onb1)}</div>
+      <span class="hl" style="display:inline-flex;align-items:center;gap:10px;border-radius:8px;background:#fff;padding:12px 20px;font-size:14px;font-weight:500;color:#1B1B1B">
+        <b style="color:#4285F4">G</b>${esc(t.onb2)}${tag(t.onb3, 'left:100%;top:8px;margin-left:14px')}
+      </span>
+      <span style="font-size:13px;color:var(--muted)">${esc(t.onb4)}</span>
+    </div>`),
+
+  'download': (t) => `
+    <div style="position:relative;width:520px;background:#1E5AA8;padding:28px;font:14px var(--ui);color:#fff;box-shadow:0 18px 50px rgba(0,0,0,.45)">
+      ${tag(t.onb5, 'top:-16px;left:24px')}
+      <div style="margin-bottom:14px;font-size:24px;font-weight:300">Windows protected your PC</div>
+      <div style="line-height:1.5;opacity:.9">Microsoft Defender SmartScreen prevented an unrecognized app from starting. Running this app might put your PC at risk.</div>
+      <div style="margin:16px 0;line-height:1.6">App: PtcglAutoBattleLog.exe<br>Publisher: Unknown publisher</div>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <span class="hl" style="border:2px solid #fff;padding:6px 20px">Run anyway${tag(t.onb6, 'bottom:100%;right:0;margin-bottom:12px')}</span>
+        <span style="border:2px solid #fff;padding:6px 20px">Don't run</span>
+      </div>
+    </div>`,
+
+  'install': (t) => `
+    <div class="win" style="width:540px">
+      ${titlebar('PTCGL Auto Battle Log - Disclaimer')}
+      <div style="display:flex;flex-direction:column;gap:12px;padding:20px">
+        <div>Please read this before installing PTCGL Auto Battle Log.</div>
+        <div style="height:150px;overflow:hidden;border-radius:4px;border:1px solid #DDD;padding:10px 12px;font-size:12px;line-height:1.6;color:#444">
+          This is a community project, not affiliated with The Pokémon Company. It installs a small mod (BepInEx) that saves the battle log of every match you play.
+          Nothing is uploaded unless you connect a tcgkb account or a Pokematch API token and turn on automatic uploads…
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <span class="wbtn">Cancel</span>
+          <span class="wbtn primary hl">I understand, install${tag(t.onb7, 'right:0;top:100%;margin-top:12px')}</span>
+        </div>
+      </div>
+    </div>`,
+
+  'play': (t) => `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:90px">
+      <div class="card">Raging Bolt ex</div>
+      <span style="font:700 20px Inter,sans-serif;color:var(--muted)">vs</span>
+      <div class="card b">Dragapult ex</div>
+    </div>
+    <div class="win hl" style="position:absolute;bottom:60px;right:18px;display:flex;gap:12px;width:360px;padding:14px 16px">
+      ${tray()}
+      <div><div style="font-weight:600">Victory vs Kairo_TCG — battle log saved</div><div style="margin-top:4px;font-size:12px;color:#555">Click to open the log.</div></div>
+      ${tag(t.onb8, 'bottom:100%;right:0;margin-bottom:12px')}
+    </div>
+    ${taskbar()}`,
+
+  'tcgkb-connect': (t) => `
+    ${tag(t.onb9, 'left:24px;top:24px')}
+    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
+      ${menu([{ text: 'Not connected', grey: true }, { text: 'Connect to tcgkb...', sel: true, hl: true, tag: t.onb10 }, { text: 'My PTCGL accounts...', grey: true }, { text: 'Upload my matches automatically', grey: true }], 270, 'margin-bottom:110px')}
+      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sel: true, sub: true }, { text: 'Pokematch', sub: true }, ...PAB_MENU_BOTTOM], 230)}
+    </div>
+    ${taskbar(true)}`,
+
+  'tcgkb-approve': (t) => `
+    ${tag(t.onb11, 'left:50%;top:22px;transform:translateX(-50%)')}
+    <div style="display:flex;align-items:center;gap:24px;margin-top:30px">
+      <div class="win" style="width:300px">
+        ${titlebar('Connect to tcgkb')}
+        <div style="display:flex;flex-direction:column;gap:12px;padding:16px">
+          <div style="font-size:13px;line-height:1.5">Sign in to tcgkb in your browser and approve this code. It must match the code on the page:</div>
+          <div class="hl mono" style="padding:8px 0;text-align:center;font-size:26px;font-weight:600;letter-spacing:.05em">WDJB-MJHT</div>
+          <div style="display:flex;justify-content:flex-end;gap:6px"><span class="wbtn">Cancel</span><span class="wbtn">Open tcgkb.app</span></div>
+        </div>
+      </div>
+      ${browser('tcgkb.app/link', 360, `
+        <div style="display:flex;flex-direction:column;gap:12px;padding:24px">
+          <div style="font:700 20px Inter,var(--cjk,sans-serif),sans-serif">${esc(t.onb12)}</div>
+          <div style="font-size:13px;line-height:1.5;color:var(--muted)">${esc(t.onb13)}</div>
+          <div class="hl mono" style="background:var(--panel);padding:8px 0;text-align:center;font-size:24px;letter-spacing:.05em">WDJB-MJHT</div>
+          <div style="display:flex;gap:8px"><span class="kb-btn" style="flex:1">${esc(t.onb14)}</span><span class="kb-ghost">${esc(t.onb15)}</span></div>
+        </div>`)}
+    </div>`,
+
+  'tcgkb-claim': (t) => `
+    <div class="win" style="width:580px">
+      ${titlebar('PTCGL Auto Battle Log - My PTCGL accounts')}
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px">
+        <div style="font-size:13px">Signed in to tcgkb as ManuCL. Claim the PTCGL accounts you play with; each one keeps its own stats.</div>
+        <table style="width:100%;border:1px solid #DDD;font-size:13px">
+          <thead style="background:#F7F7F7;text-align:left;font-size:12px;color:#555">
+            <tr><th style="padding:6px 10px;font-weight:400">PTCGL account</th><th style="padding:6px 10px;font-weight:400">Matches on this PC</th><th style="padding:6px 10px;font-weight:400">On tcgkb</th></tr>
+          </thead>
+          <tbody>
+            <tr style="background:#CCE4F7"><td style="padding:6px 10px">ManuCL</td><td style="padding:6px 10px">205</td><td style="padding:6px 10px">Not claimed</td></tr>
+            <tr><td style="padding:6px 10px">ManuCL_alt</td><td style="padding:6px 10px">17</td><td style="padding:6px 10px">Not claimed</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <span class="wbtn">Release</span>
+          <span class="wbtn primary hl">Claim${tag(t.onb16, 'right:0;top:100%;margin-top:12px')}</span>
+          <span class="wbtn">Close</span>
+        </div>
+      </div>
+    </div>`,
+
+  'tcgkb-auto-upload': (t) => `
+    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
+      ${menu([{ text: 'Connected as ManuCL', grey: true }, 'My PTCGL accounts...', { text: 'Upload my matches automatically', sel: true, hl: true, check: true, tag: t.onb17 }, 'Upload matches now', null, 'Disconnect'], 270, 'margin-bottom:110px')}
+      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sel: true, sub: true }, { text: 'Pokematch', sub: true }, ...PAB_MENU_BOTTOM], 230)}
+    </div>
+    ${taskbar()}`,
+
+  'tcgkb-done': (t) => {
+    const row = (n, name, elo, wr, hl) => `
+      <div class="${hl ? 'hl' : ''}" style="display:flex;align-items:center;gap:14px;padding:10px 8px;${hl ? 'background:var(--raise)' : 'border-bottom:1px solid #1A1F27;color:var(--muted)'}">
+        <span class="mono" style="width:20px">${n}</span><span style="flex:1">${name}</span>
+        <span class="mono">${elo}</span><span class="mono" style="width:44px;text-align:right">${wr}</span>
+      </div>`;
+    return browser('tcgkb.app', 640, `
+      <div style="padding:20px 24px">
+        <div style="margin-bottom:12px;font:700 22px Inter,sans-serif">Ranking</div>
+        ${row(2, 'nebulosa', 1874, '64%')}
+        ${row(3, `ManuCL <span style="font-size:12px;color:var(--accent)">${esc(t.onb18)}</span>`, 1851, '62%', true)}
+        ${row(4, 'pikasso', 1820, '61%')}
+      </div>`);
+  },
+
+  // Pokematch's own pages are drawn plainly: the guide points at the labels, not at Pokematch's look.
+  'pokematch-token': (t) => browser('pokematch-vslogger.onrender.com', 620, `
+    <div style="display:flex;flex-direction:column;gap:14px;padding:26px 30px">
+      <div style="font-size:12px;color:var(--muted)">Profile Settings › Account</div>
+      <div style="font:700 22px Inter,sans-serif">API Tokens</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="hl" style="flex:1;border:1px solid var(--edge);border-radius:8px;padding:9px 12px;font-size:14px">PTCGL uploader${tag(t.pm1a, 'left:0;top:100%;margin-top:10px')}</span>
+        <span class="kb-btn">Create token</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:30px;background:var(--panel);border-radius:8px;padding:12px">
+        <span class="mono hl" style="flex:1;font-size:14px">pmk_7Fq2…x9Lw${tag(t.pm1b, 'right:0;top:100%;margin-top:12px')}</span>
+        <span class="kb-ghost">Copy</span>
+      </div>
+    </div>`),
+
+  'pokematch-set-token': (t) => `
+    ${tag(t.onb9, 'left:24px;top:24px')}
+    <div style="position:absolute;left:24px;top:70px;width:380px">
+    <div class="win">
+      ${titlebar('PTCGL Auto Battle Log - Pokematch API token')}
+      <div style="display:flex;flex-direction:column;gap:10px;padding:14px">
+        <div style="font-size:12px;line-height:1.5;color:#333">Make a token on Pokematch (Profile Settings &gt; Account &gt; API Tokens, for example named "PTCGL uploader") and paste it here.</div>
+        <div class="hl mono" style="border:1px solid #999;border-radius:3px;padding:6px 8px;font-size:12px">pmk_7Fq2…x9Lw</div>
+        <div style="display:flex;justify-content:flex-end;gap:6px">
+          <span class="wbtn">Open Pokematch</span><span class="wbtn primary">OK</span><span class="wbtn">Cancel</span>
+        </div>
+      </div>
+    </div>
+    ${tag(t.pm2b, 'left:14px;top:100%;margin-top:14px')}
+    </div>
+    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
+      ${menu([{ text: 'Not set up', grey: true }, { text: 'Set API token...', sel: true, hl: true, tag: t.pm2a }], 200, 'margin-bottom:84px')}
+      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sub: true }, { text: 'Pokematch', sel: true, sub: true }, ...PAB_MENU_BOTTOM], 230)}
+    </div>
+    ${taskbar(true)}`,
+
+  'pokematch-auto-upload': (t) => `
+    <div class="win" style="width:560px">
+      ${titlebar('PTCGL Auto Battle Log')}
+      <div style="display:flex;gap:14px;padding:20px 20px 8px">
+        <span style="flex:none;display:inline-flex;width:32px;height:32px;border-radius:50%;background:#0067C0;color:#fff;align-items:center;justify-content:center;font-weight:700">?</span>
+        <div style="font-size:13px;line-height:1.55">
+          <div style="margin-bottom:8px">Upload your new battle logs to Pokematch automatically?</div>
+          <div style="color:#333">After each finished match (victory or defeat), the app adds it to your Pokematch logs: your deck name, the result and the date.
+          Your opponent's deck shows as "Unknown": fill it in on Pokematch if you like. Your opponent's name and the battle log text stay on this computer.</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;background:#F3F3F3;padding:12px 16px;margin-top:10px;border-radius:0 0 8px 8px">
+        <span class="wbtn primary hl">Yes${tag(t.pm3, 'right:100%;top:3px;margin-right:14px')}</span><span class="wbtn">No</span>
+      </div>
+    </div>`,
+
+  'pokematch-past': (t) => `
+    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
+      ${menu([{ text: 'Uploads new battle logs', grey: true }, 'Change API token...', { text: 'Upload new battle logs automatically', check: true }, { text: 'Upload past battle logs...', sel: true, hl: true, tag: t.pm4 }, 'Remove API token'], 290, 'margin-bottom:84px')}
+      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sub: true }, { text: 'Pokematch', sel: true, sub: true }, ...PAB_MENU_BOTTOM], 230)}
+    </div>
+    ${taskbar()}`,
+
+  'pokematch-done': (t) => {
+    const chip = (s) => `<span style="border-radius:999px;background:var(--raise);border:1px solid var(--edge);padding:2px 8px;font-size:11px;color:var(--muted)">${s}</span>`;
+    const row = (deck, res, date, hl, tags) => `
+      <div class="${hl ? 'hl' : ''}" style="display:flex;align-items:center;gap:12px;padding:10px;${hl ? 'background:var(--raise)' : 'border-bottom:1px solid #1A1F27;color:var(--muted)'}">
+        <span style="flex:1">${deck} <span style="color:var(--muted)">vs</span> Unknown</span>
+        ${tags || ''}
+        <span style="width:42px;color:${res === 'Win' ? 'var(--good,#7FB4FF)' : '#F2A066'}">${res}</span><span class="mono" style="font-size:12px">${date}</span>
+      </div>`;
+    return browser('pokematch-vslogger.onrender.com', 660, `
+      <div style="padding:20px 22px">
+        <div style="margin-bottom:12px;font:700 22px Inter,sans-serif">TCG logs</div>
+        <div style="position:relative">
+          ${row('Raging Bolt ex', 'Win', '2026-10-28', true, chip('ptcgl-auto-battle-log') + chip('ranked'))}
+          ${tag(t.pm5, 'right:0;bottom:100%;margin-bottom:12px')}
+        </div>
+        ${row('Raging Bolt ex', 'Loss', '2026-10-27')}
+        ${row('Dragapult ex', 'Win', '2026-10-27')}
+      </div>`);
+  },
+};
+
+/** Draws one picture; the renderer screenshots #stage. */
+function render(step, text, lang) {
+  document.documentElement.lang = lang;
+  const draw = PICTURES[step];
+  if (!draw) throw new Error('No picture for step ' + step);
+  document.getElementById('stage').innerHTML = draw(text);
+  return document.fonts.ready;
+}
+window.render = render;
+window.PICTURE_IDS = Object.keys(PICTURES);
+
+// Opened by hand: ?step=<id>&lang=<language>.
+const q = new URLSearchParams(location.search);
+if (q.get('step')) {
+  fetch('illustration-text.json').then((r) => r.json()).then((all) => render(q.get('step'), all[q.get('lang') || 'en'], q.get('lang') || 'en'));
+}
+</script>
+</body>
+</html>

@@ -72,6 +72,9 @@
 Requirements: Windows 10 (version 1903 or later) or Windows 11, 64-bit, with Pokémon TCG Live
 installed. Nothing else: the app uses .NET Framework 4.8, which those Windows versions include.
 
+Step-by-step guides with pictures, also for connecting [tcgkb](docs/quick-setup/tcgkb.md) or
+[Pokematch](docs/quick-setup/pokematch.md), are in [docs/quick-setup](docs/quick-setup/README.md).
+
 | Download | For |
 |---|---|
 | [`PtcglAutoBattleLog.exe`](https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/latest/download/PtcglAutoBattleLog.exe) | **Most players.** Installs for your Windows user, starts with Windows, appears in Apps & Features. |

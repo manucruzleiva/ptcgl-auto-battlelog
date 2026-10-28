@@ -275,6 +275,9 @@ try {
             }
             Write-Host "tampered $kind log rejected as expected: $victim"
         }
+
+        Write-Step 'Quick-setup guides: docs\quick-setup\steps.json'
+        Invoke-Python @((P $Root 'tools' 'quick-setup' 'check.py'), $Root) | Out-Null
     }
 
     Write-Step 'Tray logic tests (tests\TrayTests)'

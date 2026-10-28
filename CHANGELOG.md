@@ -16,6 +16,10 @@ installs itself.
 
 ### Added
 
+- **Quick-setup guides in this repository** (#34): `docs/quick-setup/` has three step-by-step guides
+  with a picture per step (install PAB; connect tcgkb; upload to Pokematch) in nine languages, and
+  `steps.json` for other sites to show them, starting with tcgkb's own guide. The build checks
+  that every text and picture is there and that the menu items the guides name still exist.
 - **"Review the updated disclaimer..." in the tray menu** (#29). While a newer disclaimer than the
   one you accepted waits (after an update, it was only offered by a balloon that is easy to miss),
   the menu shows this item in red under the status line, the status reads "Action needed: accept
