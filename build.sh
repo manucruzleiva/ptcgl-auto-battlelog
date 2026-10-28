@@ -200,6 +200,9 @@ PYTHON="$PYTHON" "$DOTNET" run --project tests/TrayTests -c Release \
     "--property:Version=$VERSION" "--property:RepoOwner=$OWNER" "--property:RepoName=$REPO" \
     || die "tests/TrayTests failed"
 
+step "Quick-setup guides: docs/quick-setup/steps.json"
+"${PYRUN[@]}" tools/quick-setup/check.py . || die "tools/quick-setup/check.py found problems in the setup guides (see above)"
+
 # ------------------------------------------------------------------------------------- build
 
 step "Building $EXE_NAME v$VERSION (plugin embedded)"

@@ -1,0 +1,1109 @@
+{
+  "schemaVersion": 1,
+  "languages": [
+    "en",
+    "es",
+    "pt",
+    "fr",
+    "de",
+    "it",
+    "ja",
+    "ko",
+    "zh"
+  ],
+  "defaultLanguage": "en",
+  "baseUrl": "https://raw.githubusercontent.com/manucruzleiva/ptcgl-auto-battlelog/main/docs/quick-setup/",
+  "imagePath": "images/{lang}/{step}.png",
+  "ui": {
+    "progress": {
+      "en": "Step {n} of {total}",
+      "es": "Paso {n} de {total}",
+      "pt": "Passo {n} de {total}",
+      "fr": "Étape {n} sur {total}",
+      "de": "Schritt {n} von {total}",
+      "it": "Passo {n} di {total}",
+      "ja": "ステップ {n} / {total}",
+      "ko": "{total}단계 중 {n}단계",
+      "zh": "第 {n} 步，共 {total} 步"
+    },
+    "steps": {
+      "en": "Steps",
+      "es": "Pasos",
+      "pt": "Passos",
+      "fr": "Étapes",
+      "de": "Schritte",
+      "it": "Passi",
+      "ja": "ステップ",
+      "ko": "단계",
+      "zh": "步骤"
+    },
+    "prev": {
+      "en": "Back",
+      "es": "Anterior",
+      "pt": "Voltar",
+      "fr": "Retour",
+      "de": "Zurück",
+      "it": "Indietro",
+      "ja": "戻る",
+      "ko": "이전",
+      "zh": "上一步"
+    },
+    "next": {
+      "en": "Next",
+      "es": "Siguiente",
+      "pt": "Próximo",
+      "fr": "Suivant",
+      "de": "Weiter",
+      "it": "Avanti",
+      "ja": "次へ",
+      "ko": "다음",
+      "zh": "下一步"
+    },
+    "restart": {
+      "en": "Back to the start",
+      "es": "Volver al inicio",
+      "pt": "Voltar ao início",
+      "fr": "Revenir au début",
+      "de": "Zurück zum Anfang",
+      "it": "Torna all'inizio",
+      "ja": "最初に戻る",
+      "ko": "처음으로",
+      "zh": "回到开头"
+    }
+  },
+  "guides": [
+    {
+      "id": "install",
+      "title": {
+        "en": "Install PAB",
+        "es": "Instala PAB",
+        "pt": "Instale o PAB",
+        "fr": "Installer PAB",
+        "de": "PAB installieren",
+        "it": "Installa PAB",
+        "ja": "PAB をインストール",
+        "ko": "PAB 설치하기",
+        "zh": "安装 PAB"
+      },
+      "subtitle": {
+        "en": "Download PAB and it saves the battle log of every PTCGL match on your PC, on its own.",
+        "es": "Descarga PAB y guarda solo el battle log de cada partida de PTCGL en tu PC.",
+        "pt": "Baixe o PAB e ele salva sozinho o battle log de cada partida do PTCGL no seu PC.",
+        "fr": "Téléchargez PAB : il enregistre tout seul le battle log de chaque partie PTCGL sur votre PC.",
+        "de": "Lade PAB herunter, und es speichert das Battle Log jedes PTCGL-Matches automatisch auf deinem PC.",
+        "it": "Scarica PAB e salverà da solo il battle log di ogni partita di PTCGL sul tuo PC.",
+        "ja": "PAB をダウンロードすると、PTCGL の毎試合のバトルログが PC に自動で保存されます。",
+        "ko": "PAB를 다운로드하면 PTCGL 모든 경기의 배틀 로그가 PC에 자동으로 저장됩니다.",
+        "zh": "下载 PAB 后，PTCGL 每场对战的对战记录都会自动保存到你的电脑。"
+      },
+      "steps": [
+        "download",
+        "install",
+        "play"
+      ]
+    },
+    {
+      "id": "tcgkb",
+      "title": {
+        "en": "Get started in 5 minutes",
+        "es": "Empieza en 5 minutos",
+        "pt": "Comece em 5 minutos",
+        "fr": "Démarrez en 5 minutes",
+        "de": "In 5 Minuten startklar",
+        "it": "Inizia in 5 minuti",
+        "ja": "5分ではじめよう",
+        "ko": "5분 만에 시작하기",
+        "zh": "5 分钟快速上手"
+      },
+      "subtitle": {
+        "en": "Install PAB, connect it to your account and your PTCGL matches upload to the ranking on their own.",
+        "es": "Instala PAB, conéctalo a tu cuenta y tus partidas de PTCGL se suben solas al ranking.",
+        "pt": "Instale o PAB, conecte-o à sua conta e suas partidas do PTCGL vão para o ranking sozinhas.",
+        "fr": "Installez PAB, connectez-le à votre compte et vos parties PTCGL arrivent toutes seules dans le classement.",
+        "de": "Installiere PAB, verbinde es mit deinem Konto und deine PTCGL-Partien landen von selbst in der Rangliste.",
+        "it": "Installa PAB, collegalo al tuo account e le tue partite di PTCGL arrivano in classifica da sole.",
+        "ja": "PAB をインストールしてアカウントと接続すれば、PTCGL の対戦が自動でランキングに反映されます。",
+        "ko": "PAB를 설치하고 계정에 연결하면 PTCGL 대전이 자동으로 랭킹에 업로드됩니다.",
+        "zh": "安装 PAB 并连接你的账号，你的 PTCGL 对战就会自动上传到排名。"
+      },
+      "steps": [
+        "tcgkb-account",
+        "download",
+        "install",
+        "play",
+        "tcgkb-connect",
+        "tcgkb-approve",
+        "tcgkb-claim",
+        "tcgkb-auto-upload",
+        "tcgkb-done"
+      ]
+    },
+    {
+      "id": "pokematch",
+      "title": {
+        "en": "Upload your matches to Pokematch",
+        "es": "Sube tus partidas a Pokematch",
+        "pt": "Envie suas partidas ao Pokematch",
+        "fr": "Envoyez vos parties sur Pokematch",
+        "de": "Lade deine Matches zu Pokematch hoch",
+        "it": "Carica le tue partite su Pokematch",
+        "ja": "試合を Pokematch にアップロード",
+        "ko": "경기를 Pokematch에 업로드하기",
+        "zh": "将对战上传到 Pokematch"
+      },
+      "subtitle": {
+        "en": "Install PAB, give it a Pokematch API token and every match you finish is added to your Pokematch logs on its own.",
+        "es": "Instala PAB, dale un token de API de Pokematch y cada partida que termines se agrega sola a tus registros de Pokematch.",
+        "pt": "Instale o PAB, dê a ele um token de API do Pokematch e cada partida que você terminar é adicionada sozinha aos seus registros no Pokematch.",
+        "fr": "Installez PAB, donnez-lui un jeton d'API Pokematch et chaque partie terminée s'ajoute toute seule à vos logs Pokematch.",
+        "de": "Installiere PAB, gib ihm ein Pokematch-API-Token, und jedes beendete Match landet automatisch in deinen Pokematch-Logs.",
+        "it": "Installa PAB, dagli un token API di Pokematch e ogni partita che finisci viene aggiunta da sola ai tuoi log di Pokematch.",
+        "ja": "PAB をインストールして Pokematch の API トークンを設定すると、終わった試合が自動で Pokematch のログに追加されます。",
+        "ko": "PAB를 설치하고 Pokematch API 토큰을 넣으면 끝난 경기가 자동으로 Pokematch 기록에 추가됩니다.",
+        "zh": "安装 PAB 并填入 Pokematch API 令牌，之后每场结束的对战都会自动加入你的 Pokematch 记录。"
+      },
+      "steps": [
+        "pokematch-token",
+        "download",
+        "install",
+        "play",
+        "pokematch-set-token",
+        "pokematch-auto-upload",
+        "pokematch-past",
+        "pokematch-done"
+      ]
+    }
+  ],
+  "steps": {
+    "tcgkb-account": {
+      "phase": {
+        "en": "On the web",
+        "es": "En la web",
+        "pt": "Na web",
+        "fr": "Sur le web",
+        "de": "Im Web",
+        "it": "Sul web",
+        "ja": "Web で",
+        "ko": "웹에서",
+        "zh": "在网站上"
+      },
+      "short": {
+        "en": "Create your account",
+        "es": "Crea tu cuenta",
+        "pt": "Crie sua conta",
+        "fr": "Créez votre compte",
+        "de": "Konto erstellen",
+        "it": "Crea il tuo account",
+        "ja": "アカウント作成",
+        "ko": "계정 만들기",
+        "zh": "创建账号"
+      },
+      "title": {
+        "en": "Create your TCGKB account",
+        "es": "Crea tu cuenta en TCGKB",
+        "pt": "Crie sua conta no TCGKB",
+        "fr": "Créez votre compte TCGKB",
+        "de": "Erstelle dein TCGKB-Konto",
+        "it": "Crea il tuo account TCGKB",
+        "ja": "TCGKB アカウントを作成",
+        "ko": "TCGKB 계정 만들기",
+        "zh": "创建你的 TCGKB 账号"
+      },
+      "body": {
+        "en": "Sign up with Google or email. Only players with an account show up in the ranking.",
+        "es": "Entra con Google o con correo. Solo los jugadores con cuenta aparecen en el ranking.",
+        "pt": "Cadastre-se com Google ou e-mail. Só jogadores com conta aparecem no ranking.",
+        "fr": "Inscrivez-vous avec Google ou un e-mail. Seuls les joueurs avec un compte apparaissent dans le classement.",
+        "de": "Registriere dich mit Google oder E-Mail. Nur Spieler mit Konto erscheinen in der Rangliste.",
+        "it": "Registrati con Google o con l'email. Solo i giocatori con un account compaiono in classifica.",
+        "ja": "Google またはメールで登録します。ランキングに載るのはアカウントを持つプレイヤーだけです。",
+        "ko": "Google 또는 이메일로 가입하세요. 계정이 있는 플레이어만 랭킹에 표시됩니다.",
+        "zh": "用 Google 或邮箱注册。只有拥有账号的玩家才会出现在排名中。"
+      },
+      "alt": {
+        "en": "TCGKB sign-in page",
+        "es": "Página de inicio de sesión de TCGKB",
+        "pt": "Página de login do TCGKB",
+        "fr": "Page de connexion TCGKB",
+        "de": "TCGKB-Anmeldeseite",
+        "it": "Pagina di accesso di TCGKB",
+        "ja": "TCGKB のログインページ",
+        "ko": "TCGKB 로그인 페이지",
+        "zh": "TCGKB 登录页面"
+      },
+      "cta": {
+        "href": "https://tcgkb.app/register",
+        "label": {
+          "en": "Create account",
+          "es": "Crear cuenta",
+          "pt": "Criar conta",
+          "fr": "Créer un compte",
+          "de": "Konto erstellen",
+          "it": "Crea account",
+          "ja": "アカウントを作成",
+          "ko": "계정 만들기",
+          "zh": "创建账号"
+        }
+      },
+      "appText": []
+    },
+    "download": {
+      "phase": {
+        "en": "On your PC",
+        "es": "En tu PC",
+        "pt": "No seu PC",
+        "fr": "Sur votre PC",
+        "de": "Auf deinem PC",
+        "it": "Sul tuo PC",
+        "ja": "PC で",
+        "ko": "PC에서",
+        "zh": "在电脑上"
+      },
+      "short": {
+        "en": "Download PAB",
+        "es": "Descarga PAB",
+        "pt": "Baixe o PAB",
+        "fr": "Téléchargez PAB",
+        "de": "PAB herunterladen",
+        "it": "Scarica PAB",
+        "ja": "PAB をダウンロード",
+        "ko": "PAB 다운로드",
+        "zh": "下载 PAB"
+      },
+      "title": {
+        "en": "Download PAB and open it",
+        "es": "Descarga PAB y ábrelo",
+        "pt": "Baixe o PAB e abra",
+        "fr": "Téléchargez PAB et ouvrez-le",
+        "de": "Lade PAB herunter und öffne es",
+        "it": "Scarica PAB e aprilo",
+        "ja": "PAB をダウンロードして開く",
+        "ko": "PAB를 다운로드하고 실행하기",
+        "zh": "下载并打开 PAB"
+      },
+      "body": {
+        "en": "Download PtcglAutoBattleLog.exe and double-click it. Windows may show a blue warning because the app is new: click “More info”, then “Run anyway”.",
+        "es": "Descarga PtcglAutoBattleLog.exe y haz doble clic. Windows puede mostrar un aviso azul porque la app es nueva: toca “More info” y luego “Run anyway”.",
+        "pt": "Baixe o PtcglAutoBattleLog.exe e clique duas vezes. O Windows pode mostrar um aviso azul porque o app é novo: clique em “More info” e depois em “Run anyway”.",
+        "fr": "Téléchargez PtcglAutoBattleLog.exe et double-cliquez dessus. Windows peut afficher un avertissement bleu car l'app est récente : cliquez sur “More info”, puis sur “Run anyway”.",
+        "de": "Lade PtcglAutoBattleLog.exe herunter und doppelklicke darauf. Windows zeigt eventuell eine blaue Warnung, weil die App neu ist: klicke auf “More info” und dann auf “Run anyway”.",
+        "it": "Scarica PtcglAutoBattleLog.exe e fai doppio clic. Windows potrebbe mostrare un avviso blu perché l'app è nuova: clicca su “More info” e poi su “Run anyway”.",
+        "ja": "PtcglAutoBattleLog.exe をダウンロードしてダブルクリックします。新しいアプリのため Windows が青い警告を出すことがあります。“More info”、続いて “Run anyway” をクリックしてください。",
+        "ko": "PtcglAutoBattleLog.exe를 다운로드하고 더블 클릭하세요. 새 앱이라 Windows에서 파란 경고가 표시될 수 있습니다. “추가 정보”를 누른 뒤 “실행”을 누르세요.",
+        "zh": "下载 PtcglAutoBattleLog.exe 并双击打开。由于应用较新，Windows 可能会显示蓝色警告：点击“更多信息”，然后点击“仍要运行”。"
+      },
+      "tip": {
+        "en": "Don't run it as administrator: PAB installs for your user only.",
+        "es": "No lo abras como administrador: PAB se instala solo para tu usuario.",
+        "pt": "Não abra como administrador: o PAB se instala só para o seu usuário.",
+        "fr": "Ne le lancez pas en administrateur : PAB s'installe pour votre utilisateur uniquement.",
+        "de": "Nicht als Administrator ausführen: PAB installiert sich nur für deinen Benutzer.",
+        "it": "Non avviarlo come amministratore: PAB si installa solo per il tuo utente.",
+        "ja": "管理者として実行しないでください。PAB はあなたのユーザーにだけインストールされます。",
+        "ko": "관리자 권한으로 실행하지 마세요. PAB는 현재 사용자에게만 설치됩니다.",
+        "zh": "不要以管理员身份运行：PAB 只为当前用户安装。"
+      },
+      "alt": {
+        "en": "Blue Windows SmartScreen warning with the Run anyway button",
+        "es": "Aviso azul de Windows SmartScreen con el botón Run anyway",
+        "pt": "Aviso azul do Windows SmartScreen com o botão Run anyway",
+        "fr": "Avertissement bleu de Windows SmartScreen avec le bouton Run anyway",
+        "de": "Blaue Windows SmartScreen-Warnung mit dem Button Run anyway",
+        "it": "Avviso blu di Windows SmartScreen con il pulsante Run anyway",
+        "ja": "Run anyway ボタンのある Windows SmartScreen の青い警告",
+        "ko": "실행 버튼이 있는 Windows SmartScreen 파란 경고",
+        "zh": "带有“仍要运行”按钮的蓝色 Windows SmartScreen 警告"
+      },
+      "cta": {
+        "href": "https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/latest/download/PtcglAutoBattleLog.exe",
+        "label": {
+          "en": "Download PAB for Windows",
+          "es": "Descargar PAB para Windows",
+          "pt": "Baixar PAB para Windows",
+          "fr": "Télécharger PAB pour Windows",
+          "de": "PAB für Windows herunterladen",
+          "it": "Scarica PAB per Windows",
+          "ja": "PAB（Windows 版）をダウンロード",
+          "ko": "Windows용 PAB 다운로드",
+          "zh": "下载 Windows 版 PAB"
+        }
+      },
+      "appText": []
+    },
+    "install": {
+      "short": {
+        "en": "Accept and install",
+        "es": "Acepta e instala",
+        "pt": "Aceite e instale",
+        "fr": "Acceptez et installez",
+        "de": "Bestätigen und installieren",
+        "it": "Accetta e installa",
+        "ja": "同意してインストール",
+        "ko": "동의하고 설치",
+        "zh": "接受并安装"
+      },
+      "title": {
+        "en": "Accept the notice and install",
+        "es": "Acepta el aviso e instala",
+        "pt": "Aceite o aviso e instale",
+        "fr": "Acceptez l'avertissement et installez",
+        "de": "Bestätige den Hinweis und installiere",
+        "it": "Accetta l'avviso e installa",
+        "ja": "案内に同意してインストール",
+        "ko": "안내에 동의하고 설치하기",
+        "zh": "接受说明并安装"
+      },
+      "body": {
+        "en": "PAB tells you what it does and what it sends. Click “I understand, install”. A yellow icon appears next to the Windows clock.",
+        "es": "PAB te muestra qué hace y qué envía. Toca “I understand, install”. Aparece un ícono amarillo junto al reloj de Windows.",
+        "pt": "O PAB mostra o que faz e o que envia. Clique em “I understand, install”. Um ícone amarelo aparece ao lado do relógio do Windows.",
+        "fr": "PAB vous explique ce qu'il fait et ce qu'il envoie. Cliquez sur “I understand, install”. Une icône jaune apparaît à côté de l'horloge de Windows.",
+        "de": "PAB erklärt dir, was es tut und was es sendet. Klicke auf “I understand, install”. Neben der Windows-Uhr erscheint ein gelbes Symbol.",
+        "it": "PAB ti spiega cosa fa e cosa invia. Clicca su “I understand, install”. Compare un'icona gialla accanto all'orologio di Windows.",
+        "ja": "PAB が何をして何を送信するかを表示します。“I understand, install” をクリックすると、Windows の時計の横に黄色いアイコンが表示されます。",
+        "ko": "PAB가 하는 일과 전송하는 정보를 알려 줍니다. “I understand, install”을 누르세요. Windows 시계 옆에 노란 아이콘이 나타납니다.",
+        "zh": "PAB 会告诉你它做什么以及发送什么。点击 “I understand, install”。Windows 时钟旁会出现一个黄色图标。"
+      },
+      "tip": {
+        "en": "If you can't see the icon, look under the ^ arrow in the taskbar.",
+        "es": "Si no ves el ícono, búscalo en la flecha ^ de la barra de tareas.",
+        "pt": "Se não vir o ícone, procure na seta ^ da barra de tarefas.",
+        "fr": "Si vous ne voyez pas l'icône, regardez sous la flèche ^ de la barre des tâches.",
+        "de": "Wenn du das Symbol nicht siehst, schau unter dem Pfeil ^ in der Taskleiste nach.",
+        "it": "Se non vedi l'icona, cercala sotto la freccia ^ della barra delle applicazioni.",
+        "ja": "アイコンが見えない場合は、タスクバーの ^ 矢印の中を探してください。",
+        "ko": "아이콘이 보이지 않으면 작업 표시줄의 ^ 화살표 안을 확인하세요.",
+        "zh": "如果看不到图标，请查看任务栏中 ^ 箭头里面。"
+      },
+      "alt": {
+        "en": "PAB notice window with the I understand, install button",
+        "es": "Ventana de aviso de PAB con el botón I understand, install",
+        "pt": "Janela de aviso do PAB com o botão I understand, install",
+        "fr": "Fenêtre d'avertissement de PAB avec le bouton I understand, install",
+        "de": "PAB-Hinweisfenster mit dem Button I understand, install",
+        "it": "Finestra di avviso di PAB con il pulsante I understand, install",
+        "ja": "I understand, install ボタンのある PAB の案内ウィンドウ",
+        "ko": "I understand, install 버튼이 있는 PAB 안내 창",
+        "zh": "带有 I understand, install 按钮的 PAB 说明窗口"
+      },
+      "appText": [
+        "I understand, install"
+      ]
+    },
+    "play": {
+      "short": {
+        "en": "Play a match",
+        "es": "Juega una partida",
+        "pt": "Jogue uma partida",
+        "fr": "Jouez une partie",
+        "de": "Spiele eine Partie",
+        "it": "Gioca una partita",
+        "ja": "1戦プレイ",
+        "ko": "대전하기",
+        "zh": "打一局"
+      },
+      "title": {
+        "en": "Play a match in PTCGL",
+        "es": "Juega una partida en PTCGL",
+        "pt": "Jogue uma partida no PTCGL",
+        "fr": "Jouez une partie dans PTCGL",
+        "de": "Spiele eine Partie in PTCGL",
+        "it": "Gioca una partita su PTCGL",
+        "ja": "PTCGL で1戦プレイ",
+        "ko": "PTCGL에서 대전하기",
+        "zh": "在 PTCGL 中打一局"
+      },
+      "body": {
+        "en": "Open Pokémon TCG Live and play any match. When it ends you get a “battle log saved” notification: PAB is saving your matches.",
+        "es": "Abre Pokémon TCG Live y juega cualquier partida. Al terminar verás el aviso “battle log saved”: eso confirma que PAB está guardando tus partidas.",
+        "pt": "Abra o Pokémon TCG Live e jogue qualquer partida. Ao terminar você verá o aviso “battle log saved”: isso confirma que o PAB está salvando suas partidas.",
+        "fr": "Ouvrez Pokémon TCG Live et jouez n'importe quelle partie. À la fin, vous verrez la notification “battle log saved” : PAB enregistre bien vos parties.",
+        "de": "Öffne Pokémon TCG Live und spiele irgendeine Partie. Am Ende erscheint die Benachrichtigung “battle log saved”: PAB speichert deine Partien.",
+        "it": "Apri Pokémon TCG Live e gioca una partita qualsiasi. Alla fine vedrai la notifica “battle log saved”: vuol dire che PAB sta salvando le tue partite.",
+        "ja": "Pokémon TCG Live を開いて好きな対戦をプレイします。終わると “battle log saved” の通知が出ます。PAB が対戦を保存している合図です。",
+        "ko": "Pokémon TCG Live를 열고 아무 대전이나 하세요. 대전이 끝나면 “battle log saved” 알림이 표시됩니다. PAB가 대전을 저장하고 있다는 뜻입니다.",
+        "zh": "打开 Pokémon TCG Live，随便打一局。结束时会收到 “battle log saved” 通知：说明 PAB 正在保存你的对战。"
+      },
+      "tip": {
+        "en": "If the game was open while you installed, close it and open it again.",
+        "es": "Si tenías el juego abierto al instalar, ciérralo y vuelve a abrirlo.",
+        "pt": "Se o jogo estava aberto quando você instalou, feche e abra de novo.",
+        "fr": "Si le jeu était ouvert pendant l'installation, fermez-le et rouvrez-le.",
+        "de": "Wenn das Spiel bei der Installation offen war, schließe es und öffne es erneut.",
+        "it": "Se il gioco era aperto durante l'installazione, chiudilo e riaprilo.",
+        "ja": "インストール時にゲームを開いていた場合は、一度閉じて開き直してください。",
+        "ko": "설치하는 동안 게임이 열려 있었다면 게임을 닫고 다시 여세요.",
+        "zh": "如果安装时游戏是打开的，请关闭后重新打开。"
+      },
+      "alt": {
+        "en": "Windows notification: battle log saved",
+        "es": "Notificación de Windows: battle log saved",
+        "pt": "Notificação do Windows: battle log saved",
+        "fr": "Notification Windows : battle log saved",
+        "de": "Windows-Benachrichtigung: battle log saved",
+        "it": "Notifica di Windows: battle log saved",
+        "ja": "Windows の通知：battle log saved",
+        "ko": "Windows 알림: battle log saved",
+        "zh": "Windows 通知：battle log saved"
+      },
+      "appText": [
+        "battle log saved"
+      ]
+    },
+    "tcgkb-connect": {
+      "phase": {
+        "en": "Connect",
+        "es": "Conectar",
+        "pt": "Conectar",
+        "fr": "Connexion",
+        "de": "Verbinden",
+        "it": "Collega",
+        "ja": "接続",
+        "ko": "연결",
+        "zh": "连接"
+      },
+      "short": {
+        "en": "Connect to TCGKB",
+        "es": "Conecta con TCGKB",
+        "pt": "Conecte ao TCGKB",
+        "fr": "Connectez-vous à TCGKB",
+        "de": "Mit TCGKB verbinden",
+        "it": "Collega a TCGKB",
+        "ja": "TCGKB と接続",
+        "ko": "TCGKB에 연결",
+        "zh": "连接 TCGKB"
+      },
+      "title": {
+        "en": "Connect PAB to your account",
+        "es": "Conecta PAB con tu cuenta",
+        "pt": "Conecte o PAB à sua conta",
+        "fr": "Connectez PAB à votre compte",
+        "de": "Verbinde PAB mit deinem Konto",
+        "it": "Collega PAB al tuo account",
+        "ja": "PAB をアカウントと接続",
+        "ko": "PAB를 계정에 연결하기",
+        "zh": "将 PAB 连接到你的账号"
+      },
+      "body": {
+        "en": "Right-click the PAB icon, open “tcgkb account” and choose “Connect to tcgkb...”. Your browser opens.",
+        "es": "Haz clic derecho en el ícono de PAB, entra a “tcgkb account” y elige “Connect to tcgkb...”. Se abre tu navegador.",
+        "pt": "Clique com o botão direito no ícone do PAB, abra “tcgkb account” e escolha “Connect to tcgkb...”. Seu navegador vai abrir.",
+        "fr": "Faites un clic droit sur l'icône de PAB, ouvrez “tcgkb account” et choisissez “Connect to tcgkb...”. Votre navigateur s'ouvre.",
+        "de": "Rechtsklicke auf das PAB-Symbol, öffne “tcgkb account” und wähle “Connect to tcgkb...”. Dein Browser öffnet sich.",
+        "it": "Clic destro sull'icona di PAB, apri “tcgkb account” e scegli “Connect to tcgkb...”. Si apre il tuo browser.",
+        "ja": "PAB のアイコンを右クリックし、“tcgkb account” から “Connect to tcgkb...” を選びます。ブラウザが開きます。",
+        "ko": "PAB 아이콘을 마우스 오른쪽 버튼으로 클릭하고 “tcgkb account”에서 “Connect to tcgkb...”를 선택하세요. 브라우저가 열립니다.",
+        "zh": "右键点击 PAB 图标，打开 “tcgkb account” 并选择 “Connect to tcgkb...”。浏览器会打开。"
+      },
+      "alt": {
+        "en": "PAB tray menu with Connect to tcgkb highlighted",
+        "es": "Menú del ícono de PAB con Connect to tcgkb resaltado",
+        "pt": "Menu do ícone do PAB com Connect to tcgkb destacado",
+        "fr": "Menu de l'icône PAB avec Connect to tcgkb en surbrillance",
+        "de": "PAB-Menü mit hervorgehobenem Connect to tcgkb",
+        "it": "Menu dell'icona di PAB con Connect to tcgkb evidenziato",
+        "ja": "Connect to tcgkb が強調された PAB のトレイメニュー",
+        "ko": "Connect to tcgkb가 강조된 PAB 트레이 메뉴",
+        "zh": "高亮 Connect to tcgkb 的 PAB 托盘菜单"
+      },
+      "appText": [
+        "tcgkb account",
+        "Connect to tcgkb..."
+      ]
+    },
+    "tcgkb-approve": {
+      "short": {
+        "en": "Approve the code",
+        "es": "Aprueba el código",
+        "pt": "Aprove o código",
+        "fr": "Approuvez le code",
+        "de": "Code bestätigen",
+        "it": "Approva il codice",
+        "ja": "コードを承認",
+        "ko": "코드 승인",
+        "zh": "批准代码"
+      },
+      "title": {
+        "en": "Approve the code on tcgkb.app",
+        "es": "Aprueba el código en tcgkb.app",
+        "pt": "Aprove o código no tcgkb.app",
+        "fr": "Approuvez le code sur tcgkb.app",
+        "de": "Bestätige den Code auf tcgkb.app",
+        "it": "Approva il codice su tcgkb.app",
+        "ja": "tcgkb.app でコードを承認",
+        "ko": "tcgkb.app에서 코드 승인하기",
+        "zh": "在 tcgkb.app 上批准代码"
+      },
+      "body": {
+        "en": "PAB shows a code and tcgkb.app shows another. If they match, click “Approve”. PAB never sees your password.",
+        "es": "PAB muestra un código y tcgkb.app muestra otro. Si son iguales, toca “Aprobar”. PAB nunca ve tu contraseña.",
+        "pt": "O PAB mostra um código e o tcgkb.app mostra outro. Se forem iguais, clique em “Aprovar”. O PAB nunca vê sua senha.",
+        "fr": "PAB affiche un code et tcgkb.app en affiche un autre. S'ils sont identiques, cliquez sur “Approuver”. PAB ne voit jamais votre mot de passe.",
+        "de": "PAB zeigt einen Code und tcgkb.app einen weiteren. Wenn sie übereinstimmen, klicke auf “Bestätigen”. PAB sieht nie dein Passwort.",
+        "it": "PAB mostra un codice e tcgkb.app ne mostra un altro. Se coincidono, clicca su “Approva”. PAB non vede mai la tua password.",
+        "ja": "PAB と tcgkb.app にそれぞれコードが表示されます。一致していれば “承認” をクリックします。PAB があなたのパスワードを見ることはありません。",
+        "ko": "PAB와 tcgkb.app에 각각 코드가 표시됩니다. 두 코드가 같으면 “승인”을 누르세요. PAB는 비밀번호를 절대 보지 않습니다.",
+        "zh": "PAB 会显示一个代码，tcgkb.app 也会显示一个。如果两者一致，点击“批准”。PAB 永远不会看到你的密码。"
+      },
+      "tip": {
+        "en": "You can disconnect this PC any time from your profile.",
+        "es": "Puedes desconectar este PC cuando quieras desde tu perfil.",
+        "pt": "Você pode desconectar este PC quando quiser pelo seu perfil.",
+        "fr": "Vous pouvez déconnecter ce PC à tout moment depuis votre profil.",
+        "de": "Du kannst diesen PC jederzeit in deinem Profil trennen.",
+        "it": "Puoi scollegare questo PC quando vuoi dal tuo profilo.",
+        "ja": "この PC の接続はプロフィールからいつでも解除できます。",
+        "ko": "프로필에서 언제든지 이 PC의 연결을 해제할 수 있습니다.",
+        "zh": "你可以随时在个人资料中断开这台电脑。"
+      },
+      "alt": {
+        "en": "PAB code next to the tcgkb.app page with the same code",
+        "es": "Código de PAB y página de tcgkb.app con el mismo código",
+        "pt": "Código do PAB ao lado da página do tcgkb.app com o mesmo código",
+        "fr": "Code PAB à côté de la page tcgkb.app avec le même code",
+        "de": "PAB-Code neben der tcgkb.app-Seite mit demselben Code",
+        "it": "Codice di PAB accanto alla pagina di tcgkb.app con lo stesso codice",
+        "ja": "PAB のコードと同じコードが表示された tcgkb.app のページ",
+        "ko": "같은 코드가 표시된 tcgkb.app 페이지 옆의 PAB 코드",
+        "zh": "PAB 代码与显示相同代码的 tcgkb.app 页面"
+      },
+      "appText": []
+    },
+    "tcgkb-claim": {
+      "short": {
+        "en": "Claim your account",
+        "es": "Reclama tu cuenta",
+        "pt": "Reivindique sua conta",
+        "fr": "Revendiquez votre compte",
+        "de": "Konto beanspruchen",
+        "it": "Rivendica il tuo account",
+        "ja": "アカウントを登録",
+        "ko": "계정 등록",
+        "zh": "认领账号"
+      },
+      "title": {
+        "en": "Claim your PTCGL account",
+        "es": "Reclama tu cuenta de PTCGL",
+        "pt": "Reivindique sua conta do PTCGL",
+        "fr": "Revendiquez votre compte PTCGL",
+        "de": "Beanspruche dein PTCGL-Konto",
+        "it": "Rivendica il tuo account PTCGL",
+        "ja": "PTCGL アカウントを登録",
+        "ko": "PTCGL 계정 등록하기",
+        "zh": "认领你的 PTCGL 账号"
+      },
+      "body": {
+        "en": "From the “Connected to tcgkb” notification (or “My PTCGL accounts...”), pick your PTCGL name and click “Claim”. If you play on several accounts, claim them all: the ranking shows them as one row.",
+        "es": "En el aviso “Connected to tcgkb” (o en “My PTCGL accounts...”), elige tu nombre de PTCGL y toca “Claim”. Si juegas con varias cuentas, reclámalas todas: en el ranking salen juntas en una sola fila.",
+        "pt": "No aviso “Connected to tcgkb” (ou em “My PTCGL accounts...”), escolha seu nome no PTCGL e clique em “Claim”. Se você joga com várias contas, reivindique todas: no ranking elas aparecem juntas em uma linha.",
+        "fr": "Depuis la notification “Connected to tcgkb” (ou “My PTCGL accounts...”), choisissez votre nom PTCGL et cliquez sur “Claim”. Si vous jouez avec plusieurs comptes, revendiquez-les tous : le classement les regroupe sur une seule ligne.",
+        "de": "Wähle in der Benachrichtigung “Connected to tcgkb” (oder unter “My PTCGL accounts...”) deinen PTCGL-Namen und klicke auf “Claim”. Wenn du mit mehreren Konten spielst, beanspruche alle: Die Rangliste zeigt sie in einer Zeile.",
+        "it": "Dalla notifica “Connected to tcgkb” (o da “My PTCGL accounts...”), scegli il tuo nome PTCGL e clicca su “Claim”. Se giochi con più account, rivendicali tutti: in classifica compaiono insieme in una sola riga.",
+        "ja": "“Connected to tcgkb” の通知（または “My PTCGL accounts...”）から自分の PTCGL 名を選び、“Claim” をクリックします。複数のアカウントで遊んでいる場合はすべて登録してください。ランキングでは1行にまとめて表示されます。",
+        "ko": "“Connected to tcgkb” 알림(또는 “My PTCGL accounts...”)에서 PTCGL 이름을 선택하고 “Claim”을 누르세요. 여러 계정으로 플레이한다면 모두 등록하세요. 랭킹에는 한 줄로 표시됩니다.",
+        "zh": "在 “Connected to tcgkb” 通知（或 “My PTCGL accounts...”）中，选择你的 PTCGL 名称并点击 “Claim”。如果你使用多个账号，请全部认领：排名中会合并为一行显示。"
+      },
+      "alt": {
+        "en": "List of PTCGL accounts with the Claim button",
+        "es": "Lista de cuentas de PTCGL con el botón Claim",
+        "pt": "Lista de contas do PTCGL com o botão Claim",
+        "fr": "Liste des comptes PTCGL avec le bouton Claim",
+        "de": "Liste der PTCGL-Konten mit dem Button Claim",
+        "it": "Elenco degli account PTCGL con il pulsante Claim",
+        "ja": "Claim ボタンのある PTCGL アカウント一覧",
+        "ko": "Claim 버튼이 있는 PTCGL 계정 목록",
+        "zh": "带有 Claim 按钮的 PTCGL 账号列表"
+      },
+      "appText": [
+        "Connected to tcgkb",
+        "My PTCGL accounts...",
+        "Claim"
+      ]
+    },
+    "tcgkb-auto-upload": {
+      "short": {
+        "en": "Automatic uploads",
+        "es": "Subida automática",
+        "pt": "Envio automático",
+        "fr": "Envoi automatique",
+        "de": "Automatischer Upload",
+        "it": "Caricamento automatico",
+        "ja": "自動アップロード",
+        "ko": "자동 업로드",
+        "zh": "自动上传"
+      },
+      "title": {
+        "en": "Turn on automatic uploads",
+        "es": "Activa la subida automática",
+        "pt": "Ative o envio automático",
+        "fr": "Activez l'envoi automatique",
+        "de": "Aktiviere den automatischen Upload",
+        "it": "Attiva il caricamento automatico",
+        "ja": "自動アップロードをオン",
+        "ko": "자동 업로드 켜기",
+        "zh": "开启自动上传"
+      },
+      "body": {
+        "en": "In the same menu, tick “Upload my matches automatically”. Your matches, older ones included, upload on their own from now on.",
+        "es": "En el mismo menú, marca “Upload my matches automatically”. Tus partidas, también las antiguas, se suben solas desde ahora.",
+        "pt": "No mesmo menu, marque “Upload my matches automatically”. Suas partidas, incluindo as antigas, são enviadas sozinhas a partir de agora.",
+        "fr": "Dans le même menu, cochez “Upload my matches automatically”. Vos parties, anciennes comprises, s'envoient toutes seules à partir de maintenant.",
+        "de": "Setze im selben Menü einen Haken bei “Upload my matches automatically”. Deine Partien, auch ältere, werden ab jetzt von selbst hochgeladen.",
+        "it": "Nello stesso menu, spunta “Upload my matches automatically”. Le tue partite, anche quelle vecchie, da ora si caricano da sole.",
+        "ja": "同じメニューで “Upload my matches automatically” にチェックを入れます。これ以降、過去の対戦も含めて自動でアップロードされます。",
+        "ko": "같은 메뉴에서 “Upload my matches automatically”를 체크하세요. 이제부터 과거 대전을 포함한 모든 대전이 자동으로 업로드됩니다.",
+        "zh": "在同一菜单中勾选 “Upload my matches automatically”。从现在起，你的对战（包括以前的）会自动上传。"
+      },
+      "alt": {
+        "en": "PAB menu with Upload my matches automatically ticked",
+        "es": "Menú de PAB con Upload my matches automatically marcado",
+        "pt": "Menu do PAB com Upload my matches automatically marcado",
+        "fr": "Menu de PAB avec Upload my matches automatically coché",
+        "de": "PAB-Menü mit aktiviertem Upload my matches automatically",
+        "it": "Menu di PAB con Upload my matches automatically spuntato",
+        "ja": "Upload my matches automatically にチェックが入った PAB のメニュー",
+        "ko": "Upload my matches automatically가 체크된 PAB 메뉴",
+        "zh": "勾选了 Upload my matches automatically 的 PAB 菜单"
+      },
+      "appText": [
+        "Upload my matches automatically"
+      ]
+    },
+    "tcgkb-done": {
+      "phase": {
+        "en": "Done",
+        "es": "Listo",
+        "pt": "Pronto",
+        "fr": "Terminé",
+        "de": "Fertig",
+        "it": "Fatto",
+        "ja": "完了",
+        "ko": "완료",
+        "zh": "完成"
+      },
+      "short": {
+        "en": "You're in the ranking",
+        "es": "Ya estás en el ranking",
+        "pt": "Você está no ranking",
+        "fr": "Vous êtes dans le classement",
+        "de": "Du bist in der Rangliste",
+        "it": "Sei in classifica",
+        "ja": "ランキング参加",
+        "ko": "랭킹에 등장",
+        "zh": "你已上榜"
+      },
+      "title": {
+        "en": "Done! You're playing for the ranking",
+        "es": "¡Listo! Ya juegas para el ranking",
+        "pt": "Pronto! Você já joga para o ranking",
+        "fr": "C'est fait ! Vous jouez pour le classement",
+        "de": "Fertig! Du spielst jetzt für die Rangliste",
+        "it": "Fatto! Ora giochi per la classifica",
+        "ja": "完了！ランキングに参加しました",
+        "ko": "완료! 이제 랭킹을 걸고 플레이합니다",
+        "zh": "完成！你正在为排名而战"
+      },
+      "body": {
+        "en": "After 5 matches you show up in the ranking with your Elo, winrate and 3 most played decks. My matches shows your matchups.",
+        "es": "Después de 5 partidas apareces en el ranking con tu Elo, tu winrate y tus 3 decks más usados. En Mis partidas ves tus matchups.",
+        "pt": "Depois de 5 partidas você aparece no ranking com seu Elo, sua taxa de vitórias e seus 3 decks mais usados. Em Minhas partidas você vê seus confrontos.",
+        "fr": "Après 5 parties, vous apparaissez dans le classement avec votre Elo, votre taux de victoire et vos 3 decks les plus joués. Mes parties affiche vos matchups.",
+        "de": "Nach 5 Partien erscheinst du in der Rangliste mit deinem Elo, deiner Siegquote und deinen 3 meistgespielten Decks. Unter Meine Partien siehst du deine Matchups.",
+        "it": "Dopo 5 partite compari in classifica con il tuo Elo, la tua percentuale di vittorie e i tuoi 3 mazzi più usati. In Le mie partite vedi i tuoi matchup.",
+        "ja": "5戦するとランキングに Elo、勝率、よく使うデッキ3つと一緒に表示されます。「自分の対戦」で相性を確認できます。",
+        "ko": "5회 대전하면 Elo, 승률, 가장 많이 사용한 덱 3개와 함께 랭킹에 표시됩니다. 내 대전에서 상성을 확인하세요.",
+        "zh": "完成 5 场对战后，你会带着 Elo、胜率和最常用的 3 个卡组出现在排名中。在“我的对战”中查看你的对局。"
+      },
+      "tip": {
+        "en": "Your account is verified once another TCGKB player uploads a match against you.",
+        "es": "Tu cuenta queda verificada cuando otro jugador de TCGKB sube una partida contra ti.",
+        "pt": "Sua conta fica verificada quando outro jogador do TCGKB envia uma partida contra você.",
+        "fr": "Votre compte est vérifié dès qu'un autre joueur TCGKB envoie une partie contre vous.",
+        "de": "Dein Konto wird verifiziert, sobald ein anderer TCGKB-Spieler eine Partie gegen dich hochlädt.",
+        "it": "Il tuo account viene verificato quando un altro giocatore di TCGKB carica una partita contro di te.",
+        "ja": "他の TCGKB プレイヤーがあなたとの対戦をアップロードすると、アカウントが認証されます。",
+        "ko": "다른 TCGKB 플레이어가 나와의 대전을 업로드하면 계정이 인증됩니다.",
+        "zh": "当其他 TCGKB 玩家上传了与你的对战后，你的账号就会被验证。"
+      },
+      "alt": {
+        "en": "TCGKB ranking with your row highlighted",
+        "es": "Ranking de TCGKB con tu fila resaltada",
+        "pt": "Ranking do TCGKB com sua linha destacada",
+        "fr": "Classement TCGKB avec votre ligne en surbrillance",
+        "de": "TCGKB-Rangliste mit deiner hervorgehobenen Zeile",
+        "it": "Classifica di TCGKB con la tua riga evidenziata",
+        "ja": "あなたの行が強調された TCGKB のランキング",
+        "ko": "내 줄이 강조된 TCGKB 랭킹",
+        "zh": "高亮你所在行的 TCGKB 排名"
+      },
+      "cta": {
+        "href": "https://tcgkb.app/matches",
+        "label": {
+          "en": "See my matches",
+          "es": "Ver Mis partidas",
+          "pt": "Ver minhas partidas",
+          "fr": "Voir mes parties",
+          "de": "Meine Partien ansehen",
+          "it": "Vedi le mie partite",
+          "ja": "自分の対戦を見る",
+          "ko": "내 대전 보기",
+          "zh": "查看我的对战"
+        }
+      },
+      "appText": []
+    },
+    "pokematch-token": {
+      "phase": {
+        "en": "On the web",
+        "es": "En la web",
+        "pt": "Na web",
+        "fr": "Sur le web",
+        "de": "Im Web",
+        "it": "Sul web",
+        "ja": "Web で",
+        "ko": "웹에서",
+        "zh": "在网站上"
+      },
+      "short": {
+        "en": "Make an API token",
+        "es": "Crea un token de API",
+        "pt": "Crie um token de API",
+        "fr": "Créez un jeton d'API",
+        "de": "API-Token erstellen",
+        "it": "Crea un token API",
+        "ja": "API トークンを作成",
+        "ko": "API 토큰 만들기",
+        "zh": "创建 API 令牌"
+      },
+      "title": {
+        "en": "Make a Pokematch API token",
+        "es": "Crea un token de API en Pokematch",
+        "pt": "Crie um token de API no Pokematch",
+        "fr": "Créez un jeton d'API Pokematch",
+        "de": "Erstelle ein Pokematch-API-Token",
+        "it": "Crea un token API su Pokematch",
+        "ja": "Pokematch で API トークンを作成",
+        "ko": "Pokematch API 토큰 만들기",
+        "zh": "在 Pokematch 创建 API 令牌"
+      },
+      "body": {
+        "en": "Sign in to Pokematch and open Profile Settings › Account › API Tokens. Create a token, for example named “PTCGL uploader”, and copy it.",
+        "es": "Entra a Pokematch y abre Profile Settings › Account › API Tokens. Crea un token, por ejemplo llamado “PTCGL uploader”, y cópialo.",
+        "pt": "Entre no Pokematch e abra Profile Settings › Account › API Tokens. Crie um token, por exemplo chamado “PTCGL uploader”, e copie-o.",
+        "fr": "Connectez-vous à Pokematch et ouvrez Profile Settings › Account › API Tokens. Créez un jeton, par exemple nommé “PTCGL uploader”, et copiez-le.",
+        "de": "Melde dich bei Pokematch an und öffne Profile Settings › Account › API Tokens. Erstelle ein Token, zum Beispiel „PTCGL uploader“, und kopiere es.",
+        "it": "Accedi a Pokematch e apri Profile Settings › Account › API Tokens. Crea un token, per esempio chiamato “PTCGL uploader”, e copialo.",
+        "ja": "Pokematch にログインして Profile Settings › Account › API Tokens を開きます。“PTCGL uploader” などの名前でトークンを作成してコピーします。",
+        "ko": "Pokematch에 로그인해 Profile Settings › Account › API Tokens를 엽니다. “PTCGL uploader” 같은 이름으로 토큰을 만들고 복사하세요.",
+        "zh": "登录 Pokematch，打开 Profile Settings › Account › API Tokens。创建一个令牌（例如命名为“PTCGL uploader”）并复制。"
+      },
+      "tip": {
+        "en": "Changing your Pokematch password revokes every token: then make a new one and set it again in PAB.",
+        "es": "Si cambias tu contraseña de Pokematch, todos los tokens dejan de funcionar: crea uno nuevo y vuelve a ponerlo en PAB.",
+        "pt": "Se você mudar a senha do Pokematch, todos os tokens deixam de funcionar: crie um novo e coloque-o de novo no PAB.",
+        "fr": "Changer votre mot de passe Pokematch révoque tous les jetons : créez-en alors un nouveau et remettez-le dans PAB.",
+        "de": "Wenn du dein Pokematch-Passwort änderst, werden alle Tokens ungültig: Erstelle dann ein neues und trage es in PAB erneut ein.",
+        "it": "Se cambi la password di Pokematch, tutti i token vengono revocati: creane uno nuovo e reinseriscilo in PAB.",
+        "ja": "Pokematch のパスワードを変更するとすべてのトークンが無効になります。その場合は新しいトークンを作成して PAB に設定し直してください。",
+        "ko": "Pokematch 비밀번호를 바꾸면 모든 토큰이 취소됩니다. 그때는 새 토큰을 만들어 PAB에 다시 넣으세요.",
+        "zh": "更改 Pokematch 密码会让所有令牌失效：届时请创建新令牌并在 PAB 中重新设置。"
+      },
+      "alt": {
+        "en": "Pokematch API Tokens page with a new token",
+        "es": "Página API Tokens de Pokematch con un token nuevo",
+        "pt": "Página API Tokens do Pokematch com um token novo",
+        "fr": "Page API Tokens de Pokematch avec un nouveau jeton",
+        "de": "Pokematch-Seite API Tokens mit einem neuen Token",
+        "it": "Pagina API Tokens di Pokematch con un nuovo token",
+        "ja": "新しいトークンが表示された Pokematch の API Tokens ページ",
+        "ko": "새 토큰이 표시된 Pokematch API Tokens 페이지",
+        "zh": "显示新令牌的 Pokematch API Tokens 页面"
+      },
+      "cta": {
+        "href": "https://pokematch-vslogger.onrender.com/",
+        "label": {
+          "en": "Open Pokematch",
+          "es": "Abrir Pokematch",
+          "pt": "Abrir o Pokematch",
+          "fr": "Ouvrir Pokematch",
+          "de": "Pokematch öffnen",
+          "it": "Apri Pokematch",
+          "ja": "Pokematch を開く",
+          "ko": "Pokematch 열기",
+          "zh": "打开 Pokematch"
+        }
+      },
+      "appText": [
+        "Profile Settings > Account > API Tokens"
+      ]
+    },
+    "pokematch-set-token": {
+      "phase": {
+        "en": "Connect",
+        "es": "Conectar",
+        "pt": "Conectar",
+        "fr": "Connexion",
+        "de": "Verbinden",
+        "it": "Collega",
+        "ja": "接続",
+        "ko": "연결",
+        "zh": "连接"
+      },
+      "short": {
+        "en": "Paste the token",
+        "es": "Pega el token",
+        "pt": "Cole o token",
+        "fr": "Collez le jeton",
+        "de": "Token einfügen",
+        "it": "Incolla il token",
+        "ja": "トークンを貼り付け",
+        "ko": "토큰 붙여넣기",
+        "zh": "粘贴令牌"
+      },
+      "title": {
+        "en": "Paste the token into PAB",
+        "es": "Pega el token en PAB",
+        "pt": "Cole o token no PAB",
+        "fr": "Collez le jeton dans PAB",
+        "de": "Füge das Token in PAB ein",
+        "it": "Incolla il token in PAB",
+        "ja": "トークンを PAB に貼り付け",
+        "ko": "PAB에 토큰 붙여넣기",
+        "zh": "将令牌粘贴到 PAB"
+      },
+      "body": {
+        "en": "Right-click the PAB icon, open “Pokematch” and choose “Set API token...”. Paste the token and click “OK”.",
+        "es": "Haz clic derecho en el ícono de PAB, entra a “Pokematch” y elige “Set API token...”. Pega el token y toca “OK”.",
+        "pt": "Clique com o botão direito no ícone do PAB, entre em “Pokematch” e escolha “Set API token...”. Cole o token e clique em “OK”.",
+        "fr": "Faites un clic droit sur l'icône de PAB, ouvrez “Pokematch” et choisissez “Set API token...”. Collez le jeton et cliquez sur “OK”.",
+        "de": "Klicke mit der rechten Maustaste auf das PAB-Symbol, öffne „Pokematch“ und wähle „Set API token...“. Füge das Token ein und klicke auf „OK“.",
+        "it": "Fai clic destro sull'icona di PAB, apri “Pokematch” e scegli “Set API token...”. Incolla il token e clicca “OK”.",
+        "ja": "PAB アイコンを右クリックし、“Pokematch” から “Set API token...” を選びます。トークンを貼り付けて “OK” をクリックします。",
+        "ko": "PAB 아이콘을 마우스 오른쪽 버튼으로 클릭하고 “Pokematch”에서 “Set API token...”을 선택하세요. 토큰을 붙여넣고 “OK”를 누릅니다.",
+        "zh": "右键单击 PAB 图标，打开“Pokematch”并选择“Set API token...”。粘贴令牌后点击“OK”。"
+      },
+      "tip": {
+        "en": "The token is kept encrypted on this PC for your Windows user and is sent only to Pokematch.",
+        "es": "El token queda cifrado en este PC para tu usuario de Windows y solo se envía a Pokematch.",
+        "pt": "O token fica criptografado neste PC para o seu usuário do Windows e só é enviado ao Pokematch.",
+        "fr": "Le jeton reste chiffré sur ce PC pour votre utilisateur Windows et n'est envoyé qu'à Pokematch.",
+        "de": "Das Token bleibt verschlüsselt auf diesem PC für deinen Windows-Benutzer und wird nur an Pokematch gesendet.",
+        "it": "Il token resta cifrato su questo PC per il tuo utente Windows e viene inviato solo a Pokematch.",
+        "ja": "トークンはこの PC 上で Windows ユーザーごとに暗号化して保存され、Pokematch にだけ送信されます。",
+        "ko": "토큰은 이 PC에 Windows 사용자별로 암호화되어 저장되며 Pokematch에만 전송됩니다.",
+        "zh": "令牌会针对你的 Windows 用户加密保存在这台电脑上，只会发送给 Pokematch。"
+      },
+      "alt": {
+        "en": "PAB's Pokematch menu with Set API token highlighted",
+        "es": "Menú Pokematch de PAB con Set API token resaltado",
+        "pt": "Menu Pokematch do PAB com Set API token destacado",
+        "fr": "Menu Pokematch de PAB avec Set API token en surbrillance",
+        "de": "PABs Pokematch-Menü mit hervorgehobenem Set API token",
+        "it": "Menu Pokematch di PAB con Set API token evidenziato",
+        "ja": "Set API token が強調された PAB の Pokematch メニュー",
+        "ko": "Set API token이 강조된 PAB의 Pokematch 메뉴",
+        "zh": "PAB 的 Pokematch 菜单，Set API token 已突出显示"
+      },
+      "appText": [
+        "Pokematch",
+        "Set API token..."
+      ]
+    },
+    "pokematch-auto-upload": {
+      "short": {
+        "en": "Automatic upload",
+        "es": "Subida automática",
+        "pt": "Envio automático",
+        "fr": "Envoi automatique",
+        "de": "Automatischer Upload",
+        "it": "Caricamento automatico",
+        "ja": "自動アップロード",
+        "ko": "자동 업로드",
+        "zh": "自动上传"
+      },
+      "title": {
+        "en": "Turn on automatic upload",
+        "es": "Activa la subida automática",
+        "pt": "Ative o envio automático",
+        "fr": "Activez l'envoi automatique",
+        "de": "Aktiviere den automatischen Upload",
+        "it": "Attiva il caricamento automatico",
+        "ja": "自動アップロードをオンにする",
+        "ko": "자동 업로드 켜기",
+        "zh": "开启自动上传"
+      },
+      "body": {
+        "en": "PAB asks “Upload your new battle logs to Pokematch automatically?”. Click “Yes”. From now on every finished match is added to your Pokematch logs: your deck, the result and the date.",
+        "es": "PAB pregunta “Upload your new battle logs to Pokematch automatically?”. Toca “Yes”. Desde ahora cada partida terminada se agrega a tus registros de Pokematch: tu deck, el resultado y la fecha.",
+        "pt": "O PAB pergunta “Upload your new battle logs to Pokematch automatically?”. Clique em “Yes”. A partir de agora cada partida terminada é adicionada aos seus registros no Pokematch: seu deck, o resultado e a data.",
+        "fr": "PAB demande “Upload your new battle logs to Pokematch automatically?”. Cliquez sur “Yes”. Désormais, chaque partie terminée s'ajoute à vos logs Pokematch : votre deck, le résultat et la date.",
+        "de": "PAB fragt „Upload your new battle logs to Pokematch automatically?“. Klicke auf „Yes“. Ab jetzt landet jedes beendete Match in deinen Pokematch-Logs: dein Deck, das Ergebnis und das Datum.",
+        "it": "PAB chiede “Upload your new battle logs to Pokematch automatically?”. Clicca “Yes”. Da ora ogni partita finita viene aggiunta ai tuoi log di Pokematch: il tuo mazzo, il risultato e la data.",
+        "ja": "PAB が “Upload your new battle logs to Pokematch automatically?” と尋ねるので “Yes” をクリックします。以降、終わった試合はデッキ・結果・日付とともに Pokematch のログに追加されます。",
+        "ko": "PAB가 “Upload your new battle logs to Pokematch automatically?”라고 물으면 “Yes”를 누르세요. 이제부터 끝난 경기가 덱, 결과, 날짜와 함께 Pokematch 기록에 추가됩니다.",
+        "zh": "PAB 会询问“Upload your new battle logs to Pokematch automatically?”，点击“Yes”。此后每场结束的对战都会连同你的卡组、结果和日期加入 Pokematch 记录。"
+      },
+      "tip": {
+        "en": "Your opponent's deck shows as “Unknown”: fill it in on Pokematch if you like. Your opponent's name and the log text stay on your PC.",
+        "es": "El deck de tu rival aparece como “Unknown”: complétalo en Pokematch si quieres. El nombre de tu rival y el texto del log se quedan en tu PC.",
+        "pt": "O deck do seu oponente aparece como “Unknown”: preencha no Pokematch se quiser. O nome do oponente e o texto do log ficam no seu PC.",
+        "fr": "Le deck adverse s'affiche comme “Unknown” : complétez-le sur Pokematch si vous voulez. Le nom de l'adversaire et le texte du log restent sur votre PC.",
+        "de": "Das Deck deines Gegners erscheint als „Unknown“: Trage es bei Bedarf in Pokematch nach. Der Name des Gegners und der Logtext bleiben auf deinem PC.",
+        "it": "Il mazzo dell'avversario appare come “Unknown”: completalo su Pokematch se vuoi. Il nome dell'avversario e il testo del log restano sul tuo PC.",
+        "ja": "相手のデッキは “Unknown” と表示されます。必要なら Pokematch で入力してください。相手の名前とログの本文は PC に残ります。",
+        "ko": "상대 덱은 “Unknown”으로 표시됩니다. 원하면 Pokematch에서 채우세요. 상대 이름과 로그 내용은 PC에 남습니다.",
+        "zh": "对手的卡组显示为“Unknown”，可在 Pokematch 中自行补充。对手名称和对战记录文本只会留在你的电脑上。"
+      },
+      "alt": {
+        "en": "PAB's question to upload to Pokematch automatically, with the Yes button",
+        "es": "Pregunta de PAB para subir automáticamente a Pokematch con el botón Yes",
+        "pt": "Pergunta do PAB para enviar automaticamente ao Pokematch, com o botão Yes",
+        "fr": "Question de PAB pour l'envoi automatique vers Pokematch, avec le bouton Yes",
+        "de": "PABs Frage zum automatischen Upload zu Pokematch mit der Schaltfläche Yes",
+        "it": "Domanda di PAB per caricare automaticamente su Pokematch, con il pulsante Yes",
+        "ja": "Pokematch への自動アップロードを確認する PAB のダイアログと Yes ボタン",
+        "ko": "Pokematch 자동 업로드를 묻는 PAB 대화 상자와 Yes 버튼",
+        "zh": "PAB 询问是否自动上传到 Pokematch 的对话框及 Yes 按钮"
+      },
+      "appText": [
+        "Upload your new battle logs to Pokematch automatically?"
+      ]
+    },
+    "pokematch-past": {
+      "short": {
+        "en": "Older matches",
+        "es": "Partidas anteriores",
+        "pt": "Partidas anteriores",
+        "fr": "Parties précédentes",
+        "de": "Ältere Matches",
+        "it": "Partite precedenti",
+        "ja": "過去の試合",
+        "ko": "이전 경기",
+        "zh": "以前的对战"
+      },
+      "title": {
+        "en": "Send your older matches (optional)",
+        "es": "Envía tus partidas anteriores (opcional)",
+        "pt": "Envie suas partidas anteriores (opcional)",
+        "fr": "Envoyez vos parties précédentes (facultatif)",
+        "de": "Sende deine älteren Matches (optional)",
+        "it": "Invia le partite precedenti (facoltativo)",
+        "ja": "過去の試合を送信する（任意）",
+        "ko": "이전 경기 보내기(선택)",
+        "zh": "上传以前的对战（可选）"
+      },
+      "body": {
+        "en": "In the same menu, “Upload past battle logs...” sends the matches already in your logs folder. Matches Pokematch already has are not sent again.",
+        "es": "En el mismo menú, “Upload past battle logs...” envía las partidas que ya están en tu carpeta de logs. Las que Pokematch ya tiene no se envían de nuevo.",
+        "pt": "No mesmo menu, “Upload past battle logs...” envia as partidas que já estão na sua pasta de logs. As que o Pokematch já tem não são enviadas de novo.",
+        "fr": "Dans le même menu, “Upload past battle logs...” envoie les parties déjà présentes dans votre dossier de logs. Celles que Pokematch possède déjà ne sont pas renvoyées.",
+        "de": "Im selben Menü sendet „Upload past battle logs...“ die Matches, die schon in deinem Log-Ordner liegen. Matches, die Pokematch schon hat, werden nicht erneut gesendet.",
+        "it": "Nello stesso menu, “Upload past battle logs...” invia le partite già presenti nella tua cartella dei log. Quelle che Pokematch ha già non vengono reinviate.",
+        "ja": "同じメニューの “Upload past battle logs...” で、ログフォルダーにある試合を送信できます。Pokematch にすでにある試合は再送されません。",
+        "ko": "같은 메뉴의 “Upload past battle logs...”는 로그 폴더에 이미 있는 경기를 보냅니다. Pokematch에 이미 있는 경기는 다시 보내지 않습니다.",
+        "zh": "在同一菜单中，“Upload past battle logs...”会上传日志文件夹中已有的对战。Pokematch 已有的对战不会重复上传。"
+      },
+      "alt": {
+        "en": "PAB's Pokematch menu with Upload past battle logs highlighted",
+        "es": "Menú Pokematch de PAB con Upload past battle logs resaltado",
+        "pt": "Menu Pokematch do PAB com Upload past battle logs destacado",
+        "fr": "Menu Pokematch de PAB avec Upload past battle logs en surbrillance",
+        "de": "PABs Pokematch-Menü mit hervorgehobenem Upload past battle logs",
+        "it": "Menu Pokematch di PAB con Upload past battle logs evidenziato",
+        "ja": "Upload past battle logs が強調された PAB の Pokematch メニュー",
+        "ko": "Upload past battle logs가 강조된 PAB의 Pokematch 메뉴",
+        "zh": "PAB 的 Pokematch 菜单，Upload past battle logs 已突出显示"
+      },
+      "appText": [
+        "Upload past battle logs..."
+      ]
+    },
+    "pokematch-done": {
+      "phase": {
+        "en": "Done",
+        "es": "Listo",
+        "pt": "Pronto",
+        "fr": "Terminé",
+        "de": "Fertig",
+        "it": "Fatto",
+        "ja": "完了",
+        "ko": "완료",
+        "zh": "完成"
+      },
+      "short": {
+        "en": "Check Pokematch",
+        "es": "Revisa Pokematch",
+        "pt": "Confira o Pokematch",
+        "fr": "Vérifiez Pokematch",
+        "de": "Pokematch prüfen",
+        "it": "Controlla Pokematch",
+        "ja": "Pokematch を確認",
+        "ko": "Pokematch 확인",
+        "zh": "查看 Pokematch"
+      },
+      "title": {
+        "en": "Done! Check your Pokematch logs",
+        "es": "¡Listo! Revisa tus registros en Pokematch",
+        "pt": "Pronto! Confira seus registros no Pokematch",
+        "fr": "Terminé ! Vérifiez vos logs Pokematch",
+        "de": "Fertig! Sieh dir deine Pokematch-Logs an",
+        "it": "Fatto! Controlla i tuoi log su Pokematch",
+        "ja": "完了！Pokematch のログを確認",
+        "ko": "완료! Pokematch 기록을 확인하세요",
+        "zh": "完成！查看你的 Pokematch 记录"
+      },
+      "body": {
+        "en": "Play a match and open your TCG logs on Pokematch: the match shows up with the tag “ptcgl-auto-battle-log”.",
+        "es": "Juega una partida y abre tus registros de TCG en Pokematch: la partida aparece con la etiqueta “ptcgl-auto-battle-log”.",
+        "pt": "Jogue uma partida e abra seus registros de TCG no Pokematch: a partida aparece com a tag “ptcgl-auto-battle-log”.",
+        "fr": "Jouez une partie et ouvrez vos logs TCG sur Pokematch : la partie apparaît avec l'étiquette “ptcgl-auto-battle-log”.",
+        "de": "Spiele ein Match und öffne deine TCG-Logs auf Pokematch: Das Match erscheint mit dem Tag „ptcgl-auto-battle-log“.",
+        "it": "Gioca una partita e apri i tuoi log TCG su Pokematch: la partita appare con il tag “ptcgl-auto-battle-log”.",
+        "ja": "試合をプレイして Pokematch の TCG ログを開くと、“ptcgl-auto-battle-log” タグ付きで試合が表示されます。",
+        "ko": "경기를 한 판 하고 Pokematch의 TCG 기록을 열면 “ptcgl-auto-battle-log” 태그가 붙은 경기가 보입니다.",
+        "zh": "打一场对战，然后在 Pokematch 打开你的 TCG 记录：该对战会带有“ptcgl-auto-battle-log”标签。"
+      },
+      "tip": {
+        "en": "To stop uploading, untick “Upload new battle logs automatically” or choose “Remove API token” in the Pokematch menu.",
+        "es": "Para dejar de subir, desmarca “Upload new battle logs automatically” o elige “Remove API token” en el menú Pokematch.",
+        "pt": "Para parar de enviar, desmarque “Upload new battle logs automatically” ou escolha “Remove API token” no menu Pokematch.",
+        "fr": "Pour arrêter l'envoi, décochez “Upload new battle logs automatically” ou choisissez “Remove API token” dans le menu Pokematch.",
+        "de": "Um den Upload zu beenden, entferne das Häkchen bei „Upload new battle logs automatically“ oder wähle „Remove API token“ im Pokematch-Menü.",
+        "it": "Per smettere di caricare, togli la spunta a “Upload new battle logs automatically” o scegli “Remove API token” nel menu Pokematch.",
+        "ja": "アップロードをやめるには、Pokematch メニューで “Upload new battle logs automatically” のチェックを外すか “Remove API token” を選びます。",
+        "ko": "업로드를 멈추려면 Pokematch 메뉴에서 “Upload new battle logs automatically” 체크를 해제하거나 “Remove API token”을 선택하세요.",
+        "zh": "如需停止上传，请在 Pokematch 菜单中取消勾选“Upload new battle logs automatically”，或选择“Remove API token”。"
+      },
+      "alt": {
+        "en": "Pokematch TCG logs with a match uploaded by PAB",
+        "es": "Registros de TCG en Pokematch con una partida subida por PAB",
+        "pt": "Registros de TCG no Pokematch com uma partida enviada pelo PAB",
+        "fr": "Logs TCG Pokematch avec une partie envoyée par PAB",
+        "de": "Pokematch-TCG-Logs mit einem von PAB hochgeladenen Match",
+        "it": "Log TCG di Pokematch con una partita caricata da PAB",
+        "ja": "PAB がアップロードした試合が表示された Pokematch の TCG ログ",
+        "ko": "PAB가 업로드한 경기가 있는 Pokematch TCG 기록",
+        "zh": "包含 PAB 上传对战的 Pokematch TCG 记录"
+      },
+      "cta": {
+        "href": "https://pokematch-vslogger.onrender.com/",
+        "label": {
+          "en": "Open Pokematch",
+          "es": "Abrir Pokematch",
+          "pt": "Abrir o Pokematch",
+          "fr": "Ouvrir Pokematch",
+          "de": "Pokematch öffnen",
+          "it": "Apri Pokematch",
+          "ja": "Pokematch を開く",
+          "ko": "Pokematch 열기",
+          "zh": "打开 Pokematch"
+        }
+      },
+      "appText": [
+        "ptcgl-auto-battle-log",
+        "Upload new battle logs automatically",
+        "Remove API token"
+      ]
+    }
+  }
+}
