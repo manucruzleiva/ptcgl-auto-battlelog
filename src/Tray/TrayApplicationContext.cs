@@ -182,7 +182,7 @@ namespace PtcglAutoBattleLog.Tray
             {
                 var folder = PathUtil.Friendly(_session.LogsFolder(_session.Game));
                 var game = _session.Game == null
-                    ? "\n" + AppInfo.GameName + " was not found: right-click this icon and choose Diagnostics > Choose game folder."
+                    ? "\n" + AppInfo.GameName + " was not found: right-click this icon and choose Help > Diagnostics > Choose game folder."
                     : "";
                 if (setupPending)
                     Balloon(AppInfo.ProductName + " is installed",
