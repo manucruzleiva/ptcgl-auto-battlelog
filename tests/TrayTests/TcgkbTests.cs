@@ -71,11 +71,12 @@ static partial class Program
               s.KeyId == identity.KeyId && s.SealFile == null && s.LogFile == footer && s.SealedUtc.Kind == DateTimeKind.Utc,
               "footer seal: player, account hash, match, result, key");
         Check(s.Version == 2 && s.DeckSha256 == null && s.ReadDeck() == null, "v2, no deck: nothing to send");
+        Check(s.Queue == null && s.Format == null, "no queue or format known: null");
 
         // A footer seal of an earlier build (v1): same fields, no deck.
         var block = File.ReadAllText(footer);
         var v1 = Path.Combine(folder, "2026-10-01 10.00.00 - VICTORY vs Gary.txt");
-        File.WriteAllText(v1, block.Replace("SEAL v2", "SEAL v1").Replace("{\"v\":2,", "{\"v\":1,").Replace(",\"deckSha256\":null", ""));
+        File.WriteAllText(v1, block.Replace("SEAL v2", "SEAL v1").Replace("{\"v\":2,", "{\"v\":1,").Replace(",\"deckSha256\":null,\"queue\":null,\"format\":null", ""));
         var old = SealSummary.TryRead(v1);
         Check(old != null && old.Version == 1 && old.PlayerAccountHash == ashHash && old.MatchId == "m-1" && old.DeckSha256 == null, "a v1 seal is read too");
         File.WriteAllText(v1, block.Replace("{\"v\":2,", "{\"v\":1,"));

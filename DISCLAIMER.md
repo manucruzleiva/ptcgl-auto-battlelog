@@ -15,8 +15,8 @@ What it does: it automates obtaining data that the game itself already offers yo
 text produced by the Export button of the Battle Log screen, and saves it to a folder on your
 computer. To name, index and seal each log, it also reads, during a match, match details that the
 game client already holds: the match id, both players' display names and account ids, your deck
-name and decklist, the seats and the winner. The opponent's name goes into the log's file name; the
-names, your deck name and the match id into its index.csv row and its seal; account ids are stored
+name and decklist, the seats and the winner, and the queue and format of the match. The opponent's name goes into the log's file name; the
+names, your deck name, the match id, the queue and the format into its index.csv row and its seal; account ids are stored
 only as hashes, in the seal. Your decklist (the cards of your own deck and their counts; the client
 never has your opponent's) is saved once per distinct deck in the logs folder's decks subfolder,
 and each log's seal names the deck it was played with.

@@ -56,7 +56,7 @@ Pokematch's TCG log, as its API docs define it (Pokematch → API Docs):
 | `games` | One game: `"win"` for a `VICTORY` log, `"loss"` for `DEFEAT`. Other logs are not sent. |
 | `date` | The match end's local date, `yyyy-MM-dd`: the seal's `endedUtc`, else the file name. |
 | `notes` | `"Added by PTCGL Auto Battle Log."` |
-| `tags` | `["ptcgl-auto-battle-log"]` (Pokematch stores tags lowercase, at most 30 characters). |
+| `tags` | `"ptcgl-auto-battle-log"`, then the seal's `queue` and `format` in lowercase when it names them, e.g. `["ptcgl-auto-battle-log","ranked","standard"]` (Pokematch stores tags lowercase, at most 30 characters; a repeated name is sent once). |
 
 Nothing else is sent: no player or opponent names, no account ids or hashes, no log text, no seal,
 no file paths. `GET /api/v1/me` is called once when the player sets a token, to check it.

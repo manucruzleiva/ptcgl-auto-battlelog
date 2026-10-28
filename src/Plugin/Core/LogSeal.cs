@@ -201,6 +201,8 @@ namespace PtcglAutoBattleLog.Core
             Field(sb, "opponent", Party(m.OpponentName, m.OpponentAccountId));
             Field(sb, "deck", Quote(NullIfEmpty(m.MyDeck)));
             Field(sb, "deckSha256", Quote(deck == null ? null : SigningIdentity.Hex(SigningIdentity.Sha256(deck))));
+            Field(sb, "queue", Quote(NullIfEmpty(m.Queue)));
+            Field(sb, "format", Quote(NullIfEmpty(m.Format)));
             Field(sb, "logSha256", Quote(SigningIdentity.Hex(SigningIdentity.Sha256(logUtf8))));
             Field(sb, "logChars", text.Length.ToString(CultureInfo.InvariantCulture));
             Field(sb, "sealedUtc", PluginStatusWriter.Date(sealedUtc));

@@ -40,6 +40,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
         private static readonly Regex OpponentField = new Regex(@",""opponent"":\{""name"":(?:null|" + JsonString + @"),""accountHash"":");
         private static readonly Regex DeckField = new Regex(@",""deck"":(?:null|" + JsonString + ")");
         private static readonly Regex DeckShaField = new Regex(@",""deckSha256"":(?:null|""([0-9a-f]{64})"")");
+        private static readonly Regex QueueField = new Regex(@",""queue"":(?:null|" + JsonString + ")");
+        private static readonly Regex FormatField = new Regex(@",""format"":(?:null|" + JsonString + ")");
         private static readonly Regex EndedField = new Regex(@",""endedUtc"":(?:null|""(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)"")");
 
         /// <summary>The .txt the seal belongs to, and its sidecar when the seal is in one.</summary>
@@ -55,6 +57,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public int Version;
         /// <summary>The seal's deckSha256 (v2): names decks\&lt;hash&gt;.deck in the log's folder; null when it names none.</summary>
         public string DeckSha256;
+        /// <summary>The seal's queue and format (v2), as the client names them (Ranked, Casual, BuildAndBattle, Friend; Standard, Expanded); null when unknown.</summary>
+        public string Queue, Format;
 
         /// <summary>
         /// The seal of a battle log .txt: its footer, else &lt;name&gt;.seal beside it. Null when the log is
@@ -102,6 +106,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
             var deck = DeckField.Match(json);
             var ended = EndedField.Match(json);
             var deckSha = version >= 2 ? DeckShaField.Match(json) : null;
+            var queue = version >= 2 ? QueueField.Match(json) : null;
+            var format = version >= 2 ? FormatField.Match(json) : null;
             return new SealSummary
             {
                 LogFile = logFile,
@@ -117,6 +123,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 EndedUtc = ended.Success && ended.Groups[1].Success ? ParseUtc(ended.Groups[1].Value) : (DateTime?)null,
                 Version = version,
                 DeckSha256 = deckSha != null && deckSha.Success && deckSha.Groups[1].Success ? deckSha.Groups[1].Value : null,
+                Queue = queue != null && queue.Success && queue.Groups[1].Success ? Unescape(queue.Groups[1].Value) : null,
+                Format = format != null && format.Success && format.Groups[1].Success ? Unescape(format.Groups[1].Value) : null,
             };
         }
 

@@ -19,6 +19,10 @@ namespace PtcglAutoBattleLog.Core
         public DeckList MyDeckList;
         public string MyAccountId;
         public string OpponentAccountId;
+        /// <summary>The client's queue name (Ranked, Casual, BuildAndBattle, Friend, ...); null when unknown.</summary>
+        public string Queue;
+        /// <summary>The client's format name (Standard, Expanded, BuildAndBattle, ...); null when unknown.</summary>
+        public string Format;
         public bool ManualOnly;     // an Export click with no match we were tracking
         /// <summary>How the text being saved was obtained: "auto" (our own read) or "export" (the player's Export click).</summary>
         public string Capture;
@@ -141,6 +145,8 @@ namespace PtcglAutoBattleLog.Core
             }
             s.Dirty |= Take(ref r.MyAccountId, snap.MyAccountId, open);
             s.Dirty |= Take(ref r.OpponentAccountId, snap.OpponentAccountId, open);
+            s.Dirty |= Take(ref r.Queue, snap.Queue, open);
+            s.Dirty |= Take(ref r.Format, snap.Format, open);
             if (snap.MySeat.HasValue && r.MySeat != snap.MySeat && (open || r.MySeat == null))
             {
                 r.MySeat = snap.MySeat;

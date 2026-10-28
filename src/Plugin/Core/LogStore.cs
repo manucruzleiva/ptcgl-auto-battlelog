@@ -20,7 +20,12 @@ namespace PtcglAutoBattleLog.Core
         public const string IndexFile = "index.csv";
         /// <summary>Subfolder of the logs folder holding each distinct deck once (docs/LOG-SEAL.md §2a).</summary>
         public const string DecksFolder = "decks";
-        public const string IndexHeader = "Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File";
+        /// <summary>Queue and Format came last (1.3.2), so readers of the earlier columns keep working.</summary>
+        public const string IndexHeader = "Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File,Queue,Format";
+        /// <summary>The header before Queue and Format; MigrateLegacy extends it. Its rows keep 8 fields.</summary>
+        internal const string IndexHeaderV1 = "Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File";
+        /// <summary>Position of File in a row (0-based): rows are found again by it.</summary>
+        private const int FileColumn = 7;
 
         /// <summary>
         /// Longest file name stem. With ".txt" and a " (999)" duplicate suffix the whole name stays
@@ -209,7 +214,9 @@ namespace PtcglAutoBattleLog.Core
         /// <summary>
         /// Removes what 1.0 left in the logs folder: the Spanish estado.txt (replaced by
         /// plugin-status.json) and the Spanish index.csv header and result labels, so old and new
-        /// rows read as one table. Best effort; anything locked is retried on the next start.
+        /// rows read as one table. An index.csv header without Queue and Format gets them; its rows
+        /// are left as they are (two empty columns to a spreadsheet). Best effort; anything locked
+        /// is retried on the next start.
         /// </summary>
         public void MigrateLegacy(Action<string> log)
         {
@@ -229,11 +236,24 @@ namespace PtcglAutoBattleLog.Core
             {
                 var index = Path.Combine(Folder, IndexFile);
                 if (!File.Exists(index)) return;
-                bool legacy;
-                using (var r = new StreamReader(index, Encoding.UTF8, true)) legacy = r.ReadLine() == LegacyIndexHeader;
-                if (!legacy) return;
-                RewriteIndex(record => record == LegacyIndexHeader ? IndexHeader : TranslateLegacyLabel(record));
-                log(IndexFile + " converted from version 1.0 (Spanish) to English.");
+                string header;
+                using (var r = new StreamReader(index, Encoding.UTF8, true)) header = r.ReadLine();
+                if (header == LegacyIndexHeader)
+                {
+                    RewriteIndex(record => record == LegacyIndexHeader ? IndexHeader : TranslateLegacyLabel(record));
+                    log(IndexFile + " converted from version 1.0 (Spanish) to English.");
+                }
+                else if (header == IndexHeaderV1)
+                {
+                    bool first = true;
+                    RewriteIndex(record =>
+                    {
+                        if (!first) return record;
+                        first = false;
+                        return IndexHeader;
+                    });
+                    log(IndexFile + ": added the Queue and Format columns.");
+                }
             }
             catch (Exception e) { log("Could not convert " + IndexFile + " from version 1.0: " + e.Message); }
         }
@@ -306,13 +326,14 @@ namespace PtcglAutoBattleLog.Core
         /// <summary>Points the row of a renamed log file at its new name and details.</summary>
         private void ReplaceIndexRow(string oldFileName, MatchRecord m, string newPath)
         {
-            var suffix = "," + Csv(oldFileName);
             bool found = false;
             try
             {
                 RewriteIndex(record =>
                 {
-                    if (found || !record.EndsWith(suffix, StringComparison.Ordinal)) return record;
+                    if (found) return record;
+                    var fields = SplitCsv(record);
+                    if (fields.Count <= FileColumn || fields[FileColumn] != oldFileName) return record;
                     found = true;
                     return Row(m, newPath);
                 });
@@ -359,7 +380,32 @@ namespace PtcglAutoBattleLog.Core
                 .Append(Csv(m.MyDeck)).Append(',')
                 .Append(Csv(minutes)).Append(',')
                 .Append(Csv(m.MatchId)).Append(',')
-                .Append(Csv(Path.GetFileName(path))).ToString();
+                .Append(Csv(Path.GetFileName(path))).Append(',')
+                .Append(Csv(m.Queue)).Append(',')
+                .Append(Csv(m.Format)).ToString();
+        }
+
+        /// <summary>The fields of one index.csv record, unquoted.</summary>
+        internal static List<string> SplitCsv(string record)
+        {
+            var fields = new List<string>();
+            var sb = new StringBuilder();
+            bool quoted = false;
+            for (int i = 0; i < record.Length; i++)
+            {
+                var c = record[i];
+                if (quoted)
+                {
+                    if (c != '"') sb.Append(c);
+                    else if (i + 1 < record.Length && record[i + 1] == '"') { sb.Append('"'); i++; }
+                    else quoted = false;
+                }
+                else if (c == '"') quoted = true;
+                else if (c == ',') { fields.Add(sb.ToString()); sb.Length = 0; }
+                else sb.Append(c);
+            }
+            fields.Add(sb.ToString());
+            return fields;
         }
 
         private static string Csv(string v)

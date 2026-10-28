@@ -20,7 +20,7 @@ static partial class Program
     static readonly string[] SealKeys =
     {
         "v", "app", "pluginVersion", "gameVersion", "capture", "matchId", "startedUtc", "endedUtc", "result", "winner",
-        "mySeat", "player", "opponent", "deck", "deckSha256", "logSha256", "logChars", "sealedUtc", "seq", "prev", "keyId", "publicKey",
+        "mySeat", "player", "opponent", "deck", "deckSha256", "queue", "format", "logSha256", "logChars", "sealedUtc", "seq", "prev", "keyId", "publicKey",
     };
 
     const string Separator = "\n\n-----BEGIN PTCGL-ABL SEAL v2-----\n";
@@ -171,6 +171,7 @@ static partial class Program
             MatchId = id, StartUtc = start, EndUtc = start.AddMinutes(12), Won = won, Winner = won == null ? null : won == true ? 1 : 2,
             MySeat = 1, MyName = "Ash", OpponentName = opponent, MyDeck = "Charizard ex",
             MyAccountId = "me-123", OpponentAccountId = "opp-9", Capture = LogSealer.CaptureAuto,
+            Queue = "Ranked", Format = "Standard",
         };
     }
 
@@ -212,6 +213,7 @@ static partial class Program
               "player name and accountHash = sha256(\"ptcgl-abl:v1:\" + id)");
         Check(m.GetProperty("opponent").GetProperty("accountHash").GetString() == Hex(SHA256.HashData(Encoding.UTF8.GetBytes("ptcgl-abl:v1:opp-9"))), "opponent accountHash");
         Check(s.Str("deck") == "Charizard ex" && m.GetProperty("logChars").GetInt32() == text.Length, "deck and logChars");
+        Check(s.Str("queue") == "Ranked" && s.Str("format") == "Standard", "queue and format, as the client names them");
         Check(s.Seq == 1 && s.Prev == null, "first seal: seq 1, prev null");
         Check(s.Str("keyId") == id.KeyId && m.GetProperty("publicKey").GetProperty("e").GetString() == "AQAB" &&
               B64Url(m.GetProperty("publicKey").GetProperty("n").GetString()).Length == 256, "keyId and a 2048-bit public key, e = AQAB");
@@ -313,7 +315,7 @@ static partial class Program
         Check(pc2 != pc && !File.Exists(pc) && pc2.EndsWith(" - VICTORY vs Brock.txt"), "moved to its corrected name, old name gone");
         Check(c2.Seq == c1.Seq && c2.Prev == c1.Prev && c2.Str("result") == "VICTORY" && Problem(c2) == null, "same place in the chain, new result, verifies");
         var rows = File.ReadAllLines(Path.Combine(dir, LogStore.IndexFile));
-        Check(rows.Length == 4 && rows.Count(x => x.EndsWith("," + Path.GetFileName(pc2))) == 1 && !rows.Any(x => x.EndsWith("," + Path.GetFileName(pc))), "index row follows the move");
+        Check(rows.Length == 4 && rows.Count(x => LogStore.SplitCsv(x)[7] == Path.GetFileName(pc2)) == 1 && !rows.Any(x => LogStore.SplitCsv(x)[7] == Path.GetFileName(pc)), "index row follows the move");
 
         Console.WriteLine("33. the old file cannot be moved (locked): no fork");
         var d = Match("m-d", "Erika", won: null);

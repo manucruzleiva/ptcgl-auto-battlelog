@@ -16,15 +16,20 @@ The section of a version becomes the top of its GitHub release notes, so add one
   `decks\<hash>.deck` in the logs folder: one line of JSON with the game's card ids and counts.
   The log's seal names the deck it was played with, so an edited deck file is detectable.
   Nothing is saved in seal mode **Off**.
+- **Queue and format of each match** (#26): `Ranked`, `Casual`, `BuildAndBattle` (or `Friend`
+  for a direct match the game names no queue for) and `Standard`, `Expanded`, `BuildAndBattle`,
+  as the game names them. They go into two new columns at the end of `index.csv` (an existing
+  file gets them in its header), into the seal, and as tags on Pokematch uploads. File names are
+  unchanged.
 - **Decks on tcgkb.** With **Upload my matches automatically** on, each match is sent with its
   decklist, each distinct deck only once; tcgkb keeps your decks and their versions.
 
 ### Changed
 
-- **Seal format v2**: `deckSha256` after `deck`. v1 seals of earlier builds stay valid, your chain
+- **Seal format v2**: `deckSha256`, `queue` and `format` after `deck`. v1 seals of earlier builds stay valid, your chain
   continues across the update, and `tools/verify_log.py` checks both (and the deck file).
   An older `verify_log.py` reports v2 logs as unsealed: use the new one.
-- **Disclaimer updated** (version 4): it now mentions the decklist. You are asked to accept it again.
+- **Disclaimer updated** (version 4): it now mentions the decklist, the queue and the format. You are asked to accept it again.
 
 ### Removed
 

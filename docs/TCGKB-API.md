@@ -121,6 +121,8 @@ user gives the account up; its matches stay, unowned.
   cards, a v1 seal), when the file is missing or no longer matches the seal (the log is still
   sent), and when tcgkb already linked that `deckSha256` to an earlier match
   (`tcgkb-uploads.json` `decks`). Claims never carry it.
+* The match's queue and format need no field of their own: tcgkb reads them from the verified
+  seal (v2 `queue` and `format`, docs/LOG-SEAL.md §3).
 * tcgkb checks a `deck` against the seal's `deckSha256`, then upserts the user's deck by its
   `deckGuid` (a new version when the cards changed) and links the match to it. Without `deck`,
   a v2 seal whose `deckSha256` tcgkb already has for this user (the SHA-256 of a deck file it was

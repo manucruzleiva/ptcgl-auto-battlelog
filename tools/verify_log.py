@@ -65,8 +65,8 @@ MAX_FILE_BYTES = 16 * 1024 * 1024
 TOP_KEYS_V1 = ("v", "app", "pluginVersion", "gameVersion", "capture", "matchId", "startedUtc", "endedUtc",
                "result", "winner", "mySeat", "player", "opponent", "deck", "logSha256", "logChars",
                "sealedUtc", "seq", "prev", "keyId", "publicKey")
-# v2 adds deckSha256 (the SHA-256 of the .deck file beside the log, or null) right after deck.
-TOP_KEYS_V2 = TOP_KEYS_V1[:14] + ("deckSha256",) + TOP_KEYS_V1[14:]
+# v2 adds deckSha256 (the SHA-256 of the .deck file, or null), queue and format right after deck.
+TOP_KEYS_V2 = TOP_KEYS_V1[:14] + ("deckSha256", "queue", "format") + TOP_KEYS_V1[14:]
 TOP_KEYS = {1: TOP_KEYS_V1, 2: TOP_KEYS_V2}
 PARTY_KEYS = ("name", "accountHash")
 PUBLIC_KEY_KEYS = ("kty", "n", "e")
@@ -253,6 +253,12 @@ def check_fields(meta, version):
             raise Invalid(key + ".accountHash must be 64 lowercase hex digits or null")
     if version >= 2 and meta["deckSha256"] is not None and not (isinstance(meta["deckSha256"], str) and HEX64.fullmatch(meta["deckSha256"])):
         raise Invalid("deckSha256 must be 64 lowercase hex digits or null")
+    if version >= 2:
+        # The client's own names (Ranked, Casual, BuildAndBattle, Friend; Standard, Expanded, ...),
+        # kept as they come so a new one is not refused.
+        for key in ("queue", "format"):
+            if meta[key] is not None and not (isinstance(meta[key], str) and meta[key]):
+                raise Invalid(key + " must be a non-empty string or null")
     if not isinstance(meta["logSha256"], str) or not HEX64.fullmatch(meta["logSha256"]):
         raise Invalid("logSha256 must be 64 lowercase hex digits")
     if not _is_int(meta["logChars"]) or meta["logChars"] < 0:
@@ -645,7 +651,8 @@ class _Sealer:
     def __init__(self, key):
         self.key, self.seq, self.last = key, 0, None
 
-    def block(self, log_text, result="VICTORY", opponent="Gary", seq=None, prev=None, key=None, edit=None, version=2, deck=None):
+    def block(self, log_text, result="VICTORY", opponent="Gary", seq=None, prev=None, key=None, edit=None, version=2, deck=None,
+              queue="Ranked", fmt="Standard"):
         key = key or self.key
         log = log_text.encode("utf-8")
         seq = self.seq + 1 if seq is None else seq
@@ -662,7 +669,8 @@ class _Sealer:
         }
         if version >= 2:
             items = list(meta.items())
-            items.insert(14, ("deckSha256", hashlib.sha256(deck).hexdigest() if deck is not None else None))
+            items[14:14] = [("deckSha256", hashlib.sha256(deck).hexdigest() if deck is not None else None),
+                            ("queue", queue), ("format", fmt)]
             meta = dict(items)
         meta["v"] = version
         json_line = json.dumps(meta, separators=(",", ":"), ensure_ascii=True)
@@ -871,6 +879,11 @@ def self_test():
         tampered("v-mismatch.txt", BOM + b"x\n\n" + _Sealer(key).block("x", edit=v1_keys), "v must be 2", "a v2 BEGIN line with v 1 is caught")
         no_deck_key = lambda j: j.replace(',"deckSha256":null', '', 1)
         tampered("v2-no-key.txt", BOM + b"x\n\n" + _Sealer(key).block("x", edit=no_deck_key), "not the v2 keys", "a v2 seal without deckSha256 is caught")
+        no_queue_key = lambda j: j.replace(',"queue":"Ranked","format":"Standard"', '', 1)
+        tampered("v2-no-queue.txt", BOM + b"x\n\n" + _Sealer(key).block("x", edit=no_queue_key), "not the v2 keys", "a v2 seal without queue and format is caught")
+        write(os.path.join(root, "friend.txt"), BOM + b"x\n\n" + _Sealer(key).block("x", queue="Friend", fmt=None))
+        check(quiet([os.path.join(root, "friend.txt")])[0] == 0, "a queue the verifier has not seen, and no format, are valid")
+        tampered("empty-queue.txt", BOM + b"x\n\n" + _Sealer(key).block("x", queue=""), "queue must be", "an empty queue is caught")
         v3 = _Sealer(key).block("x").replace(b"SEAL v2", b"SEAL v3")
         tampered("v3.txt", BOM + b"x\n\n" + v3, "does not know", "an unknown version is refused")
 
