@@ -87,9 +87,9 @@ namespace PtcglAutoBattleLog.Tray
             bool yes;
             using (Modal())
                 yes = Dialogs.Confirm("Upload your matches to tcgkb automatically?\n\n" +
-                                      "After each match, the app sends tcgkb.app the sealed battle log, if the player is one of the PTCGL accounts " +
+                                      "After each match, the app sends tcgkb.app the sealed battle log and your decklist, if the player is one of the PTCGL accounts " +
                                       "you claimed. The matches already in your logs folder are sent too. tcgkb uses them for your stats, the meta " +
-                                      "and the leaderboard. The logs contain both players' names, your deck and every play of the match.\n\n" +
+                                      "and the leaderboard, and keeps your decks there. The logs contain both players' names, your deck and every play of the match.\n\n" +
                                       "You can turn this off any time in the tcgkb account menu.", MessageBoxIcon.Question);
             _session.Update(s => s.TcgkbAutoUpload = yes);
             Log.Info("Automatic match upload to tcgkb " + (yes ? "turned on." : "declined."));

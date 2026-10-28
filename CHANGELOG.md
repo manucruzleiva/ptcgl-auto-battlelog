@@ -9,6 +9,27 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **Your decklist with each match** (#22). The plugin reads the cards of your own deck while a
+  match loads (the game never has your opponent's) and saves each distinct deck once, as
+  `decks\<hash>.deck` in the logs folder: one line of JSON with the game's card ids and counts.
+  The log's seal names the deck it was played with, so an edited deck file is detectable.
+  Nothing is saved in seal mode **Off**.
+- **Decks on tcgkb.** With **Upload my matches automatically** on, each match is sent with its
+  decklist, each distinct deck only once; tcgkb keeps your decks and their versions.
+
+### Changed
+
+- **Seal format v2**: `deckSha256` after `deck`. v1 seals of earlier builds stay valid, your chain
+  continues across the update, and `tools/verify_log.py` checks both (and the deck file).
+  An older `verify_log.py` reports v2 logs as unsealed: use the new one.
+- **Disclaimer updated** (version 4): it now mentions the decklist. You are asked to accept it again.
+
+### Removed
+
+- The one-time `Deck info (research, issue #15)` line in `BepInEx\LogOutput.log`.
+
 ## [1.3.2-beta.1] - 2026-10-28
 
 A beta for testers, to research the queue type (#14) and decklists (#15). Installed apps

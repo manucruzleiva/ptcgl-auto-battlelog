@@ -107,6 +107,11 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "log", Order = 2)] public string Log;
         /// <summary>The .seal sidecar exactly as on disk, base64; null when the seal is a footer.</summary>
         [DataMember(Name = "seal", Order = 3)] public string Seal;
+        /// <summary>
+        /// Match uploads only: the deck file the seal (v2) names, exactly as on disk, base64; left out
+        /// when there is none, it does not match, or tcgkb already has it (it then links it by deckSha256).
+        /// </summary>
+        [DataMember(Name = "deck", Order = 4, EmitDefaultValue = false)] public string Deck;
     }
 
     [DataContract]
@@ -130,6 +135,16 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "account")] public TcgkbAccount Account;
         [DataMember(Name = "playerDeck")] public string PlayerDeck;
         [DataMember(Name = "opponentDeck")] public string OpponentDeck;
+        /// <summary>The deck tcgkb linked to this match; null when none (no deck in the seal, or tcgkb does not have it).</summary>
+        [DataMember(Name = "deckRef")] public TcgkbDeckRef DeckRef;
+    }
+
+    [DataContract]
+    public sealed class TcgkbDeckRef
+    {
+        [DataMember(Name = "deckId")] public string DeckId;
+        [DataMember(Name = "version")] public int Version;
+        [DataMember(Name = "changed")] public bool Changed;
     }
 
     public enum DevicePollState { Pending, SlowDown, Granted, Denied, Expired }

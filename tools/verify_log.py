@@ -2,7 +2,8 @@
 """Verify the seals of PTCGL Auto Battle Log battle logs (format: docs/LOG-SEAL.md).
 
     verify_log.py FILE...         check each log: a .txt with a footer seal, or a .txt with its
-                                  .seal sidecar (passing the .seal file checks its .txt)
+                                  .seal sidecar (passing the .seal file checks its .txt); the deck
+                                  a v2 seal names (decks/<hash>.deck) is checked too when it is there
     verify_log.py --chain DIR     check every log in DIR, then each key's chain: forks and broken
                                   links are errors, gaps are warnings
     verify_log.py --key KEYID     (with FILEs or --chain, repeatable) also require the seal to be
@@ -37,11 +38,19 @@ import time
 import unicodedata
 from contextlib import redirect_stderr, redirect_stdout
 
-BEGIN = "-----BEGIN PTCGL-ABL SEAL v1-----"
-END = "-----END PTCGL-ABL SEAL v1-----"
-SEPARATOR = ("\n\n" + BEGIN + "\n").encode("ascii")
+# Seal format versions this verifier knows (docs/LOG-SEAL.md, "Versioning"). The plugin writes v2;
+# v1 seals from earlier builds stay valid.
+VERSIONS = (1, 2)
+BEGINS = {v: "-----BEGIN PTCGL-ABL SEAL v%d-----" % v for v in VERSIONS}
+ENDS = {v: "-----END PTCGL-ABL SEAL v%d-----" % v for v in VERSIONS}
+BEGIN, END = BEGINS[2], ENDS[2]
+# A footer seal of any version starts with this; the last occurrence counts.
+SEPARATOR_PREFIX = b"\n\n-----BEGIN PTCGL-ABL SEAL v"
 BOM = b"\xef\xbb\xbf"
 SIDECAR_EXT = ".seal"
+DECK_EXT = ".deck"
+DECKS_FOLDER = "decks"  # each distinct deck once, named by its SHA-256 (docs/LOG-SEAL.md, 2a)
+MAX_DECK_BYTES = 64 * 1024
 APP = "PTCGL Auto Battle Log"
 ACCOUNT_HASH_PREFIX = "ptcgl-abl:v1:"
 # The plugin makes RSA-2048 keys with e = 65537. The bounds keep pow() cheap whatever a file
@@ -53,9 +62,12 @@ PUBLIC_EXPONENT = 65537
 MAX_BLOCK_BYTES = 16 * 1024
 MAX_FILE_BYTES = 16 * 1024 * 1024
 
-TOP_KEYS = ("v", "app", "pluginVersion", "gameVersion", "capture", "matchId", "startedUtc", "endedUtc",
-            "result", "winner", "mySeat", "player", "opponent", "deck", "logSha256", "logChars",
-            "sealedUtc", "seq", "prev", "keyId", "publicKey")
+TOP_KEYS_V1 = ("v", "app", "pluginVersion", "gameVersion", "capture", "matchId", "startedUtc", "endedUtc",
+               "result", "winner", "mySeat", "player", "opponent", "deck", "logSha256", "logChars",
+               "sealedUtc", "seq", "prev", "keyId", "publicKey")
+# v2 adds deckSha256 (the SHA-256 of the .deck file beside the log, or null) right after deck.
+TOP_KEYS_V2 = TOP_KEYS_V1[:14] + ("deckSha256",) + TOP_KEYS_V1[14:]
+TOP_KEYS = {1: TOP_KEYS_V1, 2: TOP_KEYS_V2}
 PARTY_KEYS = ("name", "accountHash")
 PUBLIC_KEY_KEYS = ("kty", "n", "e")
 RESULTS = ("VICTORY", "DEFEAT", "NO-RESULT", "EXPORTED")
@@ -79,11 +91,12 @@ class Invalid(Exception):
 class Seal:
     """A seal that verified, with what the chain check needs."""
 
-    def __init__(self, path, source, meta, chain_hash):
+    def __init__(self, path, source, meta, chain_hash, deck=None):
         self.path = path
         self.source = source
         self.meta = meta
         self.hash = chain_hash
+        self.deck = deck  # "deck" (checked), "deck file missing", or None (the seal names no deck)
 
     @property
     def seq(self):
@@ -110,14 +123,14 @@ def log_path_for(path):
 def read_log_and_block(path):
     """(log bytes, seal block bytes or None, "footer" | "sidecar" | None) of a .txt file.
 
-    The log is everything before the last occurrence of SEPARATOR, after removing a leading BOM.
+    The log is everything before the last occurrence of SEPARATOR_PREFIX, after removing a leading BOM.
     Without a footer, the block is the .seal file next to the .txt (same name), if there is one.
     Oversized files and blocks are refused before anything is parsed.
     """
     data = _read_capped(path, MAX_FILE_BYTES, "the file")
     if data.startswith(BOM):
         data = data[len(BOM):]
-    at = data.rfind(SEPARATOR)
+    at = data.rfind(SEPARATOR_PREFIX)
     if at >= 0:
         return data[:at], _capped_block(data[at + 2:]), "footer"
     sidecar = os.path.splitext(path)[0] + SIDECAR_EXT
@@ -126,7 +139,7 @@ def read_log_and_block(path):
         if block.startswith(BOM):
             block = block[len(BOM):]
         return data, _capped_block(block), "sidecar"
-    if data.rstrip(b"\r\n").endswith(END.encode("ascii")):
+    if any(data.rstrip(b"\r\n").endswith(end.encode("ascii")) for end in ENDS.values()):
         raise Invalid("the file ends with a seal that is not separated from the log by exactly \"\\n\\n\" "
                       "(line endings converted?), so the file was modified")
     return data, None, None
@@ -147,7 +160,7 @@ def _capped_block(block):
 
 
 def split_block(block):
-    """(JSON line, signature line) of "BEGIN\\n<json>\\n<signature>\\nEND\\n", exactly."""
+    """(version, JSON line, signature line) of "BEGIN\\n<json>\\n<signature>\\nEND\\n", exactly."""
     try:
         text = block.decode("ascii")
     except UnicodeDecodeError:
@@ -155,10 +168,13 @@ def split_block(block):
     if "\r" in text:
         raise Invalid("the seal has CR characters: its line endings were converted, so the file was modified")
     lines = text.split("\n")
-    if len(lines) != 5 or lines[0] != BEGIN or lines[3] != END or lines[4] != "":
+    version = next((v for v in VERSIONS if lines[0] == BEGINS[v]), None)
+    if lines[0].startswith("-----BEGIN PTCGL-ABL SEAL v") and version is None:
+        raise Invalid("the seal is of a version this verifier does not know: " + lines[0])
+    if len(lines) != 5 or version is None or lines[3] != ENDS[version] or lines[4] != "":
         raise Invalid("the seal block is malformed (expected BEGIN line, JSON line, signature line, END line, "
                       "each ending with a line feed, and nothing after)")
-    return lines[1], lines[2]
+    return version, lines[1], lines[2]
 
 
 # ---------------------------------------------------------------------------------- metadata
@@ -179,15 +195,15 @@ def _no_constant(text):
     raise Invalid("the metadata has " + text)
 
 
-def load_metadata(json_line):
+def load_metadata(json_line, version):
     try:
         meta = json.loads(json_line, object_pairs_hook=_pairs, parse_float=_no_float, parse_constant=_no_constant)
     except ValueError as e:
         raise Invalid("the metadata is not valid JSON (%s)" % e)
     if not isinstance(meta, dict):
         raise Invalid("the metadata is not a JSON object")
-    if tuple(meta) != TOP_KEYS:
-        raise Invalid("the metadata keys are not the v1 keys in order: " + ",".join(meta))
+    if tuple(meta) != TOP_KEYS[version]:
+        raise Invalid("the metadata keys are not the v%d keys in order: %s" % (version, ",".join(meta)))
     return meta
 
 
@@ -208,10 +224,10 @@ def _date(meta, key, nullable):
         raise Invalid(key + " must be a UTC date yyyy-MM-ddTHH:mm:ssZ" + (" or null" if nullable else ""))
 
 
-def check_fields(meta):
+def check_fields(meta, version):
     """Types and values of every field, so nothing downstream trips on a crafted seal."""
-    if not _is_int(meta["v"]) or meta["v"] != 1:
-        raise Invalid("v must be 1")
+    if not _is_int(meta["v"]) or meta["v"] != version:
+        raise Invalid("v must be %d, as in the BEGIN line" % version)
     if meta["app"] != APP:
         raise Invalid("app must be %r" % APP)
     if not isinstance(meta["pluginVersion"], str) or not meta["pluginVersion"]:
@@ -235,6 +251,8 @@ def check_fields(meta):
         _opt_str(party, "name")
         if party["accountHash"] is not None and not (isinstance(party["accountHash"], str) and HEX64.fullmatch(party["accountHash"])):
             raise Invalid(key + ".accountHash must be 64 lowercase hex digits or null")
+    if version >= 2 and meta["deckSha256"] is not None and not (isinstance(meta["deckSha256"], str) and HEX64.fullmatch(meta["deckSha256"])):
+        raise Invalid("deckSha256 must be 64 lowercase hex digits or null")
     if not isinstance(meta["logSha256"], str) or not HEX64.fullmatch(meta["logSha256"]):
         raise Invalid("logSha256 must be 64 lowercase hex digits")
     if not _is_int(meta["logChars"]) or meta["logChars"] < 0:
@@ -331,9 +349,9 @@ def verify_file(path):
     log, block, source = read_log_and_block(path)
     if block is None:
         return None
-    json_line, signature_line = split_block(block)
-    meta = load_metadata(json_line)
-    check_fields(meta)
+    version, json_line, signature_line = split_block(block)
+    meta = load_metadata(json_line, version)
+    check_fields(meta, version)
 
     n = b64url_uint(meta["publicKey"]["n"], "publicKey.n")
     e = b64url_uint(meta["publicKey"]["e"], "publicKey.e")
@@ -355,15 +373,28 @@ def verify_file(path):
             problems.append("the log has %d characters, the seal says %d" % (chars, meta["logChars"]))
     except UnicodeDecodeError:
         problems.append("the log is not valid UTF-8")
+    deck = None
+    if meta.get("deckSha256") is not None:
+        # The deck is a file of its own, shared by every log played with it: one that was deleted or
+        # not copied along leaves the log valid (reported); one that is there must be the sealed deck.
+        deck_path = os.path.join(os.path.dirname(path), DECKS_FOLDER, meta["deckSha256"] + DECK_EXT)
+        if os.path.isfile(deck_path):
+            deck = "deck"
+            if hashlib.sha256(_read_capped(deck_path, MAX_DECK_BYTES, "the .deck file")).hexdigest() != meta["deckSha256"]:
+                problems.append("%s/%s%s does not match deckSha256: it was changed after it was sealed"
+                                % (DECKS_FOLDER, meta["deckSha256"][:12] + "...", DECK_EXT))
+        else:
+            deck = "deck file missing"
     if problems:
         raise Invalid("; ".join(problems))
-    return Seal(path, source, meta, chain_hash(json_line, signature_line))
+    return Seal(path, source, meta, chain_hash(json_line, signature_line), deck)
 
 
 def describe(seal):
     m = seal.meta
     who = m["result"] + (" vs " + safe(m["opponent"]["name"]) if m["opponent"]["name"] else "")
-    return "seq %d  %s  (%s, %s, key %s)" % (m["seq"], who, seal.source, m["capture"], safe(m["keyId"]))
+    extra = ", " + seal.deck if seal.deck else ""
+    return "seq %d  %s  (v%d %s, %s%s, key %s)" % (m["seq"], who, m["v"], seal.source, m["capture"], extra, safe(m["keyId"]))
 
 
 def safe(text):
@@ -614,7 +645,7 @@ class _Sealer:
     def __init__(self, key):
         self.key, self.seq, self.last = key, 0, None
 
-    def block(self, log_text, result="VICTORY", opponent="Gary", seq=None, prev=None, key=None, edit=None):
+    def block(self, log_text, result="VICTORY", opponent="Gary", seq=None, prev=None, key=None, edit=None, version=2, deck=None):
         key = key or self.key
         log = log_text.encode("utf-8")
         seq = self.seq + 1 if seq is None else seq
@@ -629,12 +660,17 @@ class _Sealer:
             "logChars": utf16_length(log_text), "sealedUtc": "2026-10-19T21:12:09Z", "seq": seq, "prev": prev,
             "keyId": key.key_id, "publicKey": {"kty": "RSA", "n": key.n_b64, "e": key.e_b64},
         }
+        if version >= 2:
+            items = list(meta.items())
+            items.insert(14, ("deckSha256", hashlib.sha256(deck).hexdigest() if deck is not None else None))
+            meta = dict(items)
+        meta["v"] = version
         json_line = json.dumps(meta, separators=(",", ":"), ensure_ascii=True)
         signature = key.sign(json_line.encode("ascii"))
         if edit:
             json_line = edit(json_line)
         self.seq, self.last = seq, chain_hash(json_line, signature)
-        return (BEGIN + "\n" + json_line + "\n" + signature + "\n" + END + "\n").encode("ascii")
+        return (BEGINS[version] + "\n" + json_line + "\n" + signature + "\n" + ENDS[version] + "\n").encode("ascii")
 
 
 def self_test():
@@ -704,11 +740,11 @@ def self_test():
                  "thumbprint", "a keyId that is not the key's thumbprint is caught")
         swapped = blk.replace(key.n_b64.encode(), other.n_b64.encode()).replace(key.key_id.encode(), other.key_id.encode())
         tampered("swap.txt", BOM + b"x\n\n" + swapped, "INVALID", "a seal re-labelled with another key is caught")
-        head = '{"v":1,"app":"%s"' % APP
-        reorder = lambda j: '{"app":"%s","v":1' % APP + j[len(head):]
+        head = '{"v":2,"app":"%s"' % APP
+        reorder = lambda j: '{"app":"%s","v":2' % APP + j[len(head):]
         tampered("order.txt", BOM + b"x\n\n" + _Sealer(key).block("x", edit=reorder),
-                 "keys are not the v1 keys", "reordered keys are caught")
-        dup = lambda j: j[:-1] + ',"v":1}'
+                 "keys are not the v2 keys", "reordered keys are caught")
+        dup = lambda j: j[:-1] + ',"v":2}'
         tampered("dup.txt", BOM + b"x\n\n" + _Sealer(key).block("x", edit=dup), "duplicate key", "a duplicate key is caught")
         write(os.path.join(root, "unsealed.txt"), BOM + b"plain log")
         code, out = quiet([os.path.join(root, "unsealed.txt")])
@@ -756,7 +792,7 @@ def self_test():
         code, out = quiet([esc])
         check(code == 0 and "vs Gary\\u001b[8m\\u202e" in out and "\x1b" not in out and "\u202e" not in out,
               "control and bidi characters in a name are escaped: " + out.splitlines()[0])
-        keys = lambda j: j.replace('"v":1', '"v\\u001b[2J\\r":1', 1)
+        keys = lambda j: j.replace('"v":2', '"v\\u001b[2J\\r":2', 1)
         write(esc, BOM + b"x\n\n" + _Sealer(key).block("x", edit=keys))
         code, out = quiet([esc])
         check(code == 1 and "\\u001b[2J\\u000d" in out and "\x1b" not in out and "\r" not in out, "and in the reason of an INVALID line")
@@ -808,6 +844,35 @@ def self_test():
         os.mkdir(orphan_dir)
         write(os.path.join(orphan_dir, "lost.seal"), _Sealer(key).block("lost"))
         check(quiet(["--chain", orphan_dir])[0] == 1, "a .seal without its .txt is invalid")
+
+        # Seal v2: deckSha256 names the .deck beside the log; v1 seals of earlier builds stay valid.
+        decks = os.path.join(root, "decks")
+        os.mkdir(decks)
+        deck = b'{"v":1,"deckGuid":null,"iterationCount":null,"name":null,"deckDefinitionId":"bnb-me3","size":2,"cards":{"sv8_174":2}}'
+        d = _Sealer(key)
+        with_deck = os.path.join(decks, "a.txt")
+        write(with_deck, BOM + b"one\n\n" + d.block("one", deck=deck))
+        os.mkdir(os.path.join(decks, DECKS_FOLDER))
+        deck_file = os.path.join(decks, DECKS_FOLDER, hashlib.sha256(deck).hexdigest() + DECK_EXT)
+        write(deck_file, deck)
+        write(os.path.join(decks, "a2.txt"), BOM + b"one again\n\n" + d.block("one again", deck=deck))
+        write(os.path.join(decks, "b.txt"), BOM + b"two\n\n" + d.block("two", version=1))
+        write(os.path.join(decks, "c.txt"), BOM + b"three\n\n" + d.block("three"))
+        code, out = quiet(["--chain", decks])
+        check(code == 0 and "continuous" in out and out.count("(v2 footer, auto, deck,") == 2 and "(v1 footer" in out,
+              "two v2 logs sharing one deck file, v1, and v2 without a deck: one valid chain")
+        write(deck_file, deck.replace(b'"sv8_174":2', b'"sv8_174":3'))
+        code, out = quiet([with_deck])
+        check(code == 1 and "does not match deckSha256" in out, "an edited deck file is caught")
+        os.remove(deck_file)
+        code, out = quiet([with_deck])
+        check(code == 0 and "deck file missing" in out, "a missing .deck leaves the log valid, and is reported")
+        v1_keys = lambda j: j.replace('"v":2', '"v":1', 1)
+        tampered("v-mismatch.txt", BOM + b"x\n\n" + _Sealer(key).block("x", edit=v1_keys), "v must be 2", "a v2 BEGIN line with v 1 is caught")
+        no_deck_key = lambda j: j.replace(',"deckSha256":null', '', 1)
+        tampered("v2-no-key.txt", BOM + b"x\n\n" + _Sealer(key).block("x", edit=no_deck_key), "not the v2 keys", "a v2 seal without deckSha256 is caught")
+        v3 = _Sealer(key).block("x").replace(b"SEAL v2", b"SEAL v3")
+        tampered("v3.txt", BOM + b"x\n\n" + v3, "does not know", "an unknown version is refused")
 
         check(quiet([])[0] == 2, "no arguments -> exit 2")
         check(quiet([os.path.join(root, "does-not-exist.txt")])[0] == 2, "missing FILE -> exit 2")

@@ -10,15 +10,23 @@ namespace PtcglAutoBattleLog.Tray.Logic
     /// The few seal fields the tray needs to offer a player's PTCGL accounts for a tcgkb claim: who
     /// played (player name and accountHash), the match, when it was sealed and by which key. It finds
     /// the seal as docs/LOG-SEAL.md §2 says (a footer in the .txt, else a .seal sidecar) and reads the
-    /// metadata line in its canonical v1 form. It verifies nothing: tcgkb checks the signature of every
-    /// log it is sent, so a forged or broken seal here only means a claim that tcgkb refuses.
+    /// metadata line in its canonical v1 or v2 form. It verifies nothing: tcgkb checks the signature of
+    /// every log it is sent, so a forged or broken seal here only means a claim that tcgkb refuses.
     /// </summary>
     public sealed class SealSummary
     {
-        public const string Begin = "-----BEGIN PTCGL-ABL SEAL v1-----";
-        public const string End = "-----END PTCGL-ABL SEAL v1-----";
+        public const string Begin = "-----BEGIN PTCGL-ABL SEAL v2-----";
+        public const string End = "-----END PTCGL-ABL SEAL v2-----";
+        public const string BeginV1 = "-----BEGIN PTCGL-ABL SEAL v1-----";
+        public const string EndV1 = "-----END PTCGL-ABL SEAL v1-----";
         public const string SidecarExtension = ".seal";
-        private const string FooterSeparator = "\n\n" + Begin + "\n";
+        public const string DeckExtension = ".deck";
+        /// <summary>Where the plugin keeps each distinct deck once, by its SHA-256 (docs/LOG-SEAL.md §2a).</summary>
+        public const string DecksFolder = "decks";
+        /// <summary>A .deck file is one line of about 1 KB; anything far larger is not one.</summary>
+        public const int MaxDeckBytes = 64 * 1024;
+        /// <summary>Starts a footer seal of any version; the last occurrence counts (docs/LOG-SEAL.md §2).</summary>
+        private const string FooterPrefix = "\n\n-----BEGIN PTCGL-ABL SEAL v";
 
         /// <summary>A seal block is at most 16 KiB (docs/LOG-SEAL.md §2), so the footer lies within this tail.</summary>
         private const int TailBytes = 20 * 1024;
@@ -31,6 +39,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         private static readonly Regex KeyIdField = new Regex(@",""keyId"":""([A-Za-z0-9_-]{1,128})""");
         private static readonly Regex OpponentField = new Regex(@",""opponent"":\{""name"":(?:null|" + JsonString + @"),""accountHash"":");
         private static readonly Regex DeckField = new Regex(@",""deck"":(?:null|" + JsonString + ")");
+        private static readonly Regex DeckShaField = new Regex(@",""deckSha256"":(?:null|""([0-9a-f]{64})"")");
         private static readonly Regex EndedField = new Regex(@",""endedUtc"":(?:null|""(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)"")");
 
         /// <summary>The .txt the seal belongs to, and its sidecar when the seal is in one.</summary>
@@ -42,17 +51,21 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public DateTime SealedUtc;
         /// <summary>When the plugin saw the match end; null for EXPORTED.</summary>
         public DateTime? EndedUtc;
+        /// <summary>Seal format version: 1 or 2.</summary>
+        public int Version;
+        /// <summary>The seal's deckSha256 (v2): names decks\&lt;hash&gt;.deck in the log's folder; null when it names none.</summary>
+        public string DeckSha256;
 
         /// <summary>
         /// The seal of a battle log .txt: its footer, else &lt;name&gt;.seal beside it. Null when the log is
-        /// unsealed, the seal is not v1 or the file cannot be read. Never throws.
+        /// unsealed, the seal is not v1 or v2 or the file cannot be read. Never throws.
         /// </summary>
         public static SealSummary TryRead(string logFile)
         {
             try
             {
                 var tail = ReadTail(logFile);
-                var at = LastIndexOf(tail, Encoding.ASCII.GetBytes(FooterSeparator));
+                var at = LastIndexOf(tail, Encoding.ASCII.GetBytes(FooterPrefix));
                 if (at >= 0) return Parse(Encoding.ASCII.GetString(tail, at + 2, tail.Length - at - 2), logFile, null);
 
                 var sidecar = Path.ChangeExtension(logFile, SidecarExtension);
@@ -71,9 +84,13 @@ namespace PtcglAutoBattleLog.Tray.Logic
         internal static SealSummary Parse(string block, string logFile, string sealFile)
         {
             var lines = block.Split('\n');
-            if (lines.Length != 5 || lines[0] != Begin || lines[3] != End || lines[4].Length != 0 || lines[2].Length == 0) return null;
+            if (lines.Length != 5 || lines[4].Length != 0 || lines[2].Length == 0) return null;
+            int version;
+            if (lines[0] == Begin && lines[3] == End) version = 2;
+            else if (lines[0] == BeginV1 && lines[3] == EndV1) version = 1;
+            else return null;
             var json = lines[1];
-            if (!json.StartsWith("{\"v\":1,", StringComparison.Ordinal)) return null;
+            if (!json.StartsWith("{\"v\":" + version + ",", StringComparison.Ordinal)) return null;
 
             var player = PlayerField.Match(json);
             var sealedUtc = SealedField.Match(json);
@@ -84,6 +101,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
             var opponent = OpponentField.Match(json);
             var deck = DeckField.Match(json);
             var ended = EndedField.Match(json);
+            var deckSha = version >= 2 ? DeckShaField.Match(json) : null;
             return new SealSummary
             {
                 LogFile = logFile,
@@ -97,7 +115,30 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 Deck = deck.Success && deck.Groups[1].Success ? Unescape(deck.Groups[1].Value) : null,
                 SealedUtc = ParseUtc(sealedUtc.Groups[1].Value),
                 EndedUtc = ended.Success && ended.Groups[1].Success ? ParseUtc(ended.Groups[1].Value) : (DateTime?)null,
+                Version = version,
+                DeckSha256 = deckSha != null && deckSha.Success && deckSha.Groups[1].Success ? deckSha.Groups[1].Value : null,
             };
+        }
+
+        /// <summary>
+        /// The deck the seal names (decks\&lt;deckSha256&gt;.deck in the log's folder), exactly as on disk, when its hash matches;
+        /// null otherwise (no deck, a v1 seal, the file missing, changed or too large). Never throws.
+        /// </summary>
+        public byte[] ReadDeck()
+        {
+            if (DeckSha256 == null || LogFile == null) return null;
+            try
+            {
+                var path = Path.Combine(Path.GetDirectoryName(LogFile) ?? "", DecksFolder, DeckSha256 + DeckExtension);
+                if (!File.Exists(path) || new FileInfo(path).Length > MaxDeckBytes) return null;
+                var bytes = File.ReadAllBytes(path);
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                    return Hashing.ToHex(sha.ComputeHash(bytes)) == DeckSha256 ? bytes : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         private static DateTime ParseUtc(string s) =>

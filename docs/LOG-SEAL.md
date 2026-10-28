@@ -1,4 +1,4 @@
-# Sealed logs (seal format v1)
+# Sealed logs (seal format v2)
 
 Every battle log the plugin saves carries a **seal**: one line of metadata about the match and the
 log, signed with a key that belongs to the player's Windows account and chained to the previous
@@ -7,6 +7,10 @@ online leaderboard follow a player's history of matches.
 
 This document is the full specification. `docs/ARCHITECTURE.md` ("Sealed logs") holds the summary
 that the code is tested against. The reference verifier is `tools/verify_log.py`.
+
+The plugin writes **v2** seals. v2 is v1 plus `deckSha256`, the hash of the player's decklist,
+saved once per distinct deck in the logs folder's `decks` subfolder (§2a). v1 seals, written by earlier builds, stay valid: verifiers accept both, and
+the plugin's chain continues across them (see [Versioning](#versioning)).
 
 Read the [threat model](#threat-model) before relying on a seal. A seal made on the player's own
 computer cannot prove that a match took place.
@@ -70,21 +74,26 @@ The BepInEx config `BepInEx\config\ptcgl.autobattlelog.cfg` chooses the layout i
   `\n`-separated parts with nothing after the last `\n`:
 
   ```
-  -----BEGIN PTCGL-ABL SEAL v1-----\n
+  -----BEGIN PTCGL-ABL SEAL v2-----\n
   <metadata JSON, one line>\n
   <signature, standard base64 with padding, one line>\n
-  -----END PTCGL-ABL SEAL v1-----\n
+  -----END PTCGL-ABL SEAL v2-----\n
   ```
+
+  The number in the BEGIN and END lines is the format version, and equals `v` in the JSON. A v1
+  block is the same with `v1` in both lines.
 
 * **How a verifier finds the log** (in this order):
   1. Read the `.txt` bytes and drop a leading `EF BB BF` if there is one.
-  2. If the bytes contain `\n\n-----BEGIN PTCGL-ABL SEAL v1-----\n`, the log is everything before
-     the **last** occurrence, and the block is everything after its first two bytes (`\n\n`). The
-     last occurrence is used so that a log which happens to quote a seal still verifies.
+  2. If the bytes contain `\n\n-----BEGIN PTCGL-ABL SEAL v` (the start of a BEGIN line of any
+     version), the log is everything before the **last** occurrence, and the block is everything
+     after its first two bytes (`\n\n`). The last occurrence is used so that a log which happens to
+     quote a seal still verifies. A block whose BEGIN line names a version the verifier does not
+     know is invalid, not unsealed.
   3. Otherwise, if `<name>.seal` exists, the log is all of the `.txt` bytes and the block is the
      `.seal` file (a leading BOM there is ignored).
   4. Otherwise the log is unsealed.
-* In `Sidecar` mode, a log whose own text contains the separator line (not expected in practice)
+* In `Sidecar` mode, a log whose own text contains that separator (not expected in practice)
   is sealed with a footer instead, so the rule above still finds its seal.
 * Each time a log is rewritten (a longer read, a late result), its seal is written again with it.
   Switching modes leaves no stale seal: rewriting a file in `Footer` or `Off` mode deletes its old
@@ -93,6 +102,36 @@ The BepInEx config `BepInEx\config\ptcgl.autobattlelog.cfg` chooses the layout i
   `BepInEx\LogOutput.log` and to the `message` in `plugin-status.json`. Possible failures: no key,
   a signing error, a signature that does not verify against its own key (it is never written), or
   a `.seal` file that cannot be written (the log then has no seal, rather than a stale one).
+
+## 2a. Deck file
+
+When the client gives the player's own deck (`playerDetails[me].deckInfo.cards`, during every
+tracked match; never the opponent's, which the client does not have), the plugin saves it as
+`decks\<sha256>.deck` in the logs folder, where `<sha256>` is the lowercase hex SHA-256 of the file's
+bytes, and the log's seal names that hash in `deckSha256`. Every match played with the same deck
+names the same file, so each distinct deck is stored once; editing a deck in game makes a new file.
+
+* One line of ASCII JSON, no BOM, no line break at the end, no spaces, escaped as the metadata JSON
+  (§3). Keys in this order:
+
+  | Key | Type | Meaning |
+  |---|---|---|
+  | `v` | `1` | Deck file version. |
+  | `deckGuid` | string or null | The client's id of the deck (`DeckGuid`): stable while the player keeps editing that deck. |
+  | `iterationCount` | integer or null | The client's edit counter of the deck (`IterationCount`). |
+  | `name` | string or null | The client's `deckName` as given (may be markup such as `<i></i>` in Build & Battle). |
+  | `deckDefinitionId` | string or null | The client's `deckDefinitionID`, e.g. `bnb-me3` for a Build & Battle deck. |
+  | `size` | integer | The client's `size`: normally the sum of the counts (60, or 40 in Build & Battle). |
+  | `cards` | object | PTCGL card id (`sv8_174`, `me1_131`) → count (1 to 99), ids in ordinal order. Never empty. |
+
+  Example: `{"v":1,"deckGuid":"fa550ad9-e5d6-4472-af21-abf178eb5016","iterationCount":4,"name":"<i></i>","deckDefinitionId":"bnb-me3","size":40,"cards":{"me1_131":2,"sv5_144":2,"sv8_174":2,…}}`
+* The card ids are the client's own; they are the same codes battle logs use. The file has no card
+  names: mapping ids to cards is left to whoever reads it (tcgkb does).
+* The deck file is written atomically **before** the `.txt`, unless a file with the same bytes is
+  already there (a damaged one is written again). If it cannot be written, the log is sealed with
+  `deckSha256` null. Deck files are never moved or deleted by the plugin: other logs may name them.
+* No deck file is written when the client gives no cards (for example for an `EXPORTED` log), nor
+  in `Off` mode, where no seal would name it.
 
 ## 3. Metadata JSON
 
@@ -109,7 +148,7 @@ order. Nested objects also keep the order shown. Every number is an integer, and
 
 | # | Key | Type | Meaning |
 |---|---|---|---|
-| 1 | `v` | `1` | Format version. |
+| 1 | `v` | `2` | Format version (`1` in v1 seals). |
 | 2 | `app` | `"PTCGL Auto Battle Log"` | |
 | 3 | `pluginVersion` | string | Version of the plugin that sealed the log. |
 | 4 | `gameVersion` | string or null | Unity `Application.version` of the game client. |
@@ -123,13 +162,16 @@ order. Nested objects also keep the order shown. Every number is an integer, and
 | 12 | `player` | `{"name", "accountHash"}` | The sealing player: display name, and the hash of their account id. |
 | 13 | `opponent` | `{"name", "accountHash"}` | The opponent, same fields. |
 | 14 | `deck` | string or null | The sealing player's deck name. |
-| 15 | `logSha256` | 64 lowercase hex | SHA-256 of the log bytes. |
-| 16 | `logChars` | integer | The log's length in UTF-16 code units, which is the .NET string length. |
-| 17 | `sealedUtc` | date | When the seal was made (the computer's clock). |
-| 18 | `seq` | integer ≥ 1 | Position in this key's chain. |
-| 19 | `prev` | 64 lowercase hex or null | Chain hash of the previous seal. Null exactly when `seq` is 1. |
-| 20 | `keyId` | base64url | RFC 7638 thumbprint of `publicKey`. |
-| 21 | `publicKey` | `{"kty":"RSA","n","e"}` | The signing key: base64url, no padding, no leading zero bytes. |
+| 15 | `deckSha256` | 64 lowercase hex or null | **v2 only.** SHA-256 of the player's deck file, `decks\<deckSha256>.deck` in the logs folder (§2a); null when the client gave no cards or the file could not be written. |
+| 16 | `logSha256` | 64 lowercase hex | SHA-256 of the log bytes. |
+| 17 | `logChars` | integer | The log's length in UTF-16 code units, which is the .NET string length. |
+| 18 | `sealedUtc` | date | When the seal was made (the computer's clock). |
+| 19 | `seq` | integer ≥ 1 | Position in this key's chain. |
+| 20 | `prev` | 64 lowercase hex or null | Chain hash of the previous seal. Null exactly when `seq` is 1. |
+| 21 | `keyId` | base64url | RFC 7638 thumbprint of `publicKey`. |
+| 22 | `publicKey` | `{"kty":"RSA","n","e"}` | The signing key: base64url, no padding, no leading zero bytes. |
+
+A v1 seal has the same keys without `deckSha256`.
 
 `accountHash` is the lowercase hex SHA-256 of the UTF-8 string `"ptcgl-abl:v1:" + accountId`, or
 null when the client did not give an account id. Both players' seals of one match name the same two
@@ -139,10 +181,10 @@ account ids in the files.
 Example (wrapped here, one line in the file):
 
 ```
-{"v":1,"app":"PTCGL Auto Battle Log","pluginVersion":"1.1.0","gameVersion":"1.24.0","capture":"auto",
+{"v":2,"app":"PTCGL Auto Battle Log","pluginVersion":"1.1.0","gameVersion":"1.24.0","capture":"auto",
 "matchId":"sample-1","startedUtc":"2026-10-19T20:00:00Z","endedUtc":"2026-10-19T20:11:00Z","result":"VICTORY",
 "winner":1,"mySeat":1,"player":{"name":"Ash","accountHash":"f824fc06…"},"opponent":{"name":"Gary",
-"accountHash":"be4f4101…"},"deck":"Charizard ex","logSha256":"f73f2b04…","logChars":65,
+"accountHash":"be4f4101…"},"deck":"Charizard ex","deckSha256":"3b0c51e2…","logSha256":"f73f2b04…","logChars":65,
 "sealedUtc":"2026-10-19T20:11:09Z","seq":1,"prev":null,"keyId":"E34E3c57…","publicKey":{"kty":"RSA",
 "n":"28DR3rx2…","e":"AQAB"}}
 ```
@@ -216,8 +258,11 @@ In `cmd.exe` the folder is `"%USERPROFILE%\Documents\PTCGL Battle Logs"`; on Lin
 `python3 tools/verify_log.py ...`.
 
 * The verifier needs Python 3.8+ and nothing else. It does the RSA check itself with `pow()`.
-* It prints one line per file (`OK` with the seal's full `keyId`, `INVALID` with the reason, or
-  `UNSEALED`), the chain findings, and a summary. Names and reasons taken from a file or a file
+* It prints one line per file (`OK` with the seal's version and full `keyId`, `INVALID` with the
+  reason, or `UNSEALED`), the chain findings, and a summary.
+* For a v2 seal with a `deckSha256`, the file `decks/<deckSha256>.deck` in the log's folder must
+  match it, or the log is `INVALID`. A missing one (deleted, or not copied along) leaves the log
+  valid and is reported on its `OK` line (`deck file missing`): the decklist is then unknown. Names and reasons taken from a file or a file
   name are printed with control and format characters escaped as `\uXXXX`, so a crafted log
   cannot change what the output looks like.
 * `--key KEYID` (repeatable) also requires every seal to be made with one of these keys; a valid
@@ -235,16 +280,18 @@ In `cmd.exe` the folder is `"%USERPROFILE%\Documents\PTCGL Battle Logs"`; on Lin
 ```
 verify(txt):
     data  = bytes(txt); if data starts with EF BB BF: data = data[3:]
-    i     = last index of "\n\n-----BEGIN PTCGL-ABL SEAL v1-----\n" in data
+    i     = last index of "\n\n-----BEGIN PTCGL-ABL SEAL v" in data
     if i >= 0:                 log = data[:i];  block = data[i+2:]
     elif exists(stem + ".seal"): log = data;    block = bytes(stem + ".seal") minus a leading BOM
     else:                      return UNSEALED
     require len(block) <= 16384
     lines = ascii(block).split("\n")              # non-ASCII -> INVALID
-    require len(lines) == 5 and lines[0] == BEGIN and lines[3] == END and lines[4] == ""
+    V     = the version whose BEGIN line is lines[0] (1 or 2), else INVALID
+    require len(lines) == 5 and lines[3] == END(V) and lines[4] == ""
     J, S  = lines[1], lines[2]
     meta  = json_parse(J)                         # reject duplicate keys and non-integers
-    require keys(meta) == [v, app, …, publicKey] in order, nested keys in order, field types as in §3
+    require meta.v == V
+    require keys(meta) == the keys of version V in order, nested keys in order, field types as in §3
     require (meta.seq == 1) == (meta.prev == null)
     n, e  = b64url_uint(meta.publicKey.n), b64url_uint(meta.publicKey.e)   # canonical, no leading 0x00
     require 2048 <= bits(n) <= 4096 and e == 65537
@@ -256,6 +303,9 @@ verify(txt):
     require EM == 00 01 || FF × (k − 54) || 00 || 3031300d060960864801650304020105000420 || sha256(J)
     require hex(sha256(log)) == meta.logSha256
     require utf16_length(utf8_decode_strict(log)) == meta.logChars
+    D     = folder(txt) / "decks" / (meta.deckSha256 + ".deck")
+    if V >= 2 and meta.deckSha256 != null and exists(D):
+        require hex(sha256(bytes(D))) == meta.deckSha256   # missing: valid, reported
     if keys were given: require meta.keyId in keys  # the player's known key (--key)
     return VALID, chain_hash = hex(sha256(J + "\n" + S))
 
@@ -369,7 +419,7 @@ This section is guidance for the server side, or any online leaderboard, that ac
 8. **Privacy and consent.**
    * Upload only after the player has explicitly opted in, in the tray app, with a clear
      explanation. The plugin sends nothing; the tray's tcgkb claim, its opt-in match uploads and
-     the opt-in Pokematch uploads are the only uploads, and `DISCLAIMER.md` says so (version 3). Any new upload feature must change that text and ask
+     the opt-in Pokematch uploads are the only uploads, and `DISCLAIMER.md` says so (version 4, which added the decklist). Any new upload feature must change that text and ask
      again (`Disclaimer.Version`).
    * A log contains the opponent's display name and their plays. Publish only what the
      leaderboard needs, and show opponents' names only for players who also opted in.
@@ -384,6 +434,16 @@ This section is guidance for the server side, or any online leaderboard, that ac
 
 ## Versioning
 
-`v` in the JSON and `v1` in the BEGIN/END lines change together. A verifier must reject versions it
-does not know. A new version may add keys or change their order, so v1 verifiers must not accept a
-v2 seal.
+`v` in the JSON and the number in the BEGIN/END lines change together. A verifier must reject
+versions it does not know. A new version may add keys or change their order, so a v1 verifier must
+not accept a v2 seal.
+
+| Version | Written by | Change |
+|---|---|---|
+| 1 | plugin 1.1 to 1.3 | First version. |
+| 2 | plugin after 1.3 (issue #22) | `deckSha256` after `deck`, naming the deck file (§2a). |
+
+The chain does not care about versions: a key's v1 and v2 seals form one chain, and the plugin
+continues it after an update (the chain repair of §1 reads both). An older verifier (such as
+`verify_log.py` before v2) finds no v1 separator in a v2 log and reports it as unsealed; use the
+current one.

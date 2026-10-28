@@ -22,7 +22,7 @@ BepInEx or the game itself (report those to their authors).
 
 - **Plugin** (inside Pokémon TCG Live): reads the battle log through the game's own exporter at the
   end of a match, and during a match the details the client already holds (match id, both
-  players' names and account ids, your deck, seats, winner) to name, index and seal the log; it
+  players' names and account ids, your deck and its cards, seats, winner) to name, index and seal the log; it
   writes files to your logs folder and to `%LOCALAPPDATA%\PtcglAutoBattleLog\`. Account ids are
   stored only as hashes. It makes **no network connections**.
 - **Tray app**: runs as your Windows user, never asks for administrator rights, and writes only to
@@ -36,7 +36,7 @@ BepInEx or the game itself (report those to their authors).
   pre-release), with the `User-Agent` `PtcglAutoBattleLog/<version>`.
   No telemetry and nothing uploaded, unless the player connects a tcgkb account: then HTTPS
   requests to `https://tcgkb.app` only (no redirects), with a bearer token kept encrypted with DPAPI
-  for the Windows user, and battle logs sent only for the PTCGL accounts the player claims
+  for the Windows user, and battle logs (with the player's decklist) sent only for the PTCGL accounts the player claims
   ([docs/TCGKB-API.md](docs/TCGKB-API.md)). If the player sets a Pokematch API token, HTTPS requests
   to `https://pokematch-vslogger.onrender.com` only (no redirects), with that token as the bearer
   token, kept encrypted with DPAPI for the Windows user; for each finished match, only the player's

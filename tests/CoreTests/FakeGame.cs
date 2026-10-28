@@ -32,7 +32,15 @@ public class MatchInfo
 
 public enum QueueKind { Casual, Ranked, BuildAndBattle }
 
-public class DeckInfo { public string deckName; }
+public class DeckInfo
+{
+    public int size;
+    public string DeckGuid;
+    public int IterationCount;
+    public Dictionary<string, int> cards = new Dictionary<string, int>();
+    public string deckName;
+    public string deckDefinitionID;
+}
 public class PlayerDetail { public string playerId; public string playerName; public DeckInfo deckInfo; }
 
 public static class NetworkMatchController

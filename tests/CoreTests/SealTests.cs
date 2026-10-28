@@ -20,10 +20,10 @@ static partial class Program
     static readonly string[] SealKeys =
     {
         "v", "app", "pluginVersion", "gameVersion", "capture", "matchId", "startedUtc", "endedUtc", "result", "winner",
-        "mySeat", "player", "opponent", "deck", "logSha256", "logChars", "sealedUtc", "seq", "prev", "keyId", "publicKey",
+        "mySeat", "player", "opponent", "deck", "deckSha256", "logSha256", "logChars", "sealedUtc", "seq", "prev", "keyId", "publicKey",
     };
 
-    const string Separator = "\n\n-----BEGIN PTCGL-ABL SEAL v1-----\n";
+    const string Separator = "\n\n-----BEGIN PTCGL-ABL SEAL v2-----\n";
 
     // ================================================================== fixtures
 
@@ -67,6 +67,8 @@ static partial class Program
     {
         public byte[] Log;
         public string Json, Signature, Source;
+        /// <summary>The deck file the seal names (decks\&lt;deckSha256&gt;.deck); null when it names none or it is missing.</summary>
+        public byte[] Deck;
         public string Hash => Hex(SHA256.HashData(Encoding.ASCII.GetBytes(Json + "\n" + Signature)));
         public JsonElement Meta => JsonDocument.Parse(Json).RootElement;
         public long Seq => Meta.GetProperty("seq").GetInt64();
@@ -109,9 +111,11 @@ static partial class Program
             source = "sidecar";
         }
         var lines = block.Split('\n');
-        if (lines.Length != 5 || lines[0] != "-----BEGIN PTCGL-ABL SEAL v1-----" || lines[3] != "-----END PTCGL-ABL SEAL v1-----" || lines[4] != "")
+        if (lines.Length != 5 || lines[0] != "-----BEGIN PTCGL-ABL SEAL v2-----" || lines[3] != "-----END PTCGL-ABL SEAL v2-----" || lines[4] != "")
             throw new FormatException("malformed seal block in " + txt);
-        return new Sealed { Log = log, Json = lines[1], Signature = lines[2], Source = source };
+        var named = System.Text.RegularExpressions.Regex.Match(lines[1], "\"deckSha256\":\"([0-9a-f]{64})\"");
+        var deck = named.Success ? LogStore.DeckPathFor(Path.GetDirectoryName(txt), named.Groups[1].Value) : null;
+        return new Sealed { Log = log, Json = lines[1], Signature = lines[2], Source = source, Deck = deck != null && File.Exists(deck) ? File.ReadAllBytes(deck) : null };
     }
 
     /// <summary>What is wrong with a seal, checked independently of the plugin's code; null when valid.</summary>
@@ -136,6 +140,10 @@ static partial class Program
         }
         if (Hex(SHA256.HashData(s.Log)) != root.GetProperty("logSha256").GetString()) return "logSha256";
         if (Encoding.UTF8.GetString(s.Log).Length != root.GetProperty("logChars").GetInt32()) return "logChars";
+        if (root.GetProperty("v").GetInt32() != 2) return "v";
+        var deckSha = root.GetProperty("deckSha256");
+        if (deckSha.ValueKind != JsonValueKind.Null && (s.Deck == null || Hex(SHA256.HashData(s.Deck)) != deckSha.GetString()))
+            return "deckSha256";
         return null;
     }
 
@@ -186,7 +194,7 @@ static partial class Program
         var s = ReadSealed(path);
         Check(s != null && s.Source == "footer", "the .txt carries a footer");
         Check(HasBom(bytes) && Encoding.UTF8.GetString(s.Log) == text, "the log part is the exact Export text, after the BOM");
-        var expected = new byte[] { 0xEF, 0xBB, 0xBF }.Concat(Encoding.UTF8.GetBytes(text + Separator + s.Json + "\n" + s.Signature + "\n-----END PTCGL-ABL SEAL v1-----\n")).ToArray();
+        var expected = new byte[] { 0xEF, 0xBB, 0xBF }.Concat(Encoding.UTF8.GetBytes(text + Separator + s.Json + "\n" + s.Signature + "\n-----END PTCGL-ABL SEAL v2-----\n")).ToArray();
         Check(bytes.SequenceEqual(expected), "file = BOM + log + \\n\\n + BEGIN + JSON + signature + END, each line ending in \\n");
         Check(Problem(s) == null, "signature, keyId, logSha256 and logChars verify independently (" + Problem(s) + ")");
         Check(!File.Exists(LogStore.SidecarPathFor(path)), "no sidecar in Footer mode");
@@ -195,8 +203,8 @@ static partial class Program
         Check(m.EnumerateObject().Select(p => p.Name).SequenceEqual(SealKeys), "keys in the contract's order");
         Check(m.GetProperty("player").EnumerateObject().Select(p => p.Name).SequenceEqual(new[] { "name", "accountHash" }) &&
               m.GetProperty("publicKey").EnumerateObject().Select(p => p.Name).SequenceEqual(new[] { "kty", "n", "e" }), "nested keys in order");
-        Check(m.GetProperty("v").GetInt32() == 1 && s.Str("app") == "PTCGL Auto Battle Log" && s.Str("pluginVersion") == "1.1.0" &&
-              s.Str("gameVersion") == "1.24.0" && s.Str("capture") == "auto" && s.Str("matchId") == "m-1", "v, app, versions, capture, matchId");
+        Check(m.GetProperty("v").GetInt32() == 2 && s.Str("deckSha256") == null && s.Str("app") == "PTCGL Auto Battle Log" && s.Str("pluginVersion") == "1.1.0" &&
+              s.Str("gameVersion") == "1.24.0" && s.Str("capture") == "auto" && s.Str("matchId") == "m-1", "v 2, no deck, app, versions, capture, matchId");
         Check(s.Str("startedUtc") == "2026-10-19T21:00:00Z" && s.Str("endedUtc") == "2026-10-19T21:12:00Z" && s.Str("sealedUtc") == "2026-10-19T21:12:09Z", "dates in UTC, yyyy-MM-ddTHH:mm:ssZ");
         Check(s.Str("result") == "VICTORY" && m.GetProperty("winner").GetInt32() == 1 && m.GetProperty("mySeat").GetInt32() == 1, "result, winner, mySeat");
         var meHash = Hex(SHA256.HashData(Encoding.UTF8.GetBytes("ptcgl-abl:v1:me-123")));
@@ -242,14 +250,14 @@ static partial class Program
         var saved = CultureInfo.CurrentCulture;
         string invariantJson, thaiJson;
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-        invariantJson = sealer.BuildJson(plain, "x", log, 12345, new string('a', 64), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        invariantJson = sealer.BuildJson(plain, "x", log, null, 12345, new string('a', 64), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
         try
         {
             var thai = (CultureInfo)new CultureInfo("th-TH").Clone();
             thai.NumberFormat.NegativeSign = "~";
             thai.NumberFormat.NativeDigits = new[] { "๐", "๑", "๒", "๓", "๔", "๕", "๖", "๗", "๘", "๙" };
             CultureInfo.CurrentCulture = thai;
-            thaiJson = sealer.BuildJson(plain, "x", log, 12345, new string('a', 64), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+            thaiJson = sealer.BuildJson(plain, "x", log, null, 12345, new string('a', 64), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
         }
         finally { CultureInfo.CurrentCulture = saved; }
         Check(thaiJson == invariantJson && invariantJson.Contains("\"sealedUtc\":\"2026-01-02T03:04:05Z\"") && invariantJson.Contains("\"seq\":12345"),
@@ -337,8 +345,8 @@ static partial class Program
         Check(File.ReadAllBytes(p).SequenceEqual(new byte[] { 0xEF, 0xBB, 0xBF }.Concat(Encoding.UTF8.GetBytes("sidecar log"))), "the .txt holds only the Export text");
         Check(side == p.Substring(0, p.Length - 4) + ".seal" && File.Exists(side), "the seal is in <same name>.seal");
         var sb = File.ReadAllBytes(side);
-        Check(!HasBom(sb) && sb.All(x => x < 0x80) && Encoding.ASCII.GetString(sb).StartsWith("-----BEGIN PTCGL-ABL SEAL v1-----\n") &&
-              Encoding.ASCII.GetString(sb).EndsWith("\n-----END PTCGL-ABL SEAL v1-----\n"), "the sidecar is the block, ASCII, no BOM");
+        Check(!HasBom(sb) && sb.All(x => x < 0x80) && Encoding.ASCII.GetString(sb).StartsWith("-----BEGIN PTCGL-ABL SEAL v2-----\n") &&
+              Encoding.ASCII.GetString(sb).EndsWith("\n-----END PTCGL-ABL SEAL v2-----\n"), "the sidecar is the block, ASCII, no BOM");
         var s1 = ReadSealed(p);
         Check(s1.Source == "sidecar" && Problem(s1) == null && s1.Seq == 1, "it verifies");
 
@@ -353,7 +361,7 @@ static partial class Program
         Check(p3 != p2 && File.Exists(LogStore.SidecarPathFor(p3)) && !File.Exists(LogStore.SidecarPathFor(p2)) && !File.Exists(p2), "a moved sidecar log moves its .seal too");
         Check(Problem(ReadSealed(p3)) == null && ReadSealed(p3).Seq == 1, "and it still verifies at seq 1");
 
-        var quoting = store.Save(Match("m-quote"), "a log quoting a seal:" + Separator + "{}\nAAAA\n-----END PTCGL-ABL SEAL v1-----\nmore", null);
+        var quoting = store.Save(Match("m-quote"), "a log quoting a seal:" + Separator + "{}\nAAAA\n-----END PTCGL-ABL SEAL v2-----\nmore", null);
         Check(ReadSealed(quoting).Source == "footer" && !File.Exists(LogStore.SidecarPathFor(quoting)) && Problem(ReadSealed(quoting)) == null,
               "Sidecar mode, but the log quotes the separator: sealed with a footer, so it still verifies");
 
@@ -744,7 +752,7 @@ static partial class Program
         Check(File.GetLastWriteTimeUtc(chainPath) == written, "nothing to do when the last write worked");
 
         Console.WriteLine("51. rebuilding chain.json trusts only seals this key signed");
-        string Footer(string json, string signature) => "x" + Separator + json + "\n" + signature + "\n-----END PTCGL-ABL SEAL v1-----\n";
+        string Footer(string json, string signature) => "x" + Separator + json + "\n" + signature + "\n-----END PTCGL-ABL SEAL v2-----\n";
         // The keyId is public: anyone can drop a file that claims it, with any seq.
         File.WriteAllText(Path.Combine(dir, "planted.txt"),
             Footer("{\"seq\":999999999999999999,\"prev\":\"" + new string('a', 64) + "\",\"keyId\":\"" + id.KeyId + "\"}", "AAAA"));
@@ -822,6 +830,8 @@ static partial class Program
             var ext = Path.GetExtension(f).ToLowerInvariant();
             if (ext == ".txt" || ext == ".seal" || Path.GetFileName(f) == LogStore.IndexFile) File.Delete(f);
         }
+        var decks = Path.Combine(target, LogStore.DecksFolder);
+        if (Directory.Exists(decks)) Directory.Delete(decks, true);
         // The plugin's own RSA where this runtime has it, so the samples come from the code that ships.
         RsaBackend backend = RsaBackend.Default;
         try { using (new RSACryptoServiceProvider(512)) { } } catch (PlatformNotSupportedException) { backend = new PortableRsa(); }
@@ -837,20 +847,23 @@ static partial class Program
             r.EndUtc = r.StartUtc.AddMinutes(11);
             return r;
         }
+        var first = At(0, "sample-1", true, "Gary");
+        first.MyDeckList = SampleDeck();
         var paths = new List<string>
         {
-            store.Save(At(0, "sample-1", true, "Gary"), "Setup\r\nTurn 1 - Ash played Charmander.\r\nGary conceded.\r\nAsh wins.", null),
+            store.Save(first, "Setup\r\nTurn 1 - Ash played Charmander.\r\nGary conceded.\r\nAsh wins.", null),
             store.Save(At(20, "sample-2", false, "Zo\u00eb \"Q\" \\ " + char.ConvertFromUtf32(0x1F525) + " \u65e5\u672c\u8a9e"),
                        "Setup\nZo\u00eb's Pikachu \u2014 \u65e5\u672c\u8a9e " + char.ConvertFromUtf32(0x1F525) + "\nZo\u00eb wins.", null),
         };
         var third = At(40, "sample-3", null, "Brock");
-        var p3 = store.Save(third, "Setup\nA line that quotes a seal:" + Separator + "{}\nAAAA\n-----END PTCGL-ABL SEAL v1-----\nConnection lost", null);
+        var p3 = store.Save(third, "Setup\nA line that quotes a seal:" + Separator + "{}\nAAAA\n-----END PTCGL-ABL SEAL v2-----\nConnection lost", null);
         third.Won = true; third.Winner = 1;
-        paths.Add(store.Save(third, "Setup\nA line that quotes a seal:" + Separator + "{}\nAAAA\n-----END PTCGL-ABL SEAL v1-----\nConnection lost\nBrock conceded.", p3));
+        paths.Add(store.Save(third, "Setup\nA line that quotes a seal:" + Separator + "{}\nAAAA\n-----END PTCGL-ABL SEAL v2-----\nConnection lost\nBrock conceded.", p3));
         mode = SealMode.Sidecar;
         paths.Add(store.Save(new MatchRecord { StartUtc = t0.AddMinutes(90), ManualOnly = true, Capture = LogSealer.CaptureExport }, "an exported replay", null));
         var seals = paths.Select(ReadSealed).ToList();
         Check(seals.Count(x => x.Source == "footer") >= 3 && seals.Count(x => x.Source == "sidecar") == 1, "3 footer seals and 1 sidecar written");
+        Check(seals[0].Deck != null && seals.Skip(1).All(x => x.Deck == null), "the first log names a deck file");
         Check(seals.Select(x => x.Seq).SequenceEqual(new long[] { 1, 2, 3, 4 }) && seals.All(x => Problem(x) == null), "one continuous chain, seq 1-4, all valid here");
         Check(Enumerable.Range(1, 3).All(i => seals[i].Prev == seals[i - 1].Hash), "linked");
         Console.WriteLine("    check with: python3 tools/verify_log.py --chain \"" + target + "\"");

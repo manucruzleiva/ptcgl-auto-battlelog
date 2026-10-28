@@ -15,6 +15,8 @@ namespace PtcglAutoBattleLog.Core
         public string MyName;
         public string OpponentName;
         public string MyDeck;
+        /// <summary>Our deck's cards, saved as the .deck file; null when the client gave none.</summary>
+        public DeckList MyDeckList;
         public string MyAccountId;
         public string OpponentAccountId;
         public bool ManualOnly;     // an Export click with no match we were tracking
@@ -132,6 +134,11 @@ namespace PtcglAutoBattleLog.Core
             s.Dirty |= Take(ref r.MyName, snap.MyName, open);
             s.Dirty |= Take(ref r.OpponentName, snap.OpponentName, open);
             s.Dirty |= Take(ref r.MyDeck, snap.MyDeck, open);
+            if (snap.MyDeckList != null && !DeckList.Same(r.MyDeckList, snap.MyDeckList) && (open || r.MyDeckList == null))
+            {
+                r.MyDeckList = snap.MyDeckList;
+                s.Dirty = true;
+            }
             s.Dirty |= Take(ref r.MyAccountId, snap.MyAccountId, open);
             s.Dirty |= Take(ref r.OpponentAccountId, snap.OpponentAccountId, open);
             if (snap.MySeat.HasValue && r.MySeat != snap.MySeat && (open || r.MySeat == null))

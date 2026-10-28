@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using PtcglAutoBattleLog.Core;
@@ -68,6 +70,17 @@ static partial class Program
         Check(s != null && s.PlayerName == "Ash" && s.PlayerAccountHash == ashHash && s.MatchId == "m-1" && s.Result == "VICTORY" &&
               s.KeyId == identity.KeyId && s.SealFile == null && s.LogFile == footer && s.SealedUtc.Kind == DateTimeKind.Utc,
               "footer seal: player, account hash, match, result, key");
+        Check(s.Version == 2 && s.DeckSha256 == null && s.ReadDeck() == null, "v2, no deck: nothing to send");
+
+        // A footer seal of an earlier build (v1): same fields, no deck.
+        var block = File.ReadAllText(footer);
+        var v1 = Path.Combine(folder, "2026-10-01 10.00.00 - VICTORY vs Gary.txt");
+        File.WriteAllText(v1, block.Replace("SEAL v2", "SEAL v1").Replace("{\"v\":2,", "{\"v\":1,").Replace(",\"deckSha256\":null", ""));
+        var old = SealSummary.TryRead(v1);
+        Check(old != null && old.Version == 1 && old.PlayerAccountHash == ashHash && old.MatchId == "m-1" && old.DeckSha256 == null, "a v1 seal is read too");
+        File.WriteAllText(v1, block.Replace("{\"v\":2,", "{\"v\":1,"));
+        Check(SealSummary.TryRead(v1) == null, "a v2 BEGIN line with v 1: not a seal");
+        File.Delete(v1);
 
         mode = SealMode.Sidecar;
         var sidecar = Save("Ash \"the\" Kétchum ★", "ash-id", false);
@@ -290,7 +303,7 @@ static partial class Program
         var logStore = new LogStore(folder) { Sealer = new LogSealer(identity, "1.2.0", "1.43.0") { Mode = () => SealMode.Footer } };
         var t = new DateTime(2026, 10, 20, 12, 0, 0, DateTimeKind.Utc);
         int n = 0;
-        string Save(string me, string myId, bool manual = false)
+        string Save(string me, string myId, bool manual = false, DeckList deck = null)
         {
             n++;
             var start = t.AddHours(n);
@@ -298,11 +311,17 @@ static partial class Program
             {
                 MatchId = manual ? null : "m-" + n, StartUtc = start, EndUtc = manual ? (DateTime?)null : start.AddMinutes(10), Won = true, Winner = 1,
                 MySeat = 1, MyName = me, MyAccountId = myId, OpponentName = "Gary", OpponentAccountId = "gary-id", ManualOnly = manual,
-                Capture = LogSealer.CaptureAuto,
+                Capture = LogSealer.CaptureAuto, MyDeckList = deck,
             }, "Setup\nTurn " + n + " - " + me + " played", null);
         }
         var ashHash = LogSealer.AccountHash("ash-id");
-        for (int i = 0; i < 3; i++) Save("Ash", "ash-id");
+        var deckList = new DeckList { DeckDefinitionId = "bnb-me3", Size = 2 };
+        deckList.Cards["sv8_174"] = 2;
+        var olderWithDeck = Save("Ash", "ash-id", deck: deckList);
+        var withDeck = Save("Ash", "ash-id", deck: deckList);   // the same deck again: one file, sent once
+        Save("Ash", "ash-id");
+        var deckSha = SealSummary.TryRead(withDeck).DeckSha256;
+        var deckFile = LogStore.DeckPathFor(folder, deckSha);
         Save("Ash", "ash-id", manual: true);   // an Export click: never sent
         Save("Misty", "misty-id");             // not one of the player's accounts on tcgkb
 
@@ -311,11 +330,16 @@ static partial class Program
         var server = new FakeTcgkb();
         var received = new List<ClaimEvidence>();
         var meJson = "{\"user\":{\"name\":\"Manu\"},\"accounts\":[{\"accountHash\":\"" + ashHash + "\",\"name\":\"Ash\",\"status\":\"claimed\"}]}";
+        var serverDecks = new HashSet<string>();       // the deck files tcgkb has, by SHA-256
         Func<TcgkbRequest, TcgkbResponse> upload = r =>
         {
-            received.Add(Json.Read<ClaimEvidence>(r.Body));
+            var e = Json.Read<ClaimEvidence>(r.Body);
+            received.Add(e);
+            if (e.Deck != null) serverDecks.Add(Convert.ToHexString(SHA256.HashData(Convert.FromBase64String(e.Deck))).ToLowerInvariant());
+            var named = Regex.Match(Encoding.UTF8.GetString(Convert.FromBase64String(e.Log)), "\"deckSha256\":\"([0-9a-f]{64})\"");
+            var deckRef = named.Success && serverDecks.Contains(named.Groups[1].Value) ? "{\"deckId\":\"d1\",\"version\":1,\"changed\":false}" : "null";
             return FakeTcgkb.Reply(200, "{\"added\":true,\"account\":{\"accountHash\":\"" + ashHash + "\",\"name\":\"Ash\",\"status\":\"claimed\"}," +
-                                        "\"playerDeck\":\"Mega Chandelure ex\",\"opponentDeck\":\"Alakazam\"}");
+                                        "\"playerDeck\":\"Mega Chandelure ex\",\"opponentDeck\":\"Alakazam\",\"deckRef\":" + deckRef + "}");
         };
         Func<TcgkbRequest, TcgkbResponse> uploadAnswer = upload;
         server.Handle = r => r.Path == "/api/ptcgl/accounts" ? FakeTcgkb.Reply(200, meJson) : r.Path == "/api/ptcgl/logs" ? uploadAnswer(r) : FakeTcgkb.Reply(404, "");
@@ -333,6 +357,27 @@ static partial class Program
         var order = received.Select(e => e.FileName).ToList();
         Check(order.SequenceEqual(order.OrderByDescending(f => f, StringComparer.Ordinal)), "newest first");
         Check(run.Newest?.PlayerDeck == "Mega Chandelure ex" && run.Newest.OpponentDeck == "Alakazam", "tcgkb's decks read back");
+        var sentDeck = received.Single(e => e.FileName == Path.GetFileName(withDeck));
+        Check(sentDeck.Deck != null && Convert.FromBase64String(sentDeck.Deck).SequenceEqual(File.ReadAllBytes(deckFile)),
+              "the newest log with the deck carries the deck file, exactly as on disk");
+        Check(received.Single(e => e.FileName == Path.GetFileName(olderWithDeck)).Deck == null && received.Count(e => e.Deck != null) == 1,
+              "the older log with the same deck sends only its seal (tcgkb links it by deckSha256)");
+        Check(uploader.LoadState().Decks.SequenceEqual(new[] { deckSha }), "the deck tcgkb has is remembered");
+        Check(server.Requests.Count(r => r.Path == "/api/ptcgl/logs" && r.Body.Contains("\"deck\":")) == 1, "\"deck\" is left out of the request without one");
+        var changed = SealSummary.TryRead(withDeck);
+        var deckBytes = File.ReadAllBytes(deckFile);
+        File.WriteAllText(deckFile, "{\"v\":1}");
+        Check(changed.ReadDeck() == null && TcgkbConnection.BuildEvidence(changed, withDeck: true).Deck == null,
+              "a deck file that no longer matches its seal is not sent (the log still is)");
+        File.WriteAllBytes(deckFile, deckBytes);
+        var otherStore = new LogStore(Path.Combine(TempDir(), "other")) { Sealer = logStore.Sealer };
+        var claimLog = otherStore.Save(new MatchRecord
+        {
+            MatchId = "claim-1", StartUtc = t, EndUtc = t.AddMinutes(10), Won = true, Winner = 1, MySeat = 1, MyName = "Ash", MyAccountId = "ash-id",
+            OpponentName = "Gary", Capture = LogSealer.CaptureAuto, MyDeckList = deckList,
+        }, "Setup", null);
+        Check(SealSummary.TryRead(claimLog).ReadDeck() != null && TcgkbConnection.BuildEvidence(SealSummary.TryRead(claimLog)).Deck == null,
+              "claims never carry the deck");
         Check(uploader.LoadState().Uploaded.Count == 3 && File.Exists(uploader.StatePath), "what was sent is remembered");
 
         var calls = server.Requests.Count;

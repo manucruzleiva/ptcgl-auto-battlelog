@@ -225,15 +225,20 @@ namespace PtcglAutoBattleLog.Tray.Logic
             return claim;
         }
 
-        /// <summary>A sealed log as tcgkb takes it: the .txt and the .seal sidecar (if any), exactly as on disk.</summary>
-        public static ClaimEvidence BuildEvidence(SealSummary s)
+        /// <summary>
+        /// A sealed log as tcgkb takes it: the .txt and the .seal sidecar (if any), exactly as on disk;
+        /// with <paramref name="withDeck"/> (match uploads), also the deck file the seal names, when it matches.
+        /// </summary>
+        public static ClaimEvidence BuildEvidence(SealSummary s, bool withDeck = false)
         {
             if (s == null) throw new ArgumentNullException(nameof(s));
+            var deck = withDeck ? s.ReadDeck() : null;
             return new ClaimEvidence
             {
                 FileName = Path.GetFileName(s.LogFile),
                 Log = Convert.ToBase64String(ReadCapped(s.LogFile)),
                 Seal = s.SealFile == null ? null : Convert.ToBase64String(ReadCapped(s.SealFile)),
+                Deck = deck == null ? null : Convert.ToBase64String(deck),
             };
         }
 
