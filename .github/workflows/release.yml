@@ -7,11 +7,21 @@
 # A tag with a pre-release suffix (v1.3.2-beta.1) publishes a GitHub pre-release for testers: never
 # the latest release, so installed apps on the stable channel never see it. Its X.Y.Z must be
 # higher than every published release, so the final X.Y.Z later replaces it through the updater.
+# The same release can be made without pushing a tag: run this workflow by hand on main with the
+# tag as input (Actions > Release > Run workflow). It checks that CHANGELOG.md has the version's
+# section, then publishes the release and creates the tag on the commit it built. (A tag created by
+# this workflow's token does not start the workflow again.)
 name: Release
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to create and publish from main, e.g. v1.3.2-beta.1 or v1.3.2'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -30,11 +40,14 @@ jobs:
     name: Build and publish
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Check the tag
         id: tag
         env:
-          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # UpdateChecker.TryParseVersion: three numbers without leading zeros, optionally a
           # pre-release suffix. The tray ignores pre-releases, so a tag like v1.3.2-beta.1 is
@@ -42,6 +55,19 @@ jobs:
           if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ || ${#TAG} -gt 41 ]]; then
             echo "::error::Release tags must be vMAJOR.MINOR.PATCH (e.g. v1.2.0) or vMAJOR.MINOR.PATCH-PRERELEASE (e.g. v1.3.2-beta.1), got '$TAG'. Delete the tag and push a valid one."
             exit 1
+          fi
+          if [ "$DISPATCH" = true ]; then
+            # Run by hand: only from main, and only for a new tag (or a re-run of the run that
+            # created it: the tag then points at this very commit).
+            if [ "$GITHUB_REF" != refs/heads/main ]; then
+              echo "::error::Run this workflow on main (it publishes main's commit), not on $GITHUB_REF."
+              exit 1
+            fi
+            existing="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq .object.sha 2>/dev/null || true)"
+            if [ -n "$existing" ] && [ "$existing" != "$GITHUB_SHA" ]; then
+              echo "::error::Tag $TAG already exists on another commit ($existing). Pick a new version."
+              exit 1
+            fi
           fi
           version="${TAG#v}"
           prerelease=false
@@ -54,7 +80,6 @@ jobs:
         id: latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.tag.outputs.version }}
           CORE: ${{ steps.tag.outputs.core }}
           PRERELEASE: ${{ steps.tag.outputs.prerelease }}
@@ -113,7 +138,6 @@ jobs:
 
       - name: Release notes
         env:
-          TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.tag.outputs.version }}
           CORE: ${{ steps.tag.outputs.core }}
           PRERELEASE: ${{ steps.tag.outputs.prerelease }}
@@ -141,6 +165,10 @@ jobs:
           PY
           )"
           if [ -z "$(printf '%s' "$section" | tr -d '[:space:]')" ]; then
+            if [ "$DISPATCH" = true ]; then
+              echo "::error::CHANGELOG.md has no '## [$VERSION]' section on main. Add it before publishing."
+              exit 1
+            fi
             echo "::warning::CHANGELOG.md has no '## [$VERSION]' section; the notes only list the commits."
           fi
           # What a rebuild must use to get the same bytes (SECURITY.md, "How releases are built").
@@ -173,7 +201,6 @@ jobs:
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
           LATEST: ${{ steps.latest.outputs.latest }}
           PRERELEASE: ${{ steps.tag.outputs.prerelease }}
         run: |
@@ -184,7 +211,9 @@ jobs:
             gh release upload "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
             gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false "--prerelease=$PRERELEASE" "--latest=$LATEST"
           else
-            gh release create "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            # A pushed tag must already exist; run by hand, the release creates it on the built commit.
+            if [ "$DISPATCH" = true ]; then target=(--target "$(git rev-parse HEAD)"); else target=(--verify-tag); fi
+            gh release create "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" "${target[@]}" \
               --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" --generate-notes "--prerelease=$PRERELEASE" "--latest=$LATEST"
           fi
 

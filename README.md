@@ -455,6 +455,10 @@ docs/              ARCHITECTURE.md, LOG-SEAL.md
    git push origin v1.2.0
    ```
 
+Instead of pushing a tag you can run the workflow by hand: **Actions > Release > Run workflow** on
+`main`, with the tag (e.g. `v1.3.2`) as input. It requires the version's CHANGELOG section on
+`main`, and creates the tag on the commit it built when it publishes the release.
+
 The [Release workflow](.github/workflows/release.yml) checks that the tag is `vMAJOR.MINOR.PATCH`,
 builds with that version (all tests included), and publishes a GitHub release marked **latest**
 with the four files from `dist/`. Installed apps pick it up within 6 hours. Releases are never
