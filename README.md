@@ -433,7 +433,8 @@ your clipboard.
 
 The tray app (a .NET Framework 4.8 WinForms exe with the plugin and BepInEx embedded) installs,
 repairs and updates the mod. The two never talk directly; they share files on disk. The full
-design, file formats and rules are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+design, file formats and rules are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Sites that
+want to receive battle logs from the app: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md).
 
 ## Building from source
 
@@ -470,7 +471,7 @@ src/Tray/          tray app (net48 WinForms); Logic/ is platform-neutral and uni
 tests/             CoreTests (plugin core vs fake game classes), TrayTests (tray logic, and the
                    cross-part checks: what the plugin writes, the tray and the real BepInEx read)
 tools/             verify_log.py (seal verifier), make-manifest.py (release manifest)
-docs/              ARCHITECTURE.md, LOG-SEAL.md
+docs/              ARCHITECTURE.md, LOG-SEAL.md, TCGKB-API.md, POKEMATCH-API.md, INTEGRATIONS.md
 ```
 
 ## Releasing
