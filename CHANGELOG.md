@@ -9,6 +9,11 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.3.2-beta.1] - 2026-10-28
+
+A beta for testers, to research the queue type (#14) and decklists (#15). Installed apps never
+update to it on their own; it updates itself to 1.3.2 once that is released.
+
 ### Added
 
 - **Research aid: dump the match fields.** With `DumpMatchFields = true` under `[Diagnostics]` in
@@ -20,6 +25,8 @@ The section of a version becomes the top of its GitHub release notes, so add one
   client's `deckInfo` holds, to find out whether the player's decklist can be saved with the log
   (issue #15). Your own deck is written with its values; the opponent's only as member names and
   types. It stays in `BepInEx\LogOutput.log` on your computer and is never sent anywhere.
+- **Beta releases.** A tag like `v1.3.2-beta.1` is published as a GitHub pre-release: never the
+  latest release, so the app's updater (which only reads the latest release) never offers it.
 
 ## [1.3.1] - 2026-10-22
 
@@ -130,7 +137,8 @@ First version, never published: the BepInEx plugin, a Spanish PowerShell install
 (`Instalar.bat`, `Desinstalar.bat`) with a hidden watchdog that restored the mod after game
 updates, and Spanish file names and documentation.
 
-[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.2-beta.1...HEAD
+[1.3.2-beta.1]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.1...v1.3.2-beta.1
 [1.3.1]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.1.0...v1.2.0

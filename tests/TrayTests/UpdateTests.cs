@@ -75,7 +75,9 @@ static partial class Program
         Check(Newer(Checker("1.2.0-rc1"), "1.2.0") && !Newer(Checker("1.2.0-rc1"), "1.1.9") && Newer(Checker("1.2.0-rc1"), "1.2.1"), "a pre-release build updates to its release");
         Check(!Newer(Checker("1.2.0+abc"), "1.2.0") && Newer(Checker("1.2.0+abc"), "1.2.1"), "build metadata does not change precedence");
         Check(!Newer(Checker("dev"), "9.9.9") && !Newer(Checker("1.2.0-"), "1.2.0"), "unparseable current version never updates");
-        Check(UpdateChecker.TryParseVersion(BuildInfo.Version, out _), "this build's version parses: " + BuildInfo.Version);
+        Check(UpdateChecker.TryParseVersion(BuildInfo.VersionCore, out _) &&
+              (BuildInfo.Version == BuildInfo.VersionCore || BuildInfo.Version.StartsWith(BuildInfo.VersionCore + "-", StringComparison.Ordinal)),
+              "this build's version parses (X.Y.Z, or X.Y.Z-pre for a beta): " + BuildInfo.Version + ", core " + BuildInfo.VersionCore);
 
         // Installing over a newer copy (an old download run again) must not downgrade it.
         Check(UpdateChecker.IsInstalledNewer("1.2.0", "1.1.0") && UpdateChecker.IsInstalledNewer("1.2.0+16fdb0f52796cca94b7a9eb700cc6ae08187c70f", "1.1.0") &&

@@ -20,7 +20,7 @@ namespace PtcglAutoBattleLog
     /// same text the Export button would copy, and writes it to disk, sealed with a signature
     /// (docs/LOG-SEAL.md) unless [Metadata] Mode is Off.
     /// </summary>
-    [BepInPlugin(Guid, Name, Version)]
+    [BepInPlugin(Guid, Name, BuildInfo.VersionCore)]   // BepInEx parses X.Y.Z only; Version may be 1.3.2-beta.1
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = PluginConfig.Guid;

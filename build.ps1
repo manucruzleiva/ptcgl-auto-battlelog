@@ -15,7 +15,7 @@
     Environment: VERSION, REPO_OWNER, REPO_NAME, DOTNET, PYTHON, SOURCE_DATE_EPOCH (see build.sh).
 
 .PARAMETER Version
-    X.Y.Z. Default: the VERSION environment variable, else Directory.Build.props.
+    X.Y.Z or X.Y.Z-beta.N. Default: the VERSION environment variable, else Directory.Build.props.
 
 .EXAMPLE
     powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
@@ -157,9 +157,10 @@ try {
 
     if (-not $Version) { $Version = Get-Prop $props 'Version' }
     if ($Version.StartsWith('v')) { $Version = $Version.Substring(1) }
-    # UpdateChecker.TryParseVersion: three numbers without leading zeros, no pre-release suffix.
-    if ($Version -notmatch '^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$') {
-        throw "Version must be MAJOR.MINOR.PATCH (e.g. 1.2.0), got '$Version'"
+    # UpdateChecker.TryParseVersion: three numbers without leading zeros, optionally a pre-release
+    # suffix (1.3.2-beta.1), published as a GitHub pre-release (see build.sh).
+    if ($Version -cnotmatch '^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$' -or $Version.Length -gt 40) {
+        throw "Version must be MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-PRERELEASE (e.g. 1.2.0, 1.3.2-beta.1), got '$Version'"
     }
     $owner = if ($env:REPO_OWNER) { $env:REPO_OWNER } else { Get-Prop $props 'RepoOwner' }
     $repo = if ($env:REPO_NAME) { $env:REPO_NAME } else { Get-Prop $props 'RepoName' }

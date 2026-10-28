@@ -478,10 +478,33 @@ static partial class Program
                   sums[1] == Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(zip))).ToLowerInvariant() + "  PtcglAutoBattleLog-portable.zip", owner + ": SHA256SUMS.txt");
         }
 
+        // A pre-release (published as a GitHub pre-release, never the latest): written, ignored by the
+        // stable tray, and its testers' builds take the final version.
+        {
+            var outDir = Path.Combine(dir, "beta");
+            var code = Make("1.2.3-beta.1", "v1.2.3-beta.1", "o", "r", outDir, out var output);
+            Check(code == 0, "make-manifest.py writes a pre-release (exit 0)");
+            if (code != 0) Console.WriteLine(output);
+            else
+            {
+                var m = UpdateManifest.Parse(File.ReadAllText(Path.Combine(outDir, UpdateChecker.ManifestAssetName)));
+                var asset = m.Find(UpdateChecker.ExeAssetName);
+                var stable = new UpdateChecker("o", "r", "1.2.2", (u, ct) => throw new InvalidOperationException());
+                Check(m.Version == "1.2.3-beta.1" && m.Tag == "v1.2.3-beta.1" && asset != null &&
+                      asset.Url == "https://github.com/o/r/releases/download/v1.2.3-beta.1/" + UpdateChecker.ExeAssetName && stable.IsTrustedAssetUrl(asset.Url),
+                      "pre-release manifest: version, tag and a trusted URL");
+                Check(!stable.IsNewer(m), "the stable tray ignores a pre-release manifest");
+                var final = new UpdateManifest { Version = "1.2.3" };
+                Check(new UpdateChecker("o", "r", m.Version, (u, ct) => throw new InvalidOperationException()).IsNewer(final),
+                      "a pre-release build updates to its final version");
+            }
+        }
+
         // What the tray would refuse (a version it ignores, a name its URL check rejects) is never written.
         foreach (var (version, tag, owner, repo, why) in new[]
         {
-            ("1.2.3-beta", "v1.2.3-beta", "o", "r", "a pre-release version"), ("01.2.3", "v01.2.3", "o", "r", "a leading zero"),
+            ("1.2.3-", "v1.2.3-", "o", "r", "an empty pre-release suffix"), ("1.2.3+build", "v1.2.3+build", "o", "r", "build metadata"),
+            ("1.2.3-be/ta", "v1.2.3-be/ta", "o", "r", "a '/' in the pre-release suffix"), ("01.2.3", "v01.2.3", "o", "r", "a leading zero"),
             ("1.2.3", "v1.2.3", ".hidden", "r", "an owner starting with '.'"), ("1.2.3", "v1.2.3", "o", "r/x", "a '/' in the repository"),
             ("1.2.3", "v1.2.3", new string('o', 101), "r", "an owner longer than 100 characters"), ("1.2.3", "v1.2.3", "o", "r\u00e9", "a non-ASCII repository"),
         })

@@ -1,9 +1,12 @@
 # Pushing a tag vMAJOR.MINOR.PATCH publishes a release: build.sh with the tag's version (all tests
 # included), then a GitHub release with the four assets. The tray apps read
-# releases/latest/download/update.json, so the release is published right away (never a draft or
-# a pre-release) and marked as the latest one - unless a higher version is already published:
+# releases/latest/download/update.json, so the release is published right away (never a draft)
+# and marked as the latest one - unless a higher version is already published:
 # a new lower tag fails, and re-running an older tag's workflow replaces its assets without making
 # it the latest (that would point every tray and the README's download links back at it).
+# A tag with a pre-release suffix (v1.3.2-beta.1) publishes a GitHub pre-release for testers: never
+# the latest release, so installed apps on the stable channel never see it. Its X.Y.Z must be
+# higher than every published release, so the final X.Y.Z later replaces it through the updater.
 name: Release
 
 on:
@@ -33,13 +36,19 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          # UpdateChecker.TryParseVersion: three numbers without leading zeros. The tray ignores
-          # pre-releases, so a tag like v1.2.0-beta must not become the latest release.
-          if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$ ]]; then
-            echo "::error::Release tags must be vMAJOR.MINOR.PATCH (e.g. v1.2.0), got '$TAG'. Delete the tag and push a valid one."
+          # UpdateChecker.TryParseVersion: three numbers without leading zeros, optionally a
+          # pre-release suffix. The tray ignores pre-releases, so a tag like v1.3.2-beta.1 is
+          # published as a GitHub pre-release and never becomes the latest release.
+          if [[ ! "$TAG" =~ ^v(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ || ${#TAG} -gt 41 ]]; then
+            echo "::error::Release tags must be vMAJOR.MINOR.PATCH (e.g. v1.2.0) or vMAJOR.MINOR.PATCH-PRERELEASE (e.g. v1.3.2-beta.1), got '$TAG'. Delete the tag and push a valid one."
             exit 1
           fi
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          version="${TAG#v}"
+          prerelease=false
+          if [[ "$version" == *-* ]]; then prerelease=true; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "core=${version%%-*}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
       - name: Decide whether this release becomes the latest
         id: latest
@@ -47,6 +56,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.tag.outputs.version }}
+          CORE: ${{ steps.tag.outputs.core }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
         run: |
           # The highest published vX.Y.Z (drafts and pre-releases never count), compared numerically.
           highest="$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 1000 \
@@ -54,6 +65,17 @@ jobs:
                      | grep -E '^v(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$' | sed 's/^v//' | sort -V | tail -n 1 || true)"
           rerun=false
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then rerun=true; fi
+          if [ "$PRERELEASE" = true ]; then
+            # A pre-release is never the latest. Its X.Y.Z must be above every published release:
+            # testers then move to the final X.Y.Z (or a later one) through the normal updater.
+            if [ -n "$highest" ] && [ "$(printf '%s\n%s\n' "$highest" "$CORE" | sort -V | tail -n 1)" != "$CORE" -o "$highest" = "$CORE" ]; then
+              echo "::error::$TAG is a pre-release of $CORE, which is not higher than the published v$highest. Delete the tag and push a pre-release of a higher version."
+              exit 1
+            fi
+            echo "Pre-release of $CORE (highest published: ${highest:-none}); re-run: $rerun; latest: false"
+            echo "latest=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           latest=true
           if [ -n "$highest" ] && [ "$(printf '%s\n%s\n' "$highest" "$VERSION" | sort -V | tail -n 1)" != "$VERSION" ]; then
             if [ "$rerun" != true ]; then
@@ -93,6 +115,8 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.tag.outputs.version }}
+          CORE: ${{ steps.tag.outputs.core }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
         run: |
           notes="$RUNNER_TEMP/notes.md"
           base="https://github.com/$GITHUB_REPOSITORY"
@@ -122,6 +146,10 @@ jobs:
           # What a rebuild must use to get the same bytes (SECURITY.md, "How releases are built").
           built="Built from $(git rev-parse HEAD) on Linux with the .NET SDK $(dotnet --version) and $(python3 --version 2>&1)."
           {
+            if [ "$PRERELEASE" = true ]; then
+              echo "> **Beta for testing.** Installed apps never update to it on their own: install it by hand. It updates itself to v$CORE (or later) once that is released. For the stable version use the [latest release]($base/releases/latest)."
+              echo
+            fi
             echo "## Download"
             echo
             echo "- **[PtcglAutoBattleLog.exe]($base/releases/download/$TAG/PtcglAutoBattleLog.exe)**: run it to install (no administrator rights). Already installed? The app updates itself."
@@ -147,16 +175,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
           LATEST: ${{ steps.latest.outputs.latest }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
         run: |
           assets=(dist/PtcglAutoBattleLog.exe dist/PtcglAutoBattleLog-portable.zip dist/update.json dist/SHA256SUMS.txt)
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             # A re-run of this workflow: replace the assets and make sure the release is public (and the
-            # latest, unless a higher version has been published since).
+            # latest, unless a higher version has been published since or it is a pre-release).
             gh release upload "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false "--latest=$LATEST"
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false "--prerelease=$PRERELEASE" "--latest=$LATEST"
           else
             gh release create "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --verify-tag \
-              --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" --generate-notes "--latest=$LATEST"
+              --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" --generate-notes "--prerelease=$PRERELEASE" "--latest=$LATEST"
           fi
 
       - name: Check what the tray apps will see

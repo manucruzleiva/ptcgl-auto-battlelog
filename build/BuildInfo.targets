@@ -1,7 +1,8 @@
 <Project>
   <!--
     Generates PtcglAutoBattleLog.BuildInfo with the build's version and update source as
-    compile-time constants (BepInPlugin needs a const version string). Import from any project
+    compile-time constants (BepInPlugin needs a const version string; it only takes X.Y.Z, hence
+    VersionCore: 1.3.2 for 1.3.2-beta.1). Import from any project
     that needs them.
   -->
   <Target Name="GenerateBuildInfo" BeforeTargets="CoreCompile">
@@ -13,6 +14,7 @@ namespace PtcglAutoBattleLog
     internal static class BuildInfo
     {
         public const string Version = "$(Version)"%3B
+        public const string VersionCore = "$([System.Text.RegularExpressions.Regex]::Replace('$(Version)', '[-+].*$', ''))"%3B
         public const string RepoOwner = "$(RepoOwner)"%3B
         public const string RepoName = "$(RepoName)"%3B
         public const string BepInExVersion = "$(BepInExVersion)"%3B
