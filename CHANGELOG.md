@@ -9,11 +9,35 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-28
+
+Everything from the 1.3.2 betas, now for everyone: your decklist, queue and format with each
+match, a shorter tray menu and a status and settings window. The disclaimer changed (version 4),
+so the app asks you to accept it again; until you do, tcgkb and Pokematch uploads wait.
+
 ### Added
 
+- **Your decklist with each match** (#22). The plugin reads the cards of your own deck while a
+  match loads (the game never has your opponent's) and saves each distinct deck once, as
+  `decks\<hash>.deck` in the logs folder. The log's seal names the deck it was played with.
+  Nothing is saved in seal mode **Off**.
+- **Queue and format of each match** (#26): `Ranked`, `Casual`, `BuildAndBattle` or `Friend`, and
+  `Standard`, `Expanded` or `BuildAndBattle`. They go into two new columns at the end of
+  `index.csv`, into the seal, and as tags on Pokematch uploads. File names are unchanged.
+- **Decks on tcgkb.** With **Upload my matches automatically** on, each match is sent with its
+  decklist, each distinct deck only once.
+- **Status and settings window** (#30, #41). **Status and settings...** in the tray menu opens a
+  window with the status at the top and the options under General, Updates, Accounts (tcgkb and
+  Pokematch) and Help. Starting the app again while it runs opens this window.
 - **Mod version in the status window** (#42). The "Status and settings" window shows which version
   of the mod the game has loaded (or last loaded) and says when it is not the app's version, with
   what to do: restart the game, or nothing if the game is closed and will load the new one.
+- **"Review the updated disclaimer..." in the tray menu** (#29), in red, while a newer disclaimer
+  waits for you.
+- **Beta update channel.** **Updates ▸ Update channel ▸ Beta** also installs test versions before
+  they are released. **Stable** stays the default.
+- **Quick-setup guides** (#34) in `docs/quick-setup/`: install PAB, connect tcgkb and upload to
+  Pokematch, with a picture per step, in nine languages.
 
 ### Changed
 
@@ -21,6 +45,12 @@ The section of a version becomes the top of its GitHub release notes, so add one
   status next to a dot in the tray icon's colour, a navigation column instead of tabs, settings in
   cards, switches instead of check boxes and flat buttons (Open logs folder in the accent colour, the
   updated disclaimer in red). It works as before; high contrast mode keeps the system colours.
+- **A shorter tray menu** (#30). The top keeps the status, Open logs folder, Open last log, a waiting
+  update, tcgkb and Pokematch; everything else moved into **Settings ▸**, **Updates ▸** and **Help ▸**.
+- **Seal format v2** with the deck, queue and format. v1 seals stay valid, your chain continues,
+  and the new `tools/verify_log.py` checks both (an older one reports v2 logs as unsealed).
+- **Disclaimer updated** (version 4): it now mentions the decklist, the queue and the format.
+- **tcgkb uploads wait for the updated disclaimer**, as Pokematch uploads already did.
 
 ### Fixed
 
@@ -232,7 +262,8 @@ First version, never published: the BepInEx plugin, a Spanish PowerShell install
 (`Instalar.bat`, `Desinstalar.bat`) with a hidden watchdog that restored the mod after game
 updates, and Spanish file names and documentation.
 
-[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.2-beta.1...HEAD
+[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.1...v1.4.0
 [1.3.2-beta.1]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.1...v1.3.2-beta.1
 [1.3.1]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.2.0...v1.3.0
