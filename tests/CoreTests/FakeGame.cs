@@ -26,8 +26,11 @@ public class MatchInfo
     public string accountID = "me-123";
     public string matchID;                      // fallback when the board has none
     public MatchBoard board = new MatchBoard();
+    public QueueKind queueType = QueueKind.Ranked;   // made up, for the research dump test (issue #14)
     public MatchBoard GetBoardState() => board;
 }
+
+public enum QueueKind { Casual, Ranked, BuildAndBattle }
 
 public class DeckInfo { public string deckName; }
 public class PlayerDetail { public string playerId; public string playerName; public DeckInfo deckInfo; }

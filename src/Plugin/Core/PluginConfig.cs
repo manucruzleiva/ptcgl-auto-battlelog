@@ -22,5 +22,10 @@ namespace PtcglAutoBattleLog.Core
         /// <summary>A <see cref="SealMode"/> name; BepInEx parses it case-insensitively.</summary>
         public const string SealModeKey = "Mode";
         public const SealMode SealModeDefault = SealMode.Footer;
+
+        /// <summary>Plugin only (the tray does not edit it): a research aid, see ReflectionGameApi.DumpMatchFields.</summary>
+        public const string DiagnosticsSection = "Diagnostics";
+        public const string DumpMatchFieldsKey = "DumpMatchFields";
+        public const bool DumpMatchFieldsDefault = false;
     }
 }

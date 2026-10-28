@@ -9,6 +9,14 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **Research aid: dump the match fields.** With `DumpMatchFields = true` under `[Diagnostics]` in
+  `BepInEx\config\ptcgl.autobattlelog.cfg` (off by default) the plugin writes the fields of the
+  game's match objects to `LogOutput.log` at the start and end of every match, plus the loaded
+  enums and types that look queue related, to find out whether the client says which queue a
+  match came from (#14). Player names and account ids are hidden.
+
 ## [1.3.1] - 2026-10-22
 
 ### Fixed
