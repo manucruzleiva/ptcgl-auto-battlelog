@@ -21,6 +21,9 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ### Changed
 
+- **Match fields dump: every value an enum field can take.** An enum field now lists all its
+  values, not only the current one (so one match shows every queue type), and the match details,
+  lobby and direct-match (friend battle) members are expanded too (#14).
 - **Seal format v2**: `deckSha256` after `deck`. v1 seals of earlier builds stay valid, your chain
   continues across the update, and `tools/verify_log.py` checks both (and the deck file).
   An older `verify_log.py` reports v2 logs as unsealed: use the new one.
