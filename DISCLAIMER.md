@@ -15,9 +15,11 @@ What it does: it automates obtaining data that the game itself already offers yo
 text produced by the Export button of the Battle Log screen, and saves it to a folder on your
 computer. To name, index and seal each log, it also reads, during a match, match details that the
 game client already holds: the match id, both players' display names and account ids, your deck
-name, the seats and the winner. The opponent's name goes into the log's file name; the names, your
-deck name and the match id into its index.csv row and its seal; account ids are stored only as
-hashes, in the seal.
+name and decklist, the seats and the winner. The opponent's name goes into the log's file name; the
+names, your deck name and the match id into its index.csv row and its seal; account ids are stored
+only as hashes, in the seal. Your decklist (the cards of your own deck and their counts; the client
+never has your opponent's) is saved once per distinct deck in the logs folder's decks subfolder,
+and each log's seal names the deck it was played with.
 
 What it does not do: it does not take part in the battle. It does not show you any information,
 does not automate any game action, and does not change cards, decks, matches or results. It sends
@@ -32,7 +34,8 @@ account's 3 newest battle logs with their seals, as proof that the account is yo
 contain both players' display names, your deck name, the match id, the plays of the match and the
 hashed account ids. If you also turn on
 "Upload my matches automatically", the app sends tcgkb.app every tracked match of the accounts you
-claimed, the same way, so tcgkb can show your statistics and the global meta. Nothing is sent
+claimed, the same way and with your decklist, so tcgkb can show your statistics, your decks and
+the global meta. Nothing is sent
 before you connect and claim, uploads are off until you turn them on, and you can turn them off or
 disconnect at any time.
 

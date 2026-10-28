@@ -57,7 +57,7 @@ static partial class Program
     static void DisclaimerTests()
     {
         Console.WriteLine("17. Disclaimer");
-        Check(Disclaimer.Version == 3, "version 3");
+        Check(Disclaimer.Version == 4, "version 4");
         var md = File.ReadAllText(Path.Combine(RepoRoot(), "DISCLAIMER.md"));
         var plain = Disclaimer.ToPlainText(md);
         Check(md.Contains("Pokematch") && md.Contains("tcgkb.app"), "it names every place the app can send logs to");

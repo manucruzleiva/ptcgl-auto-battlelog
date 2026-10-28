@@ -39,7 +39,7 @@ $BepInExUrl = "https://github.com/BepInEx/BepInEx/releases/download/v$BepInExVer
 
 $ExeName = 'PtcglAutoBattleLog.exe'
 $PortableZip = 'PtcglAutoBattleLog-portable.zip'
-$SealSeparator = "`n`n-----BEGIN PTCGL-ABL SEAL v1-----`n"
+$SealSeparator = "`n`n-----BEGIN PTCGL-ABL SEAL v"   # any seal version (docs/LOG-SEAL.md §2)
 
 $Root = $PSScriptRoot
 $Dotnet = if ($env:DOTNET) { $env:DOTNET } else { 'dotnet' }

@@ -108,16 +108,42 @@ user gives the account up; its matches stay, unowned.
 
 `POST /api/ptcgl/logs` (scope `logs:upload`), `application/json`:
 ```json
-{"fileName":"2026-10-19 21.34.05 - VICTORY vs Gary.txt","log":"<base64>","seal":null}
+{"fileName":"2026-10-19 21.34.05 - VICTORY vs Gary.txt","log":"<base64>","seal":null,"deck":"<base64>"}
 ```
 * One tracked match of an account the user has claimed, as in a claim's `evidence`: the `.txt` and
   the `.seal` sidecar exactly as on disk, each at most 1 MiB. tcgkb runs the same checks as for a
   claim, except that `player.accountHash` must be one of the user's accounts (claimed or verified).
 * The tray sends it only after the player turned on **Upload my matches automatically**; it sends
   each log once (`tcgkb-uploads.json`), newest first, at most 50 per run.
-* → `200 {"added":true,"account":{"accountHash","name","status"},"playerDeck":"Dragapult ex","opponentDeck":"Gardevoir ex"}`.
-  `added` is false when tcgkb already had this log (same match, seat and key): not an error. The
-  decks are tcgkb's guess from the cards seen in the log (Limitless archetype names), or null.
+* `deck` (optional): the player's deck file that the seal (v2) names in `deckSha256`
+  (`decks\<deckSha256>.deck` in the logs folder, docs/LOG-SEAL.md §2a), exactly as on disk, at most
+  64 KiB. The tray sends each distinct deck **once**: it leaves `deck` out when there is none (no
+  cards, a v1 seal), when the file is missing or no longer matches the seal (the log is still
+  sent), and when tcgkb already linked that `deckSha256` to an earlier match
+  (`tcgkb-uploads.json` `decks`). Claims never carry it.
+* tcgkb checks a `deck` against the seal's `deckSha256`, then upserts the user's deck by its
+  `deckGuid` (a new version when the cards changed) and links the match to it. Without `deck`,
+  a v2 seal whose `deckSha256` tcgkb already has for this user (the SHA-256 of a deck file it was
+  sent before) is linked to that deck version; an unknown one leaves the match without a deck. The
+  card ids are PTCGL codes (`sv8_174`); unknown ones are kept and listed in `unmatched`.
+* → `200 {"added":true,"account":{"accountHash","name","status"},"playerDeck":"Dragapult ex","opponentDeck":"Gardevoir ex","deckRef":{"deckId","version","changed"},"unmatched":["…"]}`.
+  `added` is false when tcgkb already had this log (same match, seat and key): not an error.
+  `playerDeck` and `opponentDeck` are tcgkb's guess from the cards seen in the log (Limitless
+  archetype names), or null. `deckRef` is the deck version linked to the match, or null; the tray
+  remembers the `deckSha256` of a log answered with a `deckRef`, and forgets it (sending the deck
+  again next time) when an answer has none.
 * `403 {"error":"not_claimed"}`: the account is not the user's (released, or never claimed).
-  `422 {"error":"invalid_log","message":"…"}`: the log failed a check; sending it again would fail
-  again. `429 {"error":"rate_limited"}`.
+  `422 {"error":"invalid_log","message":"…"}`: the log failed a check, or `deck` does not match the
+  seal's `deckSha256` (or came with a seal that names none); sending it again would fail again.
+  `429 {"error":"rate_limited"}` (also when the user stores too many decks).
+
+## Decks
+
+The tray uses only the match uploads above. tcgkb also offers, for later use, with scope
+`decks:write` (tokens granted before it existed lack it and need a reconnect):
+
+* `PUT /api/ptcgl/decks/<deckGuid>`: the body is a deck file exactly as on disk (its `deckGuid`, if
+  any, must be the one in the URL). Same upsert as above; `200 {"deckId","version","changed","unmatched"}`.
+  `422 {"error":"invalid_deck"}`, `413`, `429 {"error":"rate_limited"}`.
+* `GET /api/ptcgl/decks` → the user's decks `[{"deckGuid","deckId","version","iterationCount","contentHash"}]`,
+  `contentHash` being the SHA-256 of the canonical card map (not of the file).

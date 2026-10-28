@@ -82,6 +82,12 @@ watchdog and deletes `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\PT
   so a `NO-RESULT` file can be replaced by a `VICTORY`/`DEFEAT` one for the same match.
 * `index.csv`: UTF-8 with BOM, CRLF, header
   `Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File`, one row per match file.
+* `decks\<sha256>.deck`: the player's own deck (`DeckList`, read from `deckInfo` while the match
+  loads), one file per distinct deck, named by the SHA-256 of its bytes and named again by each
+  log's seal (`deckSha256`). One line of ASCII JSON `{"v":1,"deckGuid","iterationCount","name",
+  "deckDefinitionId","size","cards":{id:count}}`, card ids in ordinal order (docs/LOG-SEAL.md §2a).
+  Written before the `.txt` unless the same bytes are already there; never moved or deleted; none
+  in `Off` seal mode or when the client gives no cards.
 
 ### `plugin-status.json`
 
@@ -343,7 +349,8 @@ tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
 * **Upload my matches automatically** (`Settings.TcgkbAutoUpload`, asked once after the first
   accounts dialog, off by default): `LogUploader.SyncAsync` lists the user's accounts on tcgkb,
   then sends `POST /api/ptcgl/logs` for each tracked match of those accounts not yet in
-  `tcgkb-uploads.json` (`AppPaths.Root`; keys `matchId|accountHash|keyId`, accepted and rejected),
+  `tcgkb-uploads.json` (`AppPaths.Root`; keys `matchId|accountHash|keyId`, accepted and rejected,
+  and the `deckSha256` of decks tcgkb linked: each distinct deck file is sent once, as `deck`),
   newest first, at most 50 per run (another run follows at once when more are left). It runs at
   start, after each saved log and every 30 minutes; `not_claimed` leaves the log for later,
   `invalid_log` records it as rejected, any other error ends the run until the next one. One run
@@ -397,7 +404,8 @@ src/Plugin/                     BepInEx plugin (net472)
   Plugin.cs                     BepInEx entry, Unity runner, clipboard guard, status writer
   Core/GameApi.cs               reflection access to the client (no game DLL references)
   Core/MatchWatcher.cs          when to read and save
-  Core/LogStore.cs              .txt + index.csv (+ .seal)
+  Core/LogStore.cs              .txt + index.csv (+ .seal, decks\*.deck)
+  Core/DeckList.cs              the player's deck from deckInfo, and its .deck JSON
   Core/LogSeal.cs               seal metadata, signing, chain decisions, seal reader
   Core/SigningIdentity.cs       signing key + chain.json (RSA behind a seam: RSACryptoServiceProvider in the game)
   Core/LogsFolder.cs            OutputFolder → folder, with the BepInEx-garbling fallbacks
@@ -644,7 +652,8 @@ public static class PtcglAccountScanner
 
 public sealed class SealSummary
 {
-    public static SealSummary TryRead(string logFile);   // footer, else .seal sidecar; reads, never verifies
+    public static SealSummary TryRead(string logFile);   // footer, else .seal sidecar, v1 or v2; reads, never verifies
+    public byte[] ReadDeck();                            // decks\<DeckSha256>.deck when it matches, else null
 }
 
 public static class LogFileName
@@ -738,14 +747,15 @@ verification guidance: `docs/LOG-SEAL.md`. Summary of the contract:
     ```
     <exact Export text>\n
     \n
-    -----BEGIN PTCGL-ABL SEAL v1-----\n
+    -----BEGIN PTCGL-ABL SEAL v2-----\n
     <metadata JSON, one line>\n
     <signature, standard base64, one line>\n
-    -----END PTCGL-ABL SEAL v1-----\n
+    -----END PTCGL-ABL SEAL v2-----\n
     ```
 
-    The log is everything before the **last** occurrence of
-    `\n\n-----BEGIN PTCGL-ABL SEAL v1-----\n` (after removing a leading UTF-8 BOM).
+    The log is everything before the **last** occurrence of `\n\n-----BEGIN PTCGL-ABL SEAL v`
+    (after removing a leading UTF-8 BOM); the BEGIN line's number is the version (v1 seals of
+    earlier builds stay valid and are read by the chain repair, `SealSummary` and the verifier).
   * `Sidecar`: the `.txt` holds only the Export text; the same block (from `-----BEGIN` to the end)
     is written to `<same name>.seal` next to it (the `.txt` name with the extension `.seal`;
     ASCII, no BOM). A rewrite in `Footer` or `Off` mode deletes the file's stale `.seal`.
@@ -753,12 +763,12 @@ verification guidance: `docs/LOG-SEAL.md`. Summary of the contract:
 * **Metadata JSON** — one line, no whitespace, pure ASCII (`\uxxxx` from U+007F up), keys in
   exactly this order, written by the plugin's JSON writer; verifiers must check the signature over
   the exact bytes and must not re-serialize:
-  `v` (1), `app` ("PTCGL Auto Battle Log"), `pluginVersion`, `gameVersion` (Unity
+  `v` (2), `app` ("PTCGL Auto Battle Log"), `pluginVersion`, `gameVersion` (Unity
   `Application.version` or null), `capture` (`"auto"`: the plugin's own read; `"export"`: the sealed
   text came from the player's Export click, always so for `EXPORTED`), `matchId` (or null),
   `startedUtc`, `endedUtc`, `result` (`VICTORY|DEFEAT|NO-RESULT|EXPORTED`), `winner` (1|2|null),
   `mySeat` (1|2|null), `player` {`name`, `accountHash`}, `opponent` {`name`, `accountHash`}, `deck`,
-  `logSha256` (lowercase hex SHA-256 of the UTF-8 bytes of the log), `logChars` (UTF-16 length of
+  `deckSha256` (lowercase hex SHA-256 of the `decks\<hash>.deck` file, or null; absent in v1), `logSha256` (lowercase hex SHA-256 of the UTF-8 bytes of the log), `logChars` (UTF-16 length of
   the log), `sealedUtc`, `seq`, `prev` (hex chain hash of the previous seal, null for seq 1),
   `keyId`, `publicKey` {`kty`:"RSA", `n`, `e`} (base64url, no padding).
   `accountHash` = lowercase hex SHA-256 of the UTF-8 string `"ptcgl-abl:v1:" + accountId` (null when

@@ -38,44 +38,10 @@ static partial class Program
         SealChainRepair();
         SealSamples();
         MatchFieldsDump();
-        DeckShape();
+        DeckLists();
 
         Console.WriteLine(failures == 0 ? "\nALL PASSED (" + checks + " checks)" : "\n" + failures + " FAILED (of " + checks + " checks)");
         return failures == 0 ? 0 : 1;
-    }
-
-    // ================================================================== deckInfo research (issue #15)
-
-    class ShapeCard { public string cardID = "sv3-125"; public int count = 3; }
-    class ShapeDeck
-    {
-        public string deckName = "Charizard ex";
-        public List<ShapeCard> cards = new() { new ShapeCard(), new ShapeCard { cardID = "sv1-196", count = 4 } };
-        public string Broken => throw new InvalidOperationException("no");
-    }
-
-    static void DeckShape()
-    {
-        Console.WriteLine("DeckShape");
-        var ours = ReflectionGameApi.DescribeShape(new ShapeDeck(), true);
-        Console.WriteLine("    " + ours);
-        Check(ours.Contains("deckName: Charizard ex") && ours.Contains("cards: List`1(count 2)"), "our deck is described with its values and the list's count");
-        Check(ours.Contains("cardID: sv3-125") && ours.Contains("count: 4"), "list items are described with their members");
-        Check(ours.Contains("Broken: <InvalidOperationException>"), "a throwing getter does not stop the description");
-
-        var theirs = ReflectionGameApi.DescribeShape(new ShapeDeck(), false);
-        Console.WriteLine("    " + theirs);
-        Check(!theirs.Contains("Charizard") && !theirs.Contains("sv3-125") && !theirs.Contains("sv1-196"), "without values no names or card ids are shown");
-        Check(theirs.Contains("deckName: String") && theirs.Contains("cardID: String"), "without values the member names and types are still shown");
-
-        var lines = new List<string>();
-        var api = new ReflectionGameApi(lines.Add, null) { Assemblies = () => new[] { typeof(Program).Assembly } };
-        StartMatch("shape-1", true, "Gary");
-        api.ReadMatch();
-        api.ReadMatch();
-        Check(lines.Count(l => l.Contains("issue #15") && l.Contains("ours")) == 1, "the deck shape is logged once per session");
-        api.Unhook();
-        NetworkMatchController.currentMatchInfo = null;
     }
 
     // ================================================================== fixtures

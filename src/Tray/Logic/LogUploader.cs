@@ -16,6 +16,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "uploaded", Order = 1)] public List<string> Uploaded = new List<string>();
         /// <summary>Refused as invalid (invalid_log): sending it again would be refused again.</summary>
         [DataMember(Name = "rejected", Order = 2)] public List<string> Rejected = new List<string>();
+        /// <summary>deckSha256 of the decks tcgkb has (linked to a match): later matches with one send only the seal's hash.</summary>
+        [DataMember(Name = "decks", Order = 3)] public List<string> Decks = new List<string>();
     }
 
     /// <summary>What one LogUploader.SyncAsync did.</summary>
@@ -96,7 +98,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
                     }
                     var s = pending[i];
                     ClaimEvidence log;
-                    try { log = TcgkbConnection.BuildEvidence(s); }
+                    bool known = s.DeckSha256 != null && state.Decks.Contains(s.DeckSha256);
+                    try { log = TcgkbConnection.BuildEvidence(s, withDeck: !known); }
                     catch (IOException) { continue; }                    // moved or deleted since the scan
                     catch (UnauthorizedAccessException) { continue; }
 
@@ -106,6 +109,13 @@ namespace PtcglAutoBattleLog.Tray.Logic
                         if (r.Added) run.Uploaded++; else run.AlreadyThere++;
                         if (run.Newest == null) run.Newest = r;
                         state.Uploaded.Add(Key(s));
+                        // Each deck is sent once: tcgkb links later matches to it by deckSha256. If it
+                        // turns out not to have it any more, the next match with it sends it again.
+                        if (s.DeckSha256 != null)
+                        {
+                            state.Decks.Remove(s.DeckSha256);
+                            if (r.DeckRef != null) state.Decks.Add(s.DeckSha256);
+                        }
                     }
                     catch (TcgkbAuthException) { throw; }
                     catch (TcgkbException e) when (e.Code == "invalid_log")
@@ -159,6 +169,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 {
                     state.Uploaded = state.Uploaded ?? new List<string>();
                     state.Rejected = state.Rejected ?? new List<string>();
+                    state.Decks = state.Decks ?? new List<string>();
                     return state;
                 }
             }
@@ -170,6 +181,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         {
             if (state.Uploaded.Count > MaxKeys) state.Uploaded.RemoveRange(0, state.Uploaded.Count - MaxKeys);
             if (state.Rejected.Count > MaxKeys) state.Rejected.RemoveRange(0, state.Rejected.Count - MaxKeys);
+            if (state.Decks.Count > MaxKeys) state.Decks.RemoveRange(0, state.Decks.Count - MaxKeys);
             try { FileOps.WriteAllTextAtomic(_statePath, Json.Write(state), FileOps.Utf8NoBom); }
             catch (Exception) { }   // not saved: the same logs are offered again next run, and tcgkb takes them again
         }

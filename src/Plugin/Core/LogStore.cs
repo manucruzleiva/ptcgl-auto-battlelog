@@ -12,10 +12,14 @@ namespace PtcglAutoBattleLog.Core
     /// sealed (docs/LOG-SEAL.md): in Footer mode (the default) a seal block follows the Export
     /// text in the .txt, so a tool that expects the bare Export text must cut it off; in Sidecar
     /// mode it goes to a .seal file next to the .txt, which then holds only the Export text.
+    /// The player's deck, when the client gives it, goes to decks\&lt;sha256&gt;.deck, once per distinct
+    /// deck: the seal names it by that hash, so matches played with the same deck share one file.
     /// </summary>
     public sealed class LogStore : ILogSink
     {
         public const string IndexFile = "index.csv";
+        /// <summary>Subfolder of the logs folder holding each distinct deck once (docs/LOG-SEAL.md §2a).</summary>
+        public const string DecksFolder = "decks";
         public const string IndexHeader = "Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File";
 
         /// <summary>
@@ -82,9 +86,15 @@ namespace PtcglAutoBattleLog.Core
             // A verifier takes a footer in the .txt before a .seal file. A log that itself contains
             // the footer's separator would hide its sidecar behind that: seal it with a footer, which
             // the "last separator" rule finds.
-            if (mode == SealMode.Sidecar && text.IndexOf(LogSealer.FooterSeparator, StringComparison.Ordinal) >= 0) mode = SealMode.Footer;
+            if (mode == SealMode.Sidecar && text.IndexOf(LogSealer.FooterPrefix, StringComparison.Ordinal) >= 0) mode = SealMode.Footer;
+
+            // The deck goes first, so the seal never names a deck that is not on disk: one that cannot
+            // be written is left out of the seal (deckSha256 null) instead. Without a seal nothing
+            // would name it, so none is saved then.
+            var deck = m.MyDeckList == null || mode == SealMode.Off ? null : SaveDeck(m.MyDeckList.ToBytes());
+
             var log = Utf8NoBom.GetBytes(text);
-            var seal = mode == SealMode.Off ? null : Sealer.TryPrepare(m, text, log, previous);
+            var seal = mode == SealMode.Off ? null : Sealer.TryPrepare(m, text, log, deck, previous);
             var footer = seal != null && mode == SealMode.Footer ? Encoding.ASCII.GetBytes("\n\n" + seal.Block) : new byte[0];
             try
             {
@@ -144,6 +154,36 @@ namespace PtcglAutoBattleLog.Core
         public static string SidecarPathFor(string logPath)
         {
             return Path.ChangeExtension(logPath, LogSealer.SidecarExtension);
+        }
+
+        /// <summary>Where a deck goes: decks\&lt;its SHA-256, lowercase hex&gt;.deck in the logs folder.</summary>
+        public static string DeckPathFor(string logsFolder, string deckSha256)
+        {
+            return Path.Combine(logsFolder, DecksFolder, deckSha256 + DeckList.Extension);
+        }
+
+        /// <summary>
+        /// The deck's file, written unless the same deck is already there (decks are never deleted:
+        /// other logs may name them). Returns the bytes the seal names, or null when it cannot be saved.
+        /// </summary>
+        private byte[] SaveDeck(byte[] deck)
+        {
+            try
+            {
+                var path = DeckPathFor(Folder, SigningIdentity.Hex(SigningIdentity.Sha256(deck)));
+                if (File.Exists(path))
+                {
+                    var on = File.ReadAllBytes(path);
+                    if (on.Length == deck.Length && SigningIdentity.Hex(SigningIdentity.Sha256(on)) == Path.GetFileNameWithoutExtension(path)) return deck;
+                }
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                WriteAtomic(path, deck);     // new, or a damaged copy replaced
+                return deck;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public static string ResultLabel(MatchRecord m)

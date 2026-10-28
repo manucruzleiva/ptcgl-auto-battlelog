@@ -21,8 +21,9 @@
 > responsible** for warnings, suspensions or bans of your account, or for any other consequence.
 > It only automates obtaining data the game already gives you (the text of the Battle Log's
 > **Export** button). It does not take part in the battle: during a match it reads the match
-> details the client already holds (match id, both players' names and account ids, your deck, the
-> seats and the winner) to name, index and seal the log; account ids are stored only as hashes.
+> details the client already holds (match id, both players' names and account ids, your deck and
+> its cards, the seats and the winner) to name, index and seal the log; account ids are stored only
+> as hashes.
 > Please read the full **[disclaimer](DISCLAIMER.md)** before installing.
 
 ## Contents
@@ -49,6 +50,8 @@
   match, named by date, result and opponent: `2026-10-19 21.34.05 - VICTORY vs Gary.txt`.
 - **A spreadsheet of your matches.** `index.csv` gets one row per match (date, result, opponent,
   your name, deck, duration, match id, file), ready for Excel or Google Sheets.
+- **Your decklist with each match.** The cards of the deck you played are saved with the log, once
+  per distinct deck in a `decks` subfolder (only yours: the game never has your opponent's).
 - **Your own Export clicks too.** Pressing Export yourself still works and is saved as well.
 - **One small download, no admin rights.** A single `.exe` installs everything for your Windows
   user in a few seconds. A portable version is available too.
@@ -150,15 +153,19 @@ which may be inside OneDrive). Use **Change logs folder...** in the tray menu to
 - The content is exactly the text the game's Export button produces (UTF-8). If the result
   becomes known only later (for example after a reconnect), the file is updated and renamed, so a
   `NO-RESULT` file can become `VICTORY` or `DEFEAT`.
+- `decks\` holds the decks you played, one file per distinct deck, named by its hash: one line of
+  JSON with the game's card ids and counts, e.g. `{"v":1,...,"size":60,"cards":{"sv8_174":2,...}}`.
+  Each log's seal names the deck it was played with, so matches with the same deck share one file
+  and an edited deck file is detectable. Without a seal (**Off**) no deck is saved.
 - `index.csv` (UTF-8, opens directly in Excel) has the columns
   `Date, Result, Opponent, Player, Deck, Duration (min), MatchId, File`.
 - **The seal footer.** By default each `.txt` ends with a block like this, after the log:
 
   ```
-  -----BEGIN PTCGL-ABL SEAL v1-----
-  {"v":1,"app":"PTCGL Auto Battle Log",...}
+  -----BEGIN PTCGL-ABL SEAL v2-----
+  {"v":2,"app":"PTCGL Auto Battle Log",...}
   kq3Vx...==
-  -----END PTCGL-ABL SEAL v1-----
+  -----END PTCGL-ABL SEAL v2-----
   ```
 
   Everything before that block is the original log. If another tool chokes on it, remove those
@@ -229,7 +236,7 @@ repository's releases. They cannot protect against a compromise of the repositor
 ## Sealed logs and leaderboards
 
 Every saved log carries a **seal**: one line of metadata about the match (match id, result, both
-players' names, deck, times, a hash of the log text) signed with an RSA key that belongs to your
+players' names, deck, times, a hash of the log text and of the `.deck` file) signed with an RSA key that belongs to your
 Windows account, and chained to your previous seal (`seq`, `prev`). The goal is a future online
 leaderboard that can tell edited or made-up logs from real ones.
 
@@ -280,6 +287,9 @@ to tcgkb...** links this computer to it:
 3. A claim sends tcgkb that account's 3 newest battle logs, sealed, as proof. They contain your
    opponents' display names, as the Export text does. A claim is "not verified" until an opponent
    who also uses tcgkb uploads the same match; then it is "verified".
+4. **Upload my matches automatically** (off until you turn it on) sends each tracked match of
+   your claimed accounts the same way, with your decklist (each distinct deck is sent once), so
+   tcgkb can keep your decks and statistics.
 
 Nothing is sent until you connect and claim. **Disconnect** ends the connection (you can also
 remove the computer from your tcgkb profile). The connection is kept encrypted for your Windows
@@ -346,8 +356,8 @@ Nobody can promise that you won't. Please read the [disclaimer](DISCLAIMER.md); 
   any consequence, including warnings, suspensions or bans.
 - It only automates obtaining data the game already gives you: the Battle Log's Export text.
 - It does not take part in the battle. During a match it reads match details the client already
-  holds (the match id, both players' display names and account ids, your deck name, the seats and
-  the winner) to name, index and seal the log; account ids are stored only as hashes. It shows you
+  holds (the match id, both players' display names and account ids, your deck name and decklist,
+  the seats and the winner) to name, index and seal the log; account ids are stored only as hashes. It shows you
   nothing, automates no game action, and does not change cards, decks, matches or results.
 - It sends nothing to The Pokémon Company. Its only network traffic is the update check against
   this project's GitHub releases and, only if you choose them, requests to tcgkb.app and to

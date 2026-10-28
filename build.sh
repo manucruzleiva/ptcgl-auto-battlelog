@@ -164,7 +164,7 @@ for kind in footer sidecar; do
     victim="$("${PYRUN[@]}" - "$TAMPERED" "$kind" <<'PY'
 import os, sys
 folder, kind = sys.argv[1], sys.argv[2]
-marker = b"\n\n-----BEGIN PTCGL-ABL SEAL v1-----\n"
+marker = b"\n\n-----BEGIN PTCGL-ABL SEAL v"   # any seal version (docs/LOG-SEAL.md §2)
 for name in sorted(os.listdir(folder)):
     path = os.path.join(folder, name)
     if not name.endswith(".txt"):

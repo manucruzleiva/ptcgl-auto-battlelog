@@ -52,10 +52,17 @@ namespace PtcglAutoBattleLog.Core
     /// </summary>
     public sealed class LogSealer
     {
-        public const string Begin = "-----BEGIN PTCGL-ABL SEAL v1-----";
-        public const string End = "-----END PTCGL-ABL SEAL v1-----";
-        /// <summary>Between the log and a footer seal. The log is everything before its last occurrence.</summary>
-        public const string FooterSeparator = "\n\n" + Begin + "\n";
+        /// <summary>The seal format the plugin writes (docs/LOG-SEAL.md); v1 seals from earlier builds are still read.</summary>
+        public const int Version = 2;
+        public const string Begin = "-----BEGIN PTCGL-ABL SEAL v2-----";
+        public const string End = "-----END PTCGL-ABL SEAL v2-----";
+        public const string BeginV1 = "-----BEGIN PTCGL-ABL SEAL v1-----";
+        public const string EndV1 = "-----END PTCGL-ABL SEAL v1-----";
+        /// <summary>
+        /// Starts a footer seal of any version. The log is everything before its last occurrence;
+        /// the BEGIN line then says the version.
+        /// </summary>
+        public const string FooterPrefix = "\n\n-----BEGIN PTCGL-ABL SEAL v";
         public const string SidecarExtension = ".seal";
         public const string AppName = "PTCGL Auto Battle Log";
         public const string CaptureAuto = "auto", CaptureExport = "export";
@@ -115,9 +122,10 @@ namespace PtcglAutoBattleLog.Core
         /// Builds and signs the seal of one write of a log. <paramref name="previous"/> is the seal
         /// the same file carried until now, if any: when it is still the latest seal of the chain,
         /// the new one takes its place (same seq and prev); otherwise it takes the next seq.
+        /// <paramref name="deck"/> is the .deck file written with the log, or null.
         /// Returns null when the log has to be saved without a seal. Never throws.
         /// </summary>
-        public PreparedSeal TryPrepare(MatchRecord m, string text, byte[] logUtf8, SealRef previous)
+        public PreparedSeal TryPrepare(MatchRecord m, string text, byte[] logUtf8, byte[] deck, SealRef previous)
         {
             try
             {
@@ -131,7 +139,7 @@ namespace PtcglAutoBattleLog.Core
                 if (previous != null && previous.Hash != null && previous.Hash == chainLast) { seq = previous.Seq; prev = previous.Prev; }
                 else { seq = chainSeq + 1; prev = chainLast; }
 
-                var json = BuildJson(m, text, logUtf8, seq, prev, UtcNow());
+                var json = BuildJson(m, text, logUtf8, deck, seq, prev, UtcNow());
                 var signature = Convert.ToBase64String(_identity.Sign(Encoding.ASCII.GetBytes(json)));
                 return new PreparedSeal
                 {
@@ -175,10 +183,10 @@ namespace PtcglAutoBattleLog.Core
         /// "Sealed logs"); verifiers check the signature over these exact bytes, so nothing here may
         /// depend on the culture. ASCII only: everything else is \u-escaped.
         /// </summary>
-        internal string BuildJson(MatchRecord m, string text, byte[] logUtf8, long seq, string prev, DateTime sealedUtc)
+        internal string BuildJson(MatchRecord m, string text, byte[] logUtf8, byte[] deck, long seq, string prev, DateTime sealedUtc)
         {
-            var sb = new StringBuilder(1200);
-            sb.Append("{\"v\":1");
+            var sb = new StringBuilder(1300);
+            sb.Append("{\"v\":").Append(Version.ToString(CultureInfo.InvariantCulture));
             Field(sb, "app", Quote(AppName));
             Field(sb, "pluginVersion", Quote(_pluginVersion));
             Field(sb, "gameVersion", Quote(_gameVersion));
@@ -192,6 +200,7 @@ namespace PtcglAutoBattleLog.Core
             Field(sb, "player", Party(m.MyName, m.MyAccountId));
             Field(sb, "opponent", Party(m.OpponentName, m.OpponentAccountId));
             Field(sb, "deck", Quote(NullIfEmpty(m.MyDeck)));
+            Field(sb, "deckSha256", Quote(deck == null ? null : SigningIdentity.Hex(SigningIdentity.Sha256(deck))));
             Field(sb, "logSha256", Quote(SigningIdentity.Hex(SigningIdentity.Sha256(logUtf8))));
             Field(sb, "logChars", text.Length.ToString(CultureInfo.InvariantCulture));
             Field(sb, "sealedUtc", PluginStatusWriter.Date(sealedUtc));
@@ -287,7 +296,7 @@ namespace PtcglAutoBattleLog.Core
         public long Seq;
         public string Prev;
         public string KeyId;
-        /// <summary>The seal's publicKey n and e (base64url); null when the line has none in the v1 form.</summary>
+        /// <summary>The seal's publicKey n and e (base64url); null when the line has none in the v1/v2 form.</summary>
         public string Modulus, Exponent;
         public string Hash;
 
@@ -315,7 +324,7 @@ namespace PtcglAutoBattleLog.Core
                     int start = tail.Length >= 3 && tail[0] == 0xEF && tail[1] == 0xBB && tail[2] == 0xBF ? 3 : 0;
                     return ParseBlock(Encoding.ASCII.GetString(tail, start, tail.Length - start));
                 }
-                var at = LastIndexOf(tail, Encoding.ASCII.GetBytes(LogSealer.FooterSeparator));
+                var at = LastIndexOf(tail, Encoding.ASCII.GetBytes(LogSealer.FooterPrefix));
                 if (at < 0) return null;
                 return ParseBlock(Encoding.ASCII.GetString(tail, at + 2, tail.Length - at - 2));
             }
@@ -325,13 +334,18 @@ namespace PtcglAutoBattleLog.Core
             }
         }
 
-        /// <summary>"-----BEGIN…-----\n{json}\n{signature}\n-----END…-----\n" exactly; null otherwise.</summary>
+        /// <summary>"-----BEGIN…-----\n{json}\n{signature}\n-----END…-----\n" exactly, v1 or v2; null otherwise.</summary>
         public static SealReader ParseBlock(string block)
         {
             if (block == null) return null;
             var lines = block.Split('\n');
-            if (lines.Length != 5 || lines[0] != LogSealer.Begin || lines[3] != LogSealer.End || lines[4].Length != 0) return null;
+            if (lines.Length != 5 || lines[4].Length != 0) return null;
+            string version;
+            if (lines[0] == LogSealer.Begin && lines[3] == LogSealer.End) version = "{\"v\":2,";
+            else if (lines[0] == LogSealer.BeginV1 && lines[3] == LogSealer.EndV1) version = "{\"v\":1,";
+            else return null;
             var json = lines[1];
+            if (!json.StartsWith(version, StringComparison.Ordinal)) return null;
             var seq = SeqField.Match(json);
             var prev = PrevField.Match(json);
             var keyId = KeyIdField.Match(json);
