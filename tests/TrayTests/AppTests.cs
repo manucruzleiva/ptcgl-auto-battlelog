@@ -322,6 +322,19 @@ static partial class Program
         d = m.Evaluate(Obs(80, false, all, pluginFile: false));
         Check(d.Repair, "accepted: repaired at the next tick");
 
+        // Nothing to repair, but the disclaimer still waits: the status and icon say so, even while logs are saved.
+        m = new DaemonMonitor();
+        var idle = Obs(0, false);
+        idle.ConsentPending = true;
+        d = m.Evaluate(idle);
+        Check(d.Health == TrayHealth.Attention && d.Summary == DaemonMonitor.ConsentPendingSummary, "consent pending, game closed: " + d.Summary);
+        var saving = Obs(10, true, status: Beat(t0.AddSeconds(10), saved: 2));
+        saving.ConsentPending = true;
+        d = m.Evaluate(saving);
+        Check(d.Health == TrayHealth.Attention && d.Summary == DaemonMonitor.ConsentPendingSummary && d.PluginAlive, "consent pending, saving: " + d.Summary);
+        d = m.Evaluate(Obs(20, true, status: Beat(t0.AddSeconds(20), saved: 2)));
+        Check(d.Health == TrayHealth.Active, "accepted: back to the normal status");
+
         // A first install while the game runs: no "a game update removed it" notice, the status says what to do.
         m = new DaemonMonitor();
         m.SetupPending();

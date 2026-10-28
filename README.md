@@ -197,6 +197,7 @@ Double-click it to open your logs folder.
 | tcgkb account ▸ | Optional. Connect to tcgkb, claim or release your PTCGL accounts, disconnect. See [tcgkb account](#tcgkb-account). |
 | Pokematch ▸ | Optional. Set your Pokematch API token, upload new battle logs automatically, upload past ones, remove the token. See [Pokematch](#pokematch). |
 | Diagnostics ▸ | Open the app log, the BepInEx log, the game folder or the app data folder; choose the game folder; copy diagnostic info for a bug report. |
+| Review the updated disclaimer... | In red, only when the disclaimer changed since you accepted it. Uploads to tcgkb and Pokematch wait until you accept it. |
 | Project page · View disclaimer · Licenses | Licenses shows this app's license and those of BepInEx and the other files it carries. |
 | Uninstall... (portable: Remove mod from game...) | See [Uninstall](#uninstall). |
 | Exit | Closes the tray app. Logs are still saved while it is closed (the plugin runs inside the game), but nothing is repaired or updated. |

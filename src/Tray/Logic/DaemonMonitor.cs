@@ -64,6 +64,9 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public static readonly TimeSpan RepairDelay = TimeSpan.FromSeconds(5);
         public static readonly TimeSpan RepairRetry = TimeSpan.FromSeconds(30);
 
+        /// <summary>The status while the player has not accepted the current disclaimer and nothing worse is going on.</summary>
+        public const string ConsentPendingSummary = "Action needed: accept the updated disclaimer";
+
         private DateTime? _missingSince;
         private DateTime? _retryAfter;
         private DateTime? _runningSince;
@@ -125,6 +128,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
             else if (missing && !onlyOutdatedPlugin && _setupPending) Set(d, TrayHealth.Attention, "Close Pokémon TCG Live once to finish installing the mod");
             else if (missing && !onlyOutdatedPlugin) Set(d, TrayHealth.Attention, "Mod missing: restart the game when it finishes updating");
             else if (pluginError) Set(d, TrayHealth.Error, "Mod error: " + (string.IsNullOrWhiteSpace(o.Status.Message) ? "see the BepInEx log" : o.Status.Message.Trim()));
+            else if (o.ConsentPending) Set(d, TrayHealth.Attention, ConsentPendingSummary);
             else if (alive)
             {
                 var starting = string.Equals(o.Status.State, PluginStatus.StateStarting, StringComparison.OrdinalIgnoreCase);

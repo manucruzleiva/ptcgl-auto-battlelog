@@ -239,7 +239,9 @@ next game start) · Diagnostics ▸ (app log, BepInEx log, game folder, app data
 folder, copy diagnostic info) · tcgkb account ▸ ("Not connected" / "Connected as <name>", Connect to
 tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") · Pokematch ▸ ("Not set up" / a status line, Set API token... /
 Change API token..., Upload new battle logs automatically, Upload past battle logs..., Remove API
-token; see "Pokematch") · Project page · View disclaimer · Licenses (the embedded
+token; see "Pokematch") · Project page · View disclaimer (while consent to the current
+`Disclaimer.Version` is pending it opens the updated disclaimer with its Accept button, and a red
+"Review the updated disclaimer..." item also shows under the status line) · Licenses (the embedded
 `THIRD-PARTY-NOTICES.md`, `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from
 game... · Exit.
 
@@ -254,7 +256,9 @@ game... · Exit.
   While consent to the current `Disclaimer.Version` is pending (a tray started with `--background`
   or `--updated-from` after a bump), nothing is repaired or updated and no "restart" notice is shown;
   the status reads "Accept the updated disclaimer to keep the mod updated" (see "Disclaimer and
-  consent").
+  consent"). With nothing to repair, a pending consent still shows attention ("Action needed: accept
+  the updated disclaimer"), unless the game is missing or the plugin reports an error. tcgkb and
+  Pokematch uploads wait for it too.
   First install: when a `--first-run` (or first portable) tray starts with pieces missing while the
   game runs (the installer could not finish), the welcome says to close the game once to finish
   installing, the status reads "Close Pokémon TCG Live once to finish installing the mod" and the

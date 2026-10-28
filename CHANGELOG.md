@@ -9,6 +9,19 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **"Review the updated disclaimer..." in the tray menu** (#29). While a newer disclaimer than the
+  one you accepted waits (after an update, it was only offered by a balloon that is easy to miss),
+  the menu shows this item in red under the status line, the status reads "Action needed: accept
+  the updated disclaimer" and the icon shows attention. "View disclaimer" opens the same window.
+
+### Changed
+
+- **tcgkb uploads wait for the updated disclaimer**, as Pokematch uploads already did: they now
+  carry your decklist, which the current disclaimer covers. The tcgkb menu says "Waiting: accept
+  the updated disclaimer", "Upload matches now" asks for it, and waiting matches go once you accept.
+
 ## [1.3.2-beta.3] - 2026-10-28
 
 A beta with your decklist, queue and format on each match. On the Beta channel it installs itself.
