@@ -4,7 +4,7 @@
     below is what local builds report.
   -->
   <PropertyGroup>
-    <Version Condition="'$(Version)' == ''">1.3.2-beta.2</Version>
+    <Version Condition="'$(Version)' == ''">1.3.2-beta.3</Version>
     <Product>PTCGL Auto Battle Log</Product>
     <Company>manucruzleiva</Company>
     <Copyright>Copyright (c) 2026 manucruzleiva and PTCGL Auto Battle Log contributors. MIT License.</Copyright>
