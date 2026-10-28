@@ -110,6 +110,15 @@ static partial class Program
         Check(PluginStatus.TryRead(path) == null, "absent -> null");
         File.WriteAllText(path, ContractStatusJson, new UTF8Encoding(false));
         var s = PluginStatus.TryRead(path);
+        // The status window's mod line (#42): the contract example is v1.1.0 with a heartbeat at 21:35:00Z.
+        var beat = new DateTime(2026, 10, 19, 21, 35, 30, DateTimeKind.Utc);
+        Check(PluginStatus.ModVersionLine(null, "1.1.0", beat) == "Mod in the game: not loaded yet", "mod line: no status file -> not loaded yet");
+        Check(PluginStatus.ModVersionLine(new PluginStatus { PluginVersion = " " }, "1.1.0", beat) == "Mod in the game: not loaded yet", "mod line: blank version -> not loaded yet");
+        Check(PluginStatus.ModVersionLine(s, "1.1.0", beat) == "Mod in the game: v1.1.0 (same as the app)", "mod line: alive, same version");
+        Check(PluginStatus.ModVersionLine(s, "1.2.0", beat) == "Mod in the game: v1.1.0 · not the app's v1.2.0: restart the game to update it", "mod line: alive, older than the app");
+        Check(PluginStatus.ModVersionLine(s, "1.1.0", beat.AddHours(1)) == "Mod last loaded by the game: v1.1.0", "mod line: game closed, same version");
+        Check(PluginStatus.ModVersionLine(s, "1.2.0", beat.AddHours(1)) == "Mod last loaded by the game: v1.1.0 · the game loads v1.2.0 the next time it starts", "mod line: game closed, older");
+
         Check(s != null, "contract example parses");
         if (s == null) return;
         Check(s.PluginVersion == "1.1.0" && s.State == PluginStatus.StateOk && s.Message == "Watching for matches.", "version, state, message");

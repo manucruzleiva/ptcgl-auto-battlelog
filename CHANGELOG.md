@@ -9,6 +9,12 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **Mod version in the status window** (#42). The "Status and settings" window shows which version
+  of the mod the game has loaded (or last loaded) and says when it is not the app's version, with
+  what to do: restart the game, or nothing if the game is closed and will load the new one.
+
 ### Fixed
 
 - **Decks not reaching tcgkb after an update** (#39). The mod inside the game is only replaced while
