@@ -9,6 +9,11 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.3.2-beta.4] - 2026-10-28
+
+A beta with a shorter tray menu and a new status and settings window. On the Beta channel it
+installs itself.
+
 ### Added
 
 - **"Review the updated disclaimer..." in the tray menu** (#29). While a newer disclaimer than the
