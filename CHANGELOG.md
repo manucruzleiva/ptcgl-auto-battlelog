@@ -9,6 +9,10 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.3.2-beta.3] - 2026-10-28
+
+A beta with your decklist, queue and format on each match. On the Beta channel it installs itself.
+
 ### Added
 
 - **Your decklist with each match** (#22). The plugin reads the cards of your own deck while a
