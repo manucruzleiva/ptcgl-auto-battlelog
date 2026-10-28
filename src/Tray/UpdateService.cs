@@ -12,7 +12,7 @@ namespace PtcglAutoBattleLog.Tray
 {
     /// <summary>
     /// OTA updates (docs/ARCHITECTURE.md, "OTA updates"): checks GitHub Releases 1 minute after start
-    /// and every 6 hours; with autoUpdate on, downloads, verifies (UpdateChecker), swaps the exe and
+    /// and every 6 hours, on the channel the player chose (stable: releases; beta: pre-releases too); with autoUpdate on, downloads, verifies (UpdateChecker), swaps the exe and
     /// restarts into it; otherwise offers the update. Lives on the UI thread: the timer ticks there,
     /// and awaits come back there, while the network and file work run on the thread pool.
     /// </summary>
@@ -141,17 +141,18 @@ namespace PtcglAutoBattleLog.Tray
             try
             {
                 UpdateManifest manifest;
+                bool beta = _session.Read(s => s.BetaUpdates);
                 using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token))
                 {
                     timeout.CancelAfter(ManifestTimeout);
-                    manifest = await _checker.FetchManifestAsync(timeout.Token);
+                    manifest = await _checker.FetchManifestAsync(beta, timeout.Token);
                 }
                 _nextCheckUtc = DateTime.UtcNow + Every;
                 _session.Update(s => s.LastUpdateCheckUtc = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture));
 
-                if (!_checker.IsNewer(manifest))
+                if (!_checker.IsNewer(manifest, beta))
                 {
-                    Log.Info("Update check: up to date (latest " + manifest.Version + ").");
+                    Log.Info("Update check (" + (beta ? "beta" : "stable") + "): up to date (latest " + manifest.Version + ").");
                     SetAvailable(null);
                     if (manual) Notify?.Invoke("You're up to date", AppInfo.ProductName + " v" + AppInfo.Version + " is the latest version.", null);
                     return;
@@ -164,7 +165,7 @@ namespace PtcglAutoBattleLog.Tray
                     return;
                 }
 
-                Log.Info("Update check: v" + manifest.Version + " available.");
+                Log.Info("Update check (" + (beta ? "beta" : "stable") + "): v" + manifest.Version + " available.");
                 SetAvailable(manifest);
                 if (_session.Read(s => s.AutoUpdate)) await InstallAsync(manifest, manual);
                 else if (manual || _announced != manifest.Version)

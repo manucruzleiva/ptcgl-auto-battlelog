@@ -21,7 +21,7 @@ namespace PtcglAutoBattleLog.Tray
         private ToolStripMenuItem _statusItem, _lastSavedItem, _logsInfoItem, _dataInfoItem, _findGameItem;
         private ToolStripMenuItem _openLastItem, _changeFolderItem, _defaultFolderItem;
         private ToolStripMenuItem _notifyItem, _autoUpdateItem, _updateItem, _startupItem, _repairItem;
-        private ToolStripMenuItem _sealItem, _bepInExLogItem, _gameFolderItem;
+        private ToolStripMenuItem _sealItem, _bepInExLogItem, _gameFolderItem, _channelItem;
 
         private ContextMenuStrip BuildMenu()
         {
@@ -51,6 +51,9 @@ namespace PtcglAutoBattleLog.Tray
             _updateItem.DropDownItems.Add(Item("What's new", () => Shell.Open(_updates.Available?.NotesUrl ?? AppInfo.ReleasesUrl)));
             _updateItem.DropDownItems.Add(Item("Skip this version", () => _updates.SkipAvailable()));
             _updateItem.Visible = false;
+            _channelItem = new ToolStripMenuItem("Update channel");
+            _channelItem.DropDownItems.Add(ChannelOption(Settings.StableChannel, "Stable (recommended)"));
+            _channelItem.DropDownItems.Add(ChannelOption(Settings.BetaChannel, "Beta (test versions before release)"));
             _startupItem = Item("Start with Windows", ToggleStartWithWindows);
             _repairItem = Item("Repair now", RepairNow);
 
@@ -81,7 +84,7 @@ namespace PtcglAutoBattleLog.Tray
                 new ToolStripSeparator(),
                 openLogs, _openLastItem, _changeFolderItem, _defaultFolderItem,
                 new ToolStripSeparator(),
-                _notifyItem, _autoUpdateItem, checkNow, _updateItem, _startupItem, _repairItem, _sealItem, BuildTcgkbMenu(), BuildPokematchMenu(), diagnostics,
+                _notifyItem, _autoUpdateItem, _channelItem, checkNow, _updateItem, _startupItem, _repairItem, _sealItem, BuildTcgkbMenu(), BuildPokematchMenu(), diagnostics,
                 new ToolStripSeparator(),
                 Item("Project page", () => Shell.Open(AppInfo.ProjectUrl)),
                 Item("View disclaimer", ViewDisclaimer),
@@ -121,6 +124,13 @@ namespace PtcglAutoBattleLog.Tray
             return item;
         }
 
+        private ToolStripMenuItem ChannelOption(string channel, string text)
+        {
+            var item = Item(text, () => SetUpdateChannel(channel));
+            item.Tag = channel;
+            return item;
+        }
+
         /// <summary>Everything that can change between two openings of the menu. Cheap: a few file reads.</summary>
         private void RefreshMenu()
         {
@@ -139,6 +149,8 @@ namespace PtcglAutoBattleLog.Tray
 
             _notifyItem.Checked = _session.Read(s => s.NotifyOnSave);
             _autoUpdateItem.Checked = _session.Read(s => s.AutoUpdate);
+            var channel = _session.Read(s => s.BetaUpdates) ? Settings.BetaChannel : Settings.StableChannel;
+            foreach (ToolStripMenuItem option in _channelItem.DropDownItems) option.Checked = (string)option.Tag == channel;
             try { _startupItem.Checked = WindowsIntegration.IsStartWithWindows(_session.Paths.InstalledExe); }
             catch (Exception) { _startupItem.Checked = false; }
             _repairItem.Enabled = game != null;
@@ -283,6 +295,19 @@ namespace PtcglAutoBattleLog.Tray
             if (on && _updates.Available != null) { var _ = _updates.InstallAsync(_updates.Available, manual: true); }
         }
 
+        private void SetUpdateChannel(string channel)
+        {
+            bool beta = channel == Settings.BetaChannel;
+            if (_session.Read(s => s.BetaUpdates) == beta) return;
+            _session.Update(s => s.UpdateChannel = channel);
+            Log.Info("Update channel: " + channel);
+            if (beta)
+                Balloon("Beta updates on", "You'll get test versions before they are released. They may have bugs; switch back to Stable any time.", ToolTipIcon.Info, null);
+            else
+                Balloon("Stable updates", "A test version you already have stays until the next stable release, which replaces it.", ToolTipIcon.Info, null);
+            var _ = _updates.CheckAsync(manual: false);
+        }
+
         private void ToggleStartWithWindows()
         {
             var exe = _session.Paths.InstalledExe;
@@ -379,7 +404,7 @@ namespace PtcglAutoBattleLog.Tray
             }
             sb.AppendLine("Logs folder: " + _session.LogsFolder(game) + (_session.HasCustomLogsFolder(game) ? "" : " (default)"));
             sb.AppendLine("Status: " + (r?.Decision?.Summary ?? "?") + " [" + (r?.Decision?.Health.ToString() ?? "?") + "]");
-            sb.AppendLine("Auto update: " + _session.Read(s => s.AutoUpdate) + ", last check " + (_session.Read(s => s.LastUpdateCheckUtc) ?? "never") +
+            sb.AppendLine("Auto update: " + _session.Read(s => s.AutoUpdate) + ", channel " + (_session.Read(s => s.BetaUpdates) ? "beta" : "stable") + ", last check " + (_session.Read(s => s.LastUpdateCheckUtc) ?? "never") +
                           (_updates.Available != null ? ", v" + _updates.Available.Version + " available" : ""));
             var status = PluginStatus.TryRead(_session.Paths.PluginStatusFile);
             sb.AppendLine("Plugin: " + (status == null ? "no status file"

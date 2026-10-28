@@ -178,7 +178,7 @@ Double-click it to open your logs folder.
 | Change logs folder... | New logs go there (from the next game start if the game is running). Folders whose path contains `'` or `"`, and network paths (`\\server\...`), are not supported by BepInEx's settings file. Folders inside the game's `BepInEx` folder or the app's own folders are refused, because uninstalling removes those. |
 | Use the default logs folder | Back to `Documents\PTCGL Battle Logs` (only shown when you changed it). |
 | Notify when a log is saved | Turns the "battle log saved" notifications on or off. |
-| Install updates automatically · Check for updates now | See [Automatic updates](#automatic-updates). |
+| Install updates automatically · Update channel ▸ · Check for updates now | See [Automatic updates](#automatic-updates). |
 | Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
 | Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
 | Repair now | Puts back any missing BepInEx or plugin file (with the game closed). |
@@ -203,12 +203,20 @@ for updates now**) by reading
 
 An update is installed only if **all** of these hold:
 
-- its version is strictly newer than yours (pre-release versions are ignored);
+- its version is strictly newer than yours (pre-release versions are ignored, unless you chose the
+  beta channel, below);
 - the download address is exactly a release download of this repository on `https://github.com`;
 - the downloaded file has exactly the size and the SHA-256 hash that `update.json` states.
 
 Anything else is discarded and written to the app log. The new exe replaces the old one and
 restarts; the plugin inside the game is updated the next time the game is closed.
+
+**Beta channel.** **Update channel ▸ Beta** also installs test versions (GitHub pre-releases such
+as `v1.3.2-beta.1`) before they become a release: the app then lists the repository's newest
+releases through `https://api.github.com/repos/manucruzleiva/ptcgl-auto-battlelog/releases` and
+takes the highest version, beta or not. The same download checks apply. Betas may have bugs. **Stable**
+(the default) gets releases only; switching back to it keeps the beta you have until the next
+release, which replaces it.
 
 **To turn it off**, untick **Install updates automatically**. You then get one notification per
 new version and can install it from the menu (**Update vX available ▸ Install now**), read

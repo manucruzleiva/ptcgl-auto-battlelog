@@ -16,6 +16,10 @@ update to it on their own; it updates itself to 1.3.2 once that is released.
 
 ### Added
 
+- **Beta update channel.** **Update channel ▸ Beta** in the tray menu also installs test versions
+  (GitHub pre-releases such as `v1.3.2-beta.1`) before they are released. **Stable** stays the
+  default and only gets releases; switching back keeps your beta until the next release replaces it.
+
 - **Research aid: dump the match fields.** With `DumpMatchFields = true` under `[Diagnostics]` in
   `BepInEx\config\ptcgl.autobattlelog.cfg` (off by default) the plugin writes the fields of the
   game's match objects to `LogOutput.log` at the start and end of every match, plus the loaded
