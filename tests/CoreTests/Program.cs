@@ -174,7 +174,7 @@ static partial class Program
         var dumps = lines.Where(l => l.StartsWith("Match fields (start)")).ToList();
         Check(dumps.Count == 1, "dumped once per match start");
         var d = dumps.FirstOrDefault() ?? "";
-        Check(d.Contains("queueType: QueueKind = Ranked   <<"), "queue-like field shown with its value and marked");
+        Check(d.Contains("queueType: QueueKind = Ranked of { Casual, Ranked, BuildAndBattle }   <<"), "queue-like field shown with its value and marked");
         Check(d.Contains("QueueKind [") && d.Contains("enum { Casual, Ranked, BuildAndBattle }"), "queue-like enum listed with its names");
         Check(d.Contains("gameOver: Boolean = False"), "plain fields shown");
         Check(!d.Contains("me-123") && !d.Contains("Misty") && !d.Contains("Ash"), "account ids and player names hidden");
