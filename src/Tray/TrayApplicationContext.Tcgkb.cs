@@ -26,7 +26,7 @@ namespace PtcglAutoBattleLog.Tray
             _tcgkbInfoItem = Info("Not connected");
             _tcgkbConnectItem = Item("Connect to tcgkb...", ConnectTcgkb);
             _tcgkbAccountsItem = Item("My PTCGL accounts...", ShowTcgkbAccounts);
-            _tcgkbAutoUploadItem = Item("Upload my matches automatically", ToggleAutoUpload);
+            _tcgkbAutoUploadItem = Toggle("Upload my matches automatically", ToggleAutoUpload);
             _tcgkbUploadNowItem = Item("Upload matches now", () => UploadMatches(true));
             _tcgkbLastUploadItem = Info("");
             _tcgkbDisconnectItem = Item("Disconnect", DisconnectTcgkb);

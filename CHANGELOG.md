@@ -15,6 +15,10 @@ The section of a version becomes the top of its GitHub release notes, so add one
   one you accepted waits (after an update, it was only offered by a balloon that is easy to miss),
   the menu shows this item in red under the status line, the status reads "Action needed: accept
   the updated disclaimer" and the icon shows attention. Help ▸ View disclaimer opens the same window.
+- **Status and settings window** (#30). **Status and settings...** in the tray menu opens a window with
+  the status at the top and the same options in tabs: General, Updates, Accounts (tcgkb and
+  Pokematch) and Help. Starting the app again from the Start menu while it runs now opens this
+  window instead of showing a notification.
 
 ### Changed
 

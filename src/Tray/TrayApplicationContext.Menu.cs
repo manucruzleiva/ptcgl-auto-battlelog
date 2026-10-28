@@ -22,6 +22,8 @@ namespace PtcglAutoBattleLog.Tray
         private ToolStripMenuItem _openLastItem, _changeFolderItem, _defaultFolderItem;
         private ToolStripMenuItem _notifyItem, _autoUpdateItem, _updateItem, _startupItem, _repairItem;
         private ToolStripMenuItem _sealItem, _bepInExLogItem, _gameFolderItem, _channelItem;
+        private ToolStripMenuItem _openLogsItem, _settingsMenu, _updatesMenu, _helpMenu;
+        private StatusWindow _window;
         private ToolStripMenuItem _consentItem;
 
         /// <summary>A menu item that needs the player: the updated disclaimer. Windows' own error red.</summary>
@@ -46,14 +48,14 @@ namespace PtcglAutoBattleLog.Tray
             _consentItem.ForeColor = AttentionColor;
             _consentItem.Visible = false;
 
-            var openLogs = Item("Open logs folder", OpenLogsFolder);
+            var openLogs = _openLogsItem = Item("Open logs folder", OpenLogsFolder);
             openLogs.Font = _boldFont;   // the double-click action
             _openLastItem = Item("Open last log", OpenLastLog);
             _changeFolderItem = Item("Change logs folder...", ChangeLogsFolder);
             _defaultFolderItem = Item("Use the default logs folder", ResetLogsFolder);
 
-            _notifyItem = Item("Notify when a log is saved", ToggleNotify);
-            _autoUpdateItem = Item("Install updates automatically", ToggleAutoUpdate);
+            _notifyItem = Toggle("Notify when a log is saved", ToggleNotify);
+            _autoUpdateItem = Toggle("Install updates automatically", ToggleAutoUpdate);
             var checkNow = Item("Check for updates now", () => { var _ = _updates.CheckAsync(manual: true); });
             _updateItem = new ToolStripMenuItem("Update available");
             _updateItem.DropDownItems.Add(Item("Install now", () => { var _ = _updates.InstallAsync(_updates.Available, manual: true); }));
@@ -63,7 +65,7 @@ namespace PtcglAutoBattleLog.Tray
             _channelItem = new ToolStripMenuItem("Update channel");
             _channelItem.DropDownItems.Add(ChannelOption(Settings.StableChannel, "Stable (recommended)"));
             _channelItem.DropDownItems.Add(ChannelOption(Settings.BetaChannel, "Beta (test versions before release)"));
-            _startupItem = Item("Start with Windows", ToggleStartWithWindows);
+            _startupItem = Toggle("Start with Windows", ToggleStartWithWindows);
             _repairItem = Item("Repair now", RepairNow);
 
             // The mode names first: the README and docs/ARCHITECTURE.md call them Footer, Sidecar and Off.
@@ -88,14 +90,14 @@ namespace PtcglAutoBattleLog.Tray
             var uninstall = Item(_session.Portable ? "Remove mod from game..." : "Uninstall...", Uninstall);
 
             // Only what is used often stays at the top: the rest is grouped in three submenus.
-            var settings = Submenu("Settings", true,
+            var settings = _settingsMenu = Submenu("Settings", true,
                 _notifyItem, _startupItem,
                 new ToolStripSeparator(),
                 _logsInfoItem, _changeFolderItem, _defaultFolderItem,
                 new ToolStripSeparator(),
                 _sealItem);
-            var updates = Submenu("Updates", true, _autoUpdateItem, _channelItem, new ToolStripSeparator(), checkNow);
-            var help = Submenu("Help", false,
+            var updates = _updatesMenu = Submenu("Updates", true, _autoUpdateItem, _channelItem, new ToolStripSeparator(), checkNow);
+            var help = _helpMenu = Submenu("Help", false,
                 diagnostics, _repairItem,
                 new ToolStripSeparator(),
                 Item("Project page", () => Shell.Open(AppInfo.ProjectUrl)),
@@ -112,7 +114,7 @@ namespace PtcglAutoBattleLog.Tray
                 new ToolStripSeparator(),
                 BuildTcgkbMenu(), BuildPokematchMenu(),
                 new ToolStripSeparator(),
-                settings, updates, help,
+                Item("Status and settings...", ShowWindow), settings, updates, help,
                 new ToolStripSeparator(),
                 Item("Exit", () => ExitThread()),
             });
@@ -129,7 +131,15 @@ namespace PtcglAutoBattleLog.Tray
             return item;
         }
 
-        private static ToolStripMenuItem Info(string text) => new ToolStripMenuItem(text) { Enabled = false };
+        private static ToolStripMenuItem Info(string text) => new ToolStripMenuItem(text) { Enabled = false, Tag = StatusWindow.InfoTag };
+
+        /// <summary>An item that is ticked on and off (RefreshMenu sets Checked); a check box in the window.</summary>
+        private ToolStripMenuItem Toggle(string text, Action onClick)
+        {
+            var item = Item(text, onClick);
+            item.Tag = StatusWindow.ToggleTag;
+            return item;
+        }
 
         /// <summary>Text shown as is: a lone '&amp;' (an opponent's name, a folder) would become a mnemonic underline.</summary>
         private static string MenuText(string s) => (s ?? "").Replace("&", "&&");
@@ -204,6 +214,44 @@ namespace PtcglAutoBattleLog.Tray
             var m = _updates?.Available;
             _updateItem.Visible = m != null;
             if (m != null) _updateItem.Text = "Update v" + m.Version + " available";
+        }
+
+        // ---- Window ----------------------------------------------------------------------------
+
+        /// <summary>The status and settings window: the same items as the menu, laid out in tabs.</summary>
+        private void ShowWindow()
+        {
+            if (_exiting) return;
+            if (_window == null || _window.IsDisposed)
+            {
+                RefreshMenu();
+                _window = new StatusWindow(
+                    MenuText(AppInfo.ProductName + " v" + AppInfo.Version + (_session.Portable ? " (portable)" : "")),
+                    new ToolStripItem[] { _statusItem, _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem },
+                    new[]
+                    {
+                        ("General", _settingsMenu.DropDownItems.Cast<ToolStripItem>().ToArray()),
+                        ("Updates", new ToolStripItem[] { _updateItem }.Concat(_updatesMenu.DropDownItems.Cast<ToolStripItem>()).ToArray()),
+                        ("Accounts", new ToolStripItem[] { _tcgkbItem, _pokematchItem }),
+                        ("Help", _helpMenu.DropDownItems.Cast<ToolStripItem>().ToArray()),
+                    },
+                    new[] { _openLogsItem, _openLastItem },
+                    item =>
+                    {
+                        item.PerformClick();
+                        Post(RefreshWindow);   // after the action, which may have changed what the window shows
+                    });
+                _window.FormClosed += (s, e) => _window = null;   // a closed modeless form disposes itself
+            }
+            _window.Raise();
+        }
+
+        /// <summary>Refreshes an open window (and the menu items it mirrors). Cheap enough for every daemon report.</summary>
+        private void RefreshWindow()
+        {
+            if (_window == null || _window.IsDisposed || !_window.Visible) return;
+            RefreshMenu();
+            _window.Sync();
         }
 
         // ---- Logs ------------------------------------------------------------------------------

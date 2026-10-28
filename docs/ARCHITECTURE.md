@@ -149,7 +149,7 @@ Unknown or missing fields fall back to these defaults; a corrupt file is kept as
 
 | Arguments | Behaviour |
 |---|---|
-| *(none)* | Not running from `%LOCALAPPDATA%\PtcglAutoBattleLog\PtcglAutoBattleLog.exe` → **install** (stop a running tray, copy self there, register, start the installed copy with `--first-run`, exit; see "Install and uninstall"), unless the installed exe is newer: then start (or show) that one and install nothing. Running from there (or in portable mode) → run the tray; if a tray is already running, tell it to show itself (balloon) and exit. |
+| *(none)* | Not running from `%LOCALAPPDATA%\PtcglAutoBattleLog\PtcglAutoBattleLog.exe` → **install** (stop a running tray, copy self there, register, start the installed copy with `--first-run`, exit; see "Install and uninstall"), unless the installed exe is newer: then start (or show) that one and install nothing. Running from there (or in portable mode) → run the tray; if a tray is already running, tell it to show itself (the status window) and exit. |
 | `--background` | Started by the `Run` key at logon: run the tray, silently if one is already running. Never installs (from outside the install folder in installed mode it exits) and never shows the disclaimer. |
 | `--first-run` | Run the tray and show the welcome notification. |
 | `--updated-from <version>` | Run the tray and show "Updated to vX". |
@@ -234,8 +234,8 @@ when the portable fallback is in use; "Choose the game folder..." while the game
 now, What's new, Skip this version; only while an update waits) · tcgkb account ▸ ("Not connected" /
 "Connected as <name>", Connect to tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") ·
 Pokematch ▸ ("Not set up" / a status line, Set API token... / Change API token..., Upload new battle
-logs automatically, Upload past battle logs..., Remove API token; see "Pokematch") · Settings ▸ ·
-Updates ▸ · Help ▸ · Exit.
+logs automatically, Upload past battle logs..., Remove API token; see "Pokematch") · Status and
+settings... · Settings ▸ · Updates ▸ · Help ▸ · Exit.
 
 * **Settings ▸** Notify when a log is saved · Start with Windows · the logs folder (a status line) ·
   Change logs folder... · Use the default logs folder (only when a custom one is set; writes an empty
@@ -247,6 +247,17 @@ Updates ▸ · Help ▸ · Exit.
   copy diagnostic info) · Repair now · Project page · View disclaimer (the updated one, with its
   Accept button, while consent is pending) · Licenses (the embedded `THIRD-PARTY-NOTICES.md`,
   `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from game....
+
+**Status and settings window** (`StatusWindow`): the menu laid out as a window, opened from
+"Status and settings..." and by the show event (the app started again while it runs, or started
+without `--background` when nothing else is shown). It has no state or actions of its own: each control
+mirrors one menu item (text, `Available`, `Enabled`, `Checked`) and a click is that item's
+`PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become labels, `ToggleTag` check
+boxes, a submenu whose options carry a string tag (seal mode, update channel) radio buttons, any other
+submenu a group box, the rest buttons. Header: the status lines (the red disclaimer item a red bold button); tabs: General (Settings ▸), Updates
+(the waiting update and Updates ▸), Accounts (tcgkb account ▸, Pokematch ▸), Help (Help ▸); footer:
+Open logs folder, Open last log, Close. While it is open every daemon report refreshes the items and
+the window.
 
 ### Daemon loop
 
