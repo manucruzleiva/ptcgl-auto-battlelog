@@ -66,6 +66,7 @@ namespace PtcglAutoBattleLog.Tray
                 _updates = new UpdateService(_session) { CanRestart = () => _modal == 0 && !_exiting };
                 _updates.Notify += (title, text, click) => Balloon(title, text, ToolTipIcon.Info, click);
                 _updates.AvailableChanged += RefreshUpdateItems;
+                _updates.AvailableChanged += RefreshWindow;
                 _updates.RestartRequested += () => ExitThread();
 
                 _daemon = new Daemon(_session);
@@ -136,6 +137,7 @@ namespace PtcglAutoBattleLog.Tray
                 Balloon("Mod ready", "The mod is in place in " + AppInfo.GameName + ". Battle logs are saved from your next game.", ToolTipIcon.Info, null);
 
             if (_menu.Visible) RefreshMenu();
+            RefreshWindow();
         }
 
         private void OnSaved(string path, string result, string opponent)
@@ -150,12 +152,11 @@ namespace PtcglAutoBattleLog.Tray
                     ToolTipIcon.Info, () => Shell.OpenText(path));
         }
 
+        /// <summary>The app was started again (Start menu, the exe) while running: show the window.</summary>
         private void OnShowRequested()
         {
             if (!HasConsent()) { AskConsent(); return; }
-            Balloon(AppInfo.ProductName + " is running",
-                    (_last?.Decision?.Summary ?? "Watching for battle logs.") + "\nRight-click this icon for options; double-click it to open your logs.",
-                    ToolTipIcon.Info, OpenLogsFolder);
+            ShowWindow();
         }
 
         /// <summary>The mod is not complete in the game yet and the game runs: the setup could not finish.</summary>
@@ -297,6 +298,7 @@ namespace PtcglAutoBattleLog.Tray
             // Fields may be null when the constructor failed halfway.
             if (_tray != null) _tray.Visible = false;   // gone from the notification area at once, not at the next mouse-over
             _menu?.Close();
+            Run("close window", () => _window?.Close());
             Run("stop listeners", () => { _exitListener?.Dispose(); _showListener?.Dispose(); });
             Run("stop updates", () => _updates?.Dispose());
             Run("stop tcgkb", () => { _uploadTimer?.Dispose(); _tcgkb?.Dispose(); });

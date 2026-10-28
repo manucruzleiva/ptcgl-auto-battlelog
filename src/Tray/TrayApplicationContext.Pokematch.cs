@@ -29,7 +29,7 @@ namespace PtcglAutoBattleLog.Tray
             _pokematchItem = new ToolStripMenuItem("Pokematch");
             _pokematchInfoItem = Info("Not set up");
             _pokematchTokenItem = Item("Set API token...", SetPokematchToken);
-            _pokematchAutoItem = Item("Upload new battle logs automatically", TogglePokematchAuto);
+            _pokematchAutoItem = Toggle("Upload new battle logs automatically", TogglePokematchAuto);
             _pokematchPastItem = Item("Upload past battle logs...", UploadPastPokematch);
             _pokematchRemoveItem = Item("Remove API token", RemovePokematchToken);
             _pokematchItem.DropDownItems.AddRange(new ToolStripItem[] { _pokematchInfoItem, _pokematchTokenItem, _pokematchAutoItem, _pokematchPastItem, _pokematchRemoveItem });
