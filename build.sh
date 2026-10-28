@@ -4,7 +4,7 @@
 #
 #   ./build.sh [VERSION]
 #
-# VERSION      X.Y.Z (1st argument, else the VERSION env var, else Directory.Build.props).
+# VERSION      X.Y.Z or X.Y.Z-beta.N (1st argument, else the VERSION env var, else Directory.Build.props).
 # REPO_OWNER   GitHub owner/repository the exe takes updates from and update.json points at
 # REPO_NAME    (default: Directory.Build.props). Forks set these, or edit Directory.Build.props.
 # DOTNET       the .NET 8 SDK's dotnet (default: dotnet on PATH); global.json pins the exact SDK.
@@ -58,10 +58,11 @@ esac
 
 VERSION="${1:-${VERSION:-$(prop Version)}}"
 VERSION="${VERSION#v}"
-# UpdateChecker.TryParseVersion: three numbers without leading zeros. Pre-release suffixes are
-# ignored by the tray's updater, so they are not built either.
-[[ "$VERSION" =~ ^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$ ]] \
-    || die "VERSION must be MAJOR.MINOR.PATCH (e.g. 1.2.0), got '$VERSION'"
+# UpdateChecker.TryParseVersion: three numbers without leading zeros, optionally followed by a
+# pre-release suffix (1.3.2-beta.1). The stable updater ignores pre-releases; they are published
+# as GitHub pre-releases for testers, never as the latest release.
+[[ "$VERSION" =~ ^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ && ${#VERSION} -le 40 ]] \
+    || die "VERSION must be MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-PRERELEASE (e.g. 1.2.0, 1.3.2-beta.1), got '$VERSION'"
 OWNER="${REPO_OWNER:-$(prop RepoOwner)}"
 REPO="${REPO_NAME:-$(prop RepoName)}"
 for v in "$OWNER" "$REPO"; do

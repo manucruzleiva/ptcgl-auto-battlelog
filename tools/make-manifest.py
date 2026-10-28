@@ -30,9 +30,10 @@ PORTABLE_ASSET = "PtcglAutoBattleLog-portable.zip"
 MANIFEST = "update.json"
 SUMS = "SHA256SUMS.txt"
 
-# UpdateChecker.TryParseVersion: three numbers, no leading zeros, at most 9 digits each. Versions
-# with a -suffix are pre-releases, which the tray ignores, so they are never published.
-VERSION = re.compile(r"(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})")
+# UpdateChecker.TryParseVersion: three numbers, no leading zeros, at most 9 digits each, optionally
+# a -suffix. A suffixed version is a pre-release: published as a GitHub pre-release (never the
+# latest release), and the stable tray ignores it.
+VERSION = re.compile(r"(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?")
 # UpdateChecker.IsSafeName: what may appear as one path segment of a trusted asset URL (also: not
 # starting with '.', at most 100 characters; see safe_name).
 SAFE_NAME = re.compile(r"[A-Za-z0-9._-]+")
@@ -75,8 +76,8 @@ def write_atomic(path, data):
 
 
 def build(args):
-    if not VERSION.fullmatch(args.version or ""):
-        raise Failure("--version must be MAJOR.MINOR.PATCH (e.g. 1.2.0, no 'v', no suffix), got %r" % args.version)
+    if not VERSION.fullmatch(args.version or "") or len(args.version) > 40:
+        raise Failure("--version must be MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-PRERELEASE (e.g. 1.2.0, 1.3.2-beta.1, no 'v'), got %r" % args.version)
     if args.tag != "v" + args.version:
         raise Failure("--tag must be 'v' + version (v%s), got %r" % (args.version, args.tag))
     owner = safe_name(args.owner, "--owner")
@@ -131,7 +132,7 @@ def build(args):
 def main(argv):
     parser = argparse.ArgumentParser(
         description="Write update.json and SHA256SUMS.txt for a PTCGL Auto Battle Log release.")
-    parser.add_argument("--version", required=True, help="release version, MAJOR.MINOR.PATCH")
+    parser.add_argument("--version", required=True, help="release version, MAJOR.MINOR.PATCH[-PRERELEASE]")
     parser.add_argument("--tag", required=True, help="release tag, 'v' + version")
     parser.add_argument("--owner", required=True, help="GitHub owner the release is published under")
     parser.add_argument("--repo", required=True, help="GitHub repository the release is published in")

@@ -458,8 +458,15 @@ docs/              ARCHITECTURE.md, LOG-SEAL.md
 The [Release workflow](.github/workflows/release.yml) checks that the tag is `vMAJOR.MINOR.PATCH`,
 builds with that version (all tests included), and publishes a GitHub release marked **latest**
 with the four files from `dist/`. Installed apps pick it up within 6 hours. Releases are never
-drafts or pre-releases, because the apps read `releases/latest/download/update.json`; pre-release
-tags (`v1.2.0-beta`) are refused. Versions must always increase: a tag lower than the latest
+drafts, because the apps read `releases/latest/download/update.json`.
+
+A tag with a pre-release suffix (`v1.3.2-beta.1`, with a `## [1.3.2-beta.1]` changelog section)
+publishes a **beta**: a GitHub pre-release, never the latest, so installed apps never see it and
+testers install it by hand. Its `X.Y.Z` must be higher than every published release; once the
+final `vX.Y.Z` is out, a beta install updates to it like any other. If you create the release on
+the GitHub website instead of pushing the tag, tick **Set as a pre-release**.
+
+Versions must always increase: a tag lower than the latest
 published release fails, and re-running an older tag's workflow replaces its files without making
 it the latest again. Tag runs are serialized. A published version should never be re-tagged with
 different content. The release notes name the commit, .NET SDK and Python that built the files.
