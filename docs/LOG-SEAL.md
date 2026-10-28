@@ -9,7 +9,8 @@ This document is the full specification. `docs/ARCHITECTURE.md` ("Sealed logs") 
 that the code is tested against. The reference verifier is `tools/verify_log.py`.
 
 The plugin writes **v2** seals. v2 is v1 plus `deckSha256`, the hash of the player's decklist,
-saved once per distinct deck in the logs folder's `decks` subfolder (§2a). v1 seals, written by earlier builds, stay valid: verifiers accept both, and
+saved once per distinct deck in the logs folder's `decks` subfolder (§2a), and `queue` and
+`format`, the match's queue and format as the game names them. v1 seals, written by earlier builds, stay valid: verifiers accept both, and
 the plugin's chain continues across them (see [Versioning](#versioning)).
 
 Read the [threat model](#threat-model) before relying on a seal. A seal made on the player's own
@@ -163,15 +164,18 @@ order. Nested objects also keep the order shown. Every number is an integer, and
 | 13 | `opponent` | `{"name", "accountHash"}` | The opponent, same fields. |
 | 14 | `deck` | string or null | The sealing player's deck name. |
 | 15 | `deckSha256` | 64 lowercase hex or null | **v2 only.** SHA-256 of the player's deck file, `decks\<deckSha256>.deck` in the logs folder (§2a); null when the client gave no cards or the file could not be written. |
-| 16 | `logSha256` | 64 lowercase hex | SHA-256 of the log bytes. |
-| 17 | `logChars` | integer | The log's length in UTF-16 code units, which is the .NET string length. |
-| 18 | `sealedUtc` | date | When the seal was made (the computer's clock). |
-| 19 | `seq` | integer ≥ 1 | Position in this key's chain. |
-| 20 | `prev` | 64 lowercase hex or null | Chain hash of the previous seal. Null exactly when `seq` is 1. |
-| 21 | `keyId` | base64url | RFC 7638 thumbprint of `publicKey`. |
-| 22 | `publicKey` | `{"kty":"RSA","n","e"}` | The signing key: base64url, no padding, no leading zero bytes. |
+| 16 | `queue` | string or null | **v2 only.** The queue, as the client names it (`NetworkMatchController.gameplayType`): `Ranked`, `Casual`, `BuildAndBattle`, or another name the client uses. `Friend` when the client names none but the match is a direct one (a direct opponent or a lobby code). Null when unknown. Never empty. |
+| 17 | `format` | string or null | **v2 only.** The format, as the client names it (`NetworkMatchController.gameMode`): `Standard`, `Expanded`, `BuildAndBattle`, or another name. Null when unknown. Never empty. |
+| 18 | `logSha256` | 64 lowercase hex | SHA-256 of the log bytes. |
+| 19 | `logChars` | integer | The log's length in UTF-16 code units, which is the .NET string length. |
+| 20 | `sealedUtc` | date | When the seal was made (the computer's clock). |
+| 21 | `seq` | integer ≥ 1 | Position in this key's chain. |
+| 22 | `prev` | 64 lowercase hex or null | Chain hash of the previous seal. Null exactly when `seq` is 1. |
+| 23 | `keyId` | base64url | RFC 7638 thumbprint of `publicKey`. |
+| 24 | `publicKey` | `{"kty":"RSA","n","e"}` | The signing key: base64url, no padding, no leading zero bytes. |
 
-A v1 seal has the same keys without `deckSha256`.
+A v1 seal has the same keys without `deckSha256`, `queue` and `format`. Verifiers do not check
+`queue` and `format` against a list: the client may add names.
 
 `accountHash` is the lowercase hex SHA-256 of the UTF-8 string `"ptcgl-abl:v1:" + accountId`, or
 null when the client did not give an account id. Both players' seals of one match name the same two
@@ -184,7 +188,7 @@ Example (wrapped here, one line in the file):
 {"v":2,"app":"PTCGL Auto Battle Log","pluginVersion":"1.1.0","gameVersion":"1.24.0","capture":"auto",
 "matchId":"sample-1","startedUtc":"2026-10-19T20:00:00Z","endedUtc":"2026-10-19T20:11:00Z","result":"VICTORY",
 "winner":1,"mySeat":1,"player":{"name":"Ash","accountHash":"f824fc06…"},"opponent":{"name":"Gary",
-"accountHash":"be4f4101…"},"deck":"Charizard ex","deckSha256":"3b0c51e2…","logSha256":"f73f2b04…","logChars":65,
+"accountHash":"be4f4101…"},"deck":"Charizard ex","deckSha256":"3b0c51e2…","queue":"Ranked","format":"Standard","logSha256":"f73f2b04…","logChars":65,
 "sealedUtc":"2026-10-19T20:11:09Z","seq":1,"prev":null,"keyId":"E34E3c57…","publicKey":{"kty":"RSA",
 "n":"28DR3rx2…","e":"AQAB"}}
 ```
@@ -441,7 +445,7 @@ not accept a v2 seal.
 | Version | Written by | Change |
 |---|---|---|
 | 1 | plugin 1.1 to 1.3 | First version. |
-| 2 | plugin after 1.3 (issue #22) | `deckSha256` after `deck`, naming the deck file (§2a). |
+| 2 | plugin after 1.3 (issues #22, #26) | `deckSha256`, `queue` and `format` after `deck`: the deck file (§2a), the queue and the format. |
 
 The chain does not care about versions: a key's v1 and v2 seals form one chain, and the plugin
 continues it after an update (the chain repair of §1 reads both). An older verifier (such as

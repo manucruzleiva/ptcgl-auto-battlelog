@@ -81,7 +81,17 @@ watchdog and deletes `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\PT
   (late winner, a reconnect), the file is moved to its corrected name (its `index.csv` row is updated),
   so a `NO-RESULT` file can be replaced by a `VICTORY`/`DEFEAT` one for the same match.
 * `index.csv`: UTF-8 with BOM, CRLF, header
-  `Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File`, one row per match file.
+  `Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File,Queue,Format`, one row per match
+  file. Queue and Format are the client's names (`NetworkMatchController.gameplayType` and
+  `gameMode`, see below), empty when unknown. A row is found again by its File column. At startup
+  the 8-column header of earlier versions gets `,Queue,Format`; its rows are left as they are.
+* Queue and format: `ReadMatch` reads the statics `NetworkMatchController.gameplayType`
+  (`GameplayType`: `Ranked`, `Casual`, `BuildAndBattle`, ...) and `gameMode`
+  (`MatchLogic.GameMode`: `Standard`, `Expanded`, `BuildAndBattle`, ...) and keeps the enum names as
+  text, so a value not seen yet is stored as it comes; `NONE`/`NotSet` count as unknown. Only when
+  `gameplayType` names nothing, a non-null `directMatchOpponent` or a non-empty `lobbyCode` makes
+  the queue `Friend`; the opponent id and the lobby code themselves are never stored. Like the deck,
+  the latest read wins until game over, then only gaps are filled. The file name does not change.
 * `decks\<sha256>.deck`: the player's own deck (`DeckList`, read from `deckInfo` while the match
   loads), one file per distinct deck, named by the SHA-256 of its bytes and named again by each
   log's seal (`deckSha256`). One line of ASCII JSON `{"v":1,"deckGuid","iterationCount","name",
@@ -768,7 +778,8 @@ verification guidance: `docs/LOG-SEAL.md`. Summary of the contract:
   text came from the player's Export click, always so for `EXPORTED`), `matchId` (or null),
   `startedUtc`, `endedUtc`, `result` (`VICTORY|DEFEAT|NO-RESULT|EXPORTED`), `winner` (1|2|null),
   `mySeat` (1|2|null), `player` {`name`, `accountHash`}, `opponent` {`name`, `accountHash`}, `deck`,
-  `deckSha256` (lowercase hex SHA-256 of the `decks\<hash>.deck` file, or null; absent in v1), `logSha256` (lowercase hex SHA-256 of the UTF-8 bytes of the log), `logChars` (UTF-16 length of
+  `deckSha256` (lowercase hex SHA-256 of the `decks\<hash>.deck` file, or null; absent in v1),
+  `queue` and `format` (the client's names, or null; absent in v1), `logSha256` (lowercase hex SHA-256 of the UTF-8 bytes of the log), `logChars` (UTF-16 length of
   the log), `sealedUtc`, `seq`, `prev` (hex chain hash of the previous seal, null for seq 1),
   `keyId`, `publicKey` {`kty`:"RSA", `n`, `e`} (base64url, no padding).
   `accountHash` = lowercase hex SHA-256 of the UTF-8 string `"ptcgl-abl:v1:" + accountId` (null when

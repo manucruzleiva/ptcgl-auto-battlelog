@@ -21,6 +21,13 @@ namespace PtcglAutoBattleLog.Core
         public DeckList MyDeckList;
         public string MyAccountId;
         public string OpponentAccountId;
+        /// <summary>
+        /// The queue, as the client names it (NetworkMatchController.gameplayType: Ranked, Casual,
+        /// BuildAndBattle, ...), or "Friend" for a direct match the client gives no queue for; null when unknown.
+        /// </summary>
+        public string Queue;
+        /// <summary>The format, as the client names it (NetworkMatchController.gameMode: Standard, Expanded, BuildAndBattle, ...); null when unknown.</summary>
+        public string Format;
     }
 
     public interface IGameApi
@@ -55,6 +62,7 @@ namespace PtcglAutoBattleLog.Core
     /// The names come from the client itself (decompiled, see README):
     ///   NetworkMatchController.currentMatchInfo   -> MatchInfo (gameOver, winner, isPlayer1, ...)
     ///   NetworkMatchController.playerDetails      -> names, account ids and decks of both seats
+    ///   NetworkMatchController.gameplayType/gameMode -> the queue and the format (issue #14)
     ///   MatchManager.instance.BattleLogExportData -> the data behind the Battle Log screen
     ///   _Rainier.Scripts.BattleLog.BattleLogExporter.ExportBattleLog(data) + static OnExport
     ///                                              -> the exact text the Export button copies
@@ -194,6 +202,7 @@ namespace PtcglAutoBattleLog.Core
                     }
                     else if (other != null) WarnOnce("seat", "Our account is not among playerDetails; the opponent name is left out until it is.");
                 }
+                ReadQueue(snap);
                 if (DumpMatchFields && _dumped.Add((snap.MatchId ?? "?") + (snap.GameOver ? "/over" : "/start")))
                     _log("Match fields (" + (snap.GameOver ? "game over" : "start") + "):\n" + DescribeMatch());
                 return snap;
@@ -203,6 +212,40 @@ namespace PtcglAutoBattleLog.Core
                 WarnOnce("read", "Reading the match failed: " + Unwrap(e).Message);
                 return null;
             }
+        }
+
+        /// <summary>Queue value used for a direct (friend) match when the client names no queue of its own.</summary>
+        public const string FriendQueue = "Friend";
+
+        /// <summary>
+        /// The queue and format, kept as the client's enum names so a value we have not seen yet (a
+        /// friend match's) is stored as it comes. Only when gameplayType names nothing, a direct
+        /// opponent or a lobby code makes it "Friend"; neither of those is stored itself.
+        /// </summary>
+        private void ReadQueue(MatchSnapshot snap)
+        {
+            try
+            {
+                snap.Queue = EnumName(GetStatic(_netController, "gameplayType", "GameplayType"));
+                snap.Format = EnumName(GetStatic(_netController, "gameMode", "GameMode"));
+                if (snap.Queue == null &&
+                    (GetStatic(_netController, "directMatchOpponent") != null ||
+                     !string.IsNullOrEmpty(AsString(GetStatic(_netController, "lobbyCode")))))
+                    snap.Queue = FriendQueue;
+            }
+            catch (Exception e)
+            {
+                WarnOnce("queue", "Reading the queue and format failed: " + Unwrap(e).Message);
+            }
+        }
+
+        /// <summary>An enum's name (or a string as is); null for nothing, empty, "NONE" or "NotSet".</summary>
+        internal static string EnumName(object value)
+        {
+            var s = value == null ? null : value.ToString().Trim();
+            if (string.IsNullOrEmpty(s) || s.Equals("NONE", StringComparison.OrdinalIgnoreCase) ||
+                s.Equals("NotSet", StringComparison.OrdinalIgnoreCase)) return null;
+            return s;
         }
 
         // ------------------------------------------------------------------ research dump

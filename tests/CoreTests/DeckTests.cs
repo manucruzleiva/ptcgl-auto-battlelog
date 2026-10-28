@@ -166,7 +166,7 @@ static partial class Program
 
         Console.WriteLine("60. seals of earlier builds (v1) are still read");
         var v2 = ReadSealed(p3);
-        var v1Json = System.Text.RegularExpressions.Regex.Replace(v2.Json.Replace("{\"v\":2,", "{\"v\":1,"), ",\"deckSha256\":(null|\"[0-9a-f]{64}\")", "")
+        var v1Json = System.Text.RegularExpressions.Regex.Replace(v2.Json.Replace("{\"v\":2,", "{\"v\":1,"), ",\"deckSha256\":(null|\"[0-9a-f]{64}\"),\"queue\":(null|\"[A-Za-z]+\"),\"format\":(null|\"[A-Za-z]+\")", "")
                          .Replace("\"seq\":" + v2.Seq + ",", "\"seq\":40,");
         var v1Sig = Convert.ToBase64String(id.Sign(Encoding.ASCII.GetBytes(v1Json)));
         var v1Block = "-----BEGIN PTCGL-ABL SEAL v1-----\n" + v1Json + "\n" + v1Sig + "\n-----END PTCGL-ABL SEAL v1-----\n";

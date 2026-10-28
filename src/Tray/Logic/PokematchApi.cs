@@ -63,6 +63,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public const string Unknown = "Unknown";
         /// <summary>Lowercase, at most 30 characters: Pokematch's tag rules.</summary>
         public const string Tag = "ptcgl-auto-battle-log";
+        /// <summary>Pokematch keeps at most this many characters of a tag.</summary>
+        public const int MaxTagLength = 30;
 
         [DataMember(Name = "activeDeck", Order = 1)] public PokematchDeck ActiveDeck;
         [DataMember(Name = "opponentDeck", Order = 2)] public string OpponentDeck;

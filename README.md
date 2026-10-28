@@ -49,7 +49,7 @@
   Export button would give you is written to `Documents\PTCGL Battle Logs`, one `.txt` file per
   match, named by date, result and opponent: `2026-10-19 21.34.05 - VICTORY vs Gary.txt`.
 - **A spreadsheet of your matches.** `index.csv` gets one row per match (date, result, opponent,
-  your name, deck, duration, match id, file), ready for Excel or Google Sheets.
+  your name, deck, duration, match id, file, queue and format), ready for Excel or Google Sheets.
 - **Your decklist with each match.** The cards of the deck you played are saved with the log, once
   per distinct deck in a `decks` subfolder (only yours: the game never has your opponent's).
 - **Your own Export clicks too.** Pressing Export yourself still works and is saved as well.
@@ -158,7 +158,11 @@ which may be inside OneDrive). Use **Change logs folder...** in the tray menu to
   Each log's seal names the deck it was played with, so matches with the same deck share one file
   and an edited deck file is detectable. Without a seal (**Off**) no deck is saved.
 - `index.csv` (UTF-8, opens directly in Excel) has the columns
-  `Date, Result, Opponent, Player, Deck, Duration (min), MatchId, File`.
+  `Date, Result, Opponent, Player, Deck, Duration (min), MatchId, File, Queue, Format`. Queue and
+  Format are the game's own names: `Ranked`, `Casual` or `BuildAndBattle` (`Friend` for a direct
+  match the game names no queue for), and `Standard`, `Expanded` or `BuildAndBattle`; empty when
+  unknown. An `index.csv` from an earlier version gets the two columns in its header; its old rows
+  keep them empty.
 - **The seal footer.** By default each `.txt` ends with a block like this, after the log:
 
   ```

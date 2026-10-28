@@ -130,6 +130,7 @@ static partial class Program
                 MatchId = manual ? null : matchId, StartUtc = t0.AddHours(n), EndUtc = manual ? (DateTime?)null : t0.AddHours(n).AddMinutes(12), Won = won,
                 Winner = won == null ? (int?)null : won == true ? 1 : 2, MySeat = 1, MyName = "Ash", MyAccountId = "ash-id", MyDeck = deck,
                 OpponentName = "Gary", OpponentAccountId = "gary-id", ManualOnly = manual, Capture = LogSealer.CaptureAuto,
+                Queue = "Ranked", Format = "Standard",
             }, log, existing);
 
         var win = Save(1, true, "m-1", "Setup\nAsh wins");
@@ -144,8 +145,9 @@ static partial class Program
         var c = PokematchUploader.Read(win);
         Check(c != null && c.Key == "match:m-1" && c.Match.Games.Single().Result == "win" && c.Match.ActiveDeck.Name == "Charizard ex",
               "footer log: key from the seal's match id, result, deck");
-        Check(c?.Match.OpponentDeck == PokematchMatch.Unknown && c.Match.Format == "Bo1" && c.Match.Tags.Single() == PokematchMatch.Tag,
-              "opponent deck unknown, Bo1, tagged");
+        Check(c?.Match.OpponentDeck == PokematchMatch.Unknown && c.Match.Format == "Bo1" &&
+              c.Match.Tags.SequenceEqual(new[] { PokematchMatch.Tag, "ranked", "standard" }),
+              "opponent deck unknown, Bo1, tagged with ours, the queue and the format");
         var json = c == null ? "" : Json.Write(c.Match);
         Check(!json.Contains("Gary") && !json.Contains("Ash wins") && !json.Contains("Ash"), "neither the opponent's name nor the log text is sent");
         Check(PokematchMatch.Tag.Length <= 30 && PokematchMatch.Tag == PokematchMatch.Tag.ToLowerInvariant(), "tag fits Pokematch's rules");
@@ -156,6 +158,9 @@ static partial class Program
         c = PokematchUploader.Read(unsealed);
         Check(c != null && c.Key == "file:" + Path.GetFileName(unsealed) && c.Match.ActiveDeck.Name == PokematchMatch.Unknown && c.Match.Games.Single().Result == "win",
               "unsealed log: key from the file name, deck unknown");
+        Check(c != null && c.Match.Tags.Single() == PokematchMatch.Tag, "unsealed log: only our tag (no queue known)");
+        Check(PokematchUploader.Tags(new SealSummary { Queue = "BuildAndBattle", Format = "BuildAndBattle" })
+                  .SequenceEqual(new[] { PokematchMatch.Tag, "buildandbattle" }), "the same name twice is one tag");
 
         var now = DateTime.UtcNow + TimeSpan.FromMinutes(10);   // every log has settled
         var fake = new FakePokematch();

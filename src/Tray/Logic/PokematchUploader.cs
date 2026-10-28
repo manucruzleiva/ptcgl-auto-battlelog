@@ -214,6 +214,21 @@ namespace PtcglAutoBattleLog.Tray.Logic
             return result;
         }
 
+        /// <summary>
+        /// Our tag, then the queue and the format the seal names, lowercase as Pokematch keeps tags
+        /// ("ranked", "standard"). Logs sealed without them send just our tag, as before.
+        /// </summary>
+        internal static List<string> Tags(SealSummary seal)
+        {
+            var tags = new List<string> { PokematchMatch.Tag };
+            foreach (var t in new[] { seal?.Queue, seal?.Format })
+            {
+                var tag = t?.Trim().ToLowerInvariant();
+                if (!string.IsNullOrEmpty(tag) && tag.Length <= PokematchMatch.MaxTagLength && !tags.Contains(tag)) tags.Add(tag);
+            }
+            return tags;
+        }
+
         /// <summary>A battle log as Pokematch takes it; null when it is not one of the plugin's logs. Never throws.</summary>
         public static PokematchCandidate Read(string logFile)
         {
@@ -231,7 +246,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                     Games = new List<PokematchGame> { new PokematchGame { Result = (seal?.Result ?? result) == "VICTORY" ? "win" : "loss" } },
                     Date = ended.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     Notes = "Added by " + PokematchApi.Source + ".",
-                    Tags = new List<string> { PokematchMatch.Tag },
+                    Tags = Tags(seal),
                 };
                 return new PokematchCandidate
                 {

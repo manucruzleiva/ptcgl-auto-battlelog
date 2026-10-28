@@ -43,10 +43,23 @@ public class DeckInfo
 }
 public class PlayerDetail { public string playerId; public string playerName; public DeckInfo deckInfo; }
 
+public enum GameplayType { Ranked, Casual, BuildAndBattle }
+public class SignedAccountId { public string id; }
+
 public static class NetworkMatchController
 {
     public static MatchInfo currentMatchInfo { get; set; }
     public static List<PlayerDetail> playerDetails;
+    // The queue and the format (issue #14). Nullable here only so a test can take the value away.
+    public static GameplayType? gameplayType = GameplayType.Ranked;
+    public static MatchLogic.GameMode gameMode = MatchLogic.GameMode.Standard;
+    public static SignedAccountId directMatchOpponent;
+    public static string lobbyCode = "";
+}
+
+namespace MatchLogic
+{
+    public enum GameMode { NONE, Base, Standard, Speed, Debug, Expanded, TrainerTrials, BuildAndBattle }
 }
 
 namespace _Rainier.Scripts.BattleLog

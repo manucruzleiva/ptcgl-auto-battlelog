@@ -39,6 +39,7 @@ static partial class Program
         SealSamples();
         MatchFieldsDump();
         DeckLists();
+        QueueAndFormat();
 
         Console.WriteLine(failures == 0 ? "\nALL PASSED (" + checks + " checks)" : "\n" + failures + " FAILED (of " + checks + " checks)");
         return failures == 0 ? 0 : 1;
@@ -112,6 +113,10 @@ static partial class Program
     {
         MatchManager.instance = new MatchManager();
         NetworkMatchController.currentMatchInfo = new MatchInfo { isPlayer1 = iAmP1, board = new MatchBoard { matchID = id } };
+        NetworkMatchController.gameplayType = GameplayType.Ranked;
+        NetworkMatchController.gameMode = MatchLogic.GameMode.Standard;
+        NetworkMatchController.directMatchOpponent = null;
+        NetworkMatchController.lobbyCode = "";
         NetworkMatchController.playerDetails = new() {
             new PlayerDetail { playerId = "me-123", playerName = "Ash", deckInfo = new DeckInfo { deckName = "Charizard ex" } },
             new PlayerDetail { playerId = "opp-9", playerName = opp },
@@ -241,9 +246,9 @@ static partial class Program
         Check(t.Names().Any(f => f.EndsWith(" - EXPORTED.txt")), "saved as its own EXPORTED file");
 
         var index = t.Index();
-        Check(index.Length > 0 && index[0] == "Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File", "index.csv header is the contract's");
+        Check(index.Length > 0 && index[0] == "Date,Result,Opponent,Player,Deck,Duration (min),MatchId,File,Queue,Format", "index.csv header is the contract's");
         Check(index.Length == 1 + t.Txts().Length, "index.csv has a header and one row per file (" + (index.Length - 1) + ")");
-        Check(index.Skip(1).All(r => t.Names().Contains(r.Substring(r.LastIndexOf(',') + 1))), "every row names an existing file");
+        Check(index.Skip(1).All(r => t.Names().Contains(LogStore.SplitCsv(r)[7])), "every row names an existing file");
         Check(index.Any(r => Regex.IsMatch(r, @"^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d,VICTORY,Gary<>,Ash,Charizard ex,[\d.]+,m-1,")), "row holds date, result, opponent, player, deck, minutes, match id");
         var bytes = File.ReadAllBytes(t.IndexPath);
         Check(HasBom(bytes), "index.csv starts with a UTF-8 BOM for Excel");
@@ -272,7 +277,7 @@ static partial class Program
             t.Tick(0.5);
             Check(t.Names().Length == 1 && t.Names()[0].EndsWith(" - VICTORY vs Blaine.txt"), "file renamed once the winner is known: " + string.Join(" | ", t.Names()));
             var idx = t.Index();
-            Check(idx.Length == 2 && idx[1].Contains(",VICTORY,") && idx[1].EndsWith("," + t.Names()[0]), "its index row was rewritten, not duplicated");
+            Check(idx.Length == 2 && idx[1].Contains(",VICTORY,") && LogStore.SplitCsv(idx[1])[7] == t.Names()[0], "its index row was rewritten, not duplicated");
             Check(t.Watcher.SavedCount == 1, "still one match saved");
             Check(t.Watcher.LastSavedPath == t.Txts()[0], "LastSavedPath follows the rename");
         }
