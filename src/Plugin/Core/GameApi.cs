@@ -72,6 +72,7 @@ namespace PtcglAutoBattleLog.Core
         private string _selfCaptured;
         private DateTime _nextResolve = DateTime.MinValue;
         private readonly HashSet<string> _warned = new HashSet<string>();
+        private bool _deckShapeLogged;
 
         public event Action<string> ManualExport;
 
@@ -161,6 +162,7 @@ namespace PtcglAutoBattleLog.Core
                 {
                     bool foundMe = false;
                     string other = null, otherId = null;
+                    object myDeck = null, otherDeck = null;
                     foreach (var p in players)
                     {
                         if (p == null) continue;
@@ -170,15 +172,17 @@ namespace PtcglAutoBattleLog.Core
                         {
                             foundMe = true;
                             snap.MyName = name;
-                            var deck = Get(p, "deckInfo");
+                            var deck = myDeck = Get(p, "deckInfo");
                             if (deck != null) snap.MyDeck = AsString(Get(deck, "deckName"));
                         }
                         else if (other == null && !string.IsNullOrEmpty(name))
                         {
                             other = name;
                             otherId = NonEmpty(id);
+                            otherDeck = Get(p, "deckInfo");
                         }
                     }
+                    if (foundMe && myDeck != null) LogDeckShapeOnce(myDeck, otherDeck);
                     // Without our own seat, "the other player" could be us: no name beats our own
                     // name in the opponent's place.
                     if (foundMe)
@@ -343,6 +347,118 @@ namespace PtcglAutoBattleLog.Core
             foreach (var w in words)
                 if (name.IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0) return true;
             return false;
+        }
+
+        /// <summary>
+        /// Research for issue #15 (can the player's decklist travel with the log?): once per game
+        /// session, write what deckInfo holds to the BepInEx log. Our own deck is shown with values,
+        /// since it is the player's own data in their own log; the opponent's only as member names
+        /// and types, to learn whether the client gives us their cards without recording them.
+        /// </summary>
+        private void LogDeckShapeOnce(object mine, object theirs)
+        {
+            if (_deckShapeLogged) return;
+            _deckShapeLogged = true;
+            try
+            {
+                _log("Deck info (research, issue #15) - ours: " + DescribeShape(mine, true));
+                if (theirs != null) _log("Deck info (research, issue #15) - opponent, names and types only: " + DescribeShape(theirs, false));
+            }
+            catch (Exception e) { _log("Describing deckInfo failed: " + Unwrap(e).Message); }
+        }
+
+        /// <summary>
+        /// The fields and properties of an object, three levels deep, as one line. Collections give
+        /// their count and their first few items. Values are shown only when withValues is set.
+        /// </summary>
+        public static string DescribeShape(object obj, bool withValues)
+        {
+            var sb = new System.Text.StringBuilder();
+            DescribeInto(sb, obj, withValues, 0);
+            return sb.ToString();
+        }
+
+        private static void DescribeInto(System.Text.StringBuilder sb, object obj, bool withValues, int depth)
+        {
+            if (sb.Length > ShapeBudget) { sb.Append("..."); return; }
+            if (obj == null) { sb.Append("null"); return; }
+            var t = obj.GetType();
+            if (IsLeaf(t))
+            {
+                sb.Append(withValues ? Clip(obj.ToString()) : t.Name);
+                return;
+            }
+            if (obj is IEnumerable list)
+            {
+                int n = 0;
+                var items = new List<object>();
+                foreach (var item in list) { if (n < 3) items.Add(item); if (++n >= 1000) break; }
+                sb.Append(t.Name).Append("(count ").Append(n >= 1000 ? "1000+" : n.ToString()).Append(")");
+                if (depth >= 3 || items.Count == 0) return;
+                sb.Append(" [");
+                // Without values one item shows the element's shape; the rest would repeat it.
+                var shown = withValues ? items : items.Take(1).ToList();
+                for (int i = 0; i < shown.Count; i++)
+                {
+                    if (i > 0) sb.Append(", ");
+                    DescribeInto(sb, shown[i], withValues, depth + 1);
+                }
+                if (n > shown.Count) sb.Append(", ...");
+                sb.Append("]");
+                return;
+            }
+            sb.Append(t.Name);
+            if (depth >= 3) return;
+            sb.Append(" {");
+            bool first = true;
+            for (var c = t; c != null && c != typeof(object); c = c.BaseType)
+            {
+                // Unity's own base classes hold engine state, not game data.
+                if (c.Namespace != null && c.Namespace.StartsWith("UnityEngine", StringComparison.Ordinal)) break;
+                foreach (var m in c.GetMembers(AnyInstance | BindingFlags.DeclaredOnly))
+                {
+                    object value;
+                    string error = null;
+                    var f = m as FieldInfo;
+                    var p = m as PropertyInfo;
+                    if (f != null)
+                    {
+                        if (f.Name.EndsWith("k__BackingField", StringComparison.Ordinal)) continue;
+                        try { value = f.GetValue(obj); } catch (Exception e) { value = null; error = Unwrap(e).GetType().Name; }
+                    }
+                    else if (p != null && p.GetIndexParameters().Length == 0 && p.GetGetMethod(true) != null)
+                    {
+                        try { value = p.GetValue(obj, null); } catch (Exception e) { value = null; error = Unwrap(e).GetType().Name; }
+                    }
+                    else continue;
+                    if (!first) sb.Append("; ");
+                    first = false;
+                    sb.Append(m.Name).Append(": ");
+                    if (error != null)
+                        sb.Append('<').Append(error).Append('>');
+                    else if (!withValues && value != null && IsLeaf(value.GetType()))
+                        sb.Append(value.GetType().Name);
+                    else
+                        DescribeInto(sb, value, withValues, depth + 1);
+                    if (sb.Length > ShapeBudget) { sb.Append("..."); break; }
+                }
+            }
+            sb.Append("}");
+        }
+
+        private const int ShapeBudget = 4000;   // characters; a BepInEx log line, not a dump
+
+        private static bool IsLeaf(Type t)
+        {
+            return t.IsPrimitive || t.IsEnum || t == typeof(string) || t == typeof(decimal) ||
+                   t == typeof(DateTime) || t == typeof(Guid) || t == typeof(TimeSpan);
+        }
+
+        private static string Clip(string s)
+        {
+            if (s == null) return "null";
+            s = s.Replace("\r", " ").Replace("\n", " ");
+            return s.Length > 60 ? s.Substring(0, 60) + "..." : s;
         }
 
         // ------------------------------------------------------------------ battle log
