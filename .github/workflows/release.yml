@@ -63,8 +63,8 @@ jobs:
               echo "::error::Run this workflow on main (it publishes main's commit), not on $GITHUB_REF."
               exit 1
             fi
-            existing="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq .object.sha 2>/dev/null || true)"
-            if [ -n "$existing" ] && [ "$existing" != "$GITHUB_SHA" ]; then
+            # gh api prints the error body on stdout for a 404, so only its exit status says whether the tag exists.
+            if existing="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq .object.sha 2>/dev/null)" && [ "$existing" != "$GITHUB_SHA" ]; then
               echo "::error::Tag $TAG already exists on another commit ($existing). Pick a new version."
               exit 1
             fi
