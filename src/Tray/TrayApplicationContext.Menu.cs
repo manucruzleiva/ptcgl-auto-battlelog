@@ -22,6 +22,10 @@ namespace PtcglAutoBattleLog.Tray
         private ToolStripMenuItem _openLastItem, _changeFolderItem, _defaultFolderItem;
         private ToolStripMenuItem _notifyItem, _autoUpdateItem, _updateItem, _startupItem, _repairItem;
         private ToolStripMenuItem _sealItem, _bepInExLogItem, _gameFolderItem, _channelItem;
+        private ToolStripMenuItem _consentItem;
+
+        /// <summary>A menu item that needs the player: the updated disclaimer. Windows' own error red.</summary>
+        private static readonly Color AttentionColor = Color.FromArgb(196, 43, 28);
 
         private ContextMenuStrip BuildMenu()
         {
@@ -36,6 +40,11 @@ namespace PtcglAutoBattleLog.Tray
             _dataInfoItem = Info(MenuText("Settings kept in " + PathUtil.Friendly(_session.Paths.Root) + " (this folder is read-only)"));
             _dataInfoItem.Visible = _session.Paths.UsesFallbackData;
             _findGameItem = Item("Choose the game folder...", ChooseGameFolder);
+            // Shown only while the current disclaimer is not accepted: the balloon that offers it is easy to miss.
+            _consentItem = Item("Review the updated disclaimer...", AskConsent);
+            _consentItem.Font = _boldFont;
+            _consentItem.ForeColor = AttentionColor;
+            _consentItem.Visible = false;
 
             var openLogs = Item("Open logs folder", OpenLogsFolder);
             openLogs.Font = _boldFont;   // the double-click action
@@ -97,7 +106,7 @@ namespace PtcglAutoBattleLog.Tray
 
             menu.Items.AddRange(new ToolStripItem[]
             {
-                title, _statusItem, _lastSavedItem, _dataInfoItem, _findGameItem,
+                title, _statusItem, _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem,
                 new ToolStripSeparator(),
                 openLogs, _openLastItem, _updateItem,
                 new ToolStripSeparator(),
@@ -161,6 +170,7 @@ namespace PtcglAutoBattleLog.Tray
             var r = _last;
             _statusItem.Text = MenuText(Clip(r?.Decision?.Summary ?? "Starting...", 90));
             _findGameItem.Visible = game == null;
+            _consentItem.Visible = !HasConsent();
 
             _lastSavedItem.Text = MenuText(Clip("Last saved: " + _lastSavedLabel, 90));
             _lastSavedItem.Visible = _lastSavedLabel != null;
@@ -448,8 +458,10 @@ namespace PtcglAutoBattleLog.Tray
 
         // ---- App -------------------------------------------------------------------------------
 
+        /// <summary>The accepted terms, read-only; while an updated version waits, that one with its Accept button.</summary>
         private void ViewDisclaimer()
         {
+            if (!HasConsent()) { AskConsent(); return; }
             using (Modal()) DisclaimerDialog.Ask(DisclaimerDialog.Purpose.View);
         }
 

@@ -16,6 +16,7 @@ namespace PtcglAutoBattleLog.Tray
         private LogUploader _uploader;
         private Timer _uploadTimer;
         private string _lastUploadLabel;
+        private bool _tcgkbConsentLogged;
         private ToolStripMenuItem _tcgkbItem, _tcgkbInfoItem, _tcgkbConnectItem, _tcgkbAccountsItem, _tcgkbAutoUploadItem,
                                   _tcgkbUploadNowItem, _tcgkbLastUploadItem, _tcgkbDisconnectItem;
 
@@ -46,8 +47,9 @@ namespace PtcglAutoBattleLog.Tray
             var auto = _session.Read(s => s.TcgkbAutoUpload) == true;
             _tcgkbAutoUploadItem.Checked = auto;
             _tcgkbUploadNowItem.Visible = user != null && auto;
-            _tcgkbLastUploadItem.Text = MenuText(Clip("Last upload: " + _lastUploadLabel, 90));
-            _tcgkbLastUploadItem.Visible = user != null && auto && _lastUploadLabel != null;
+            var waiting = !HasConsent();
+            _tcgkbLastUploadItem.Text = MenuText(waiting ? "Waiting: accept the updated disclaimer" : Clip("Last upload: " + _lastUploadLabel, 90));
+            _tcgkbLastUploadItem.Visible = user != null && auto && (waiting || _lastUploadLabel != null);
         }
 
         /// <summary>Made on first use: a tray that is never connected sends nothing to tcgkb.</summary>
@@ -122,6 +124,17 @@ namespace PtcglAutoBattleLog.Tray
         private async void UploadMatches(bool announce)
         {
             if (_exiting || _session.Read(s => s.TcgkbAutoUpload) != true || !Tcgkb.Connection.IsConnected) return;
+            // The uploads carry the decklist, which the current disclaimer covers: nothing goes before it is accepted.
+            if (!HasConsent())
+            {
+                if (announce) AskConsent();   // the player asked for an upload: ask now
+                if (!HasConsent())
+                {
+                    if (!_tcgkbConsentLogged) Log.Info("tcgkb uploads wait until the updated disclaimer is accepted.");
+                    _tcgkbConsentLogged = true;
+                    return;
+                }
+            }
             UploadRun run;
             try { run = await Uploader.SyncAsync(_session.LogsFolder(_session.Game), CancellationToken.None); }
             catch (TcgkbAuthException)
@@ -162,6 +175,13 @@ namespace PtcglAutoBattleLog.Tray
             }
             // The per-run limit: carry on right away rather than in 30 minutes.
             if (run.HitLimit) Post(() => UploadMatches(false));
+        }
+
+        /// <summary>The disclaimer was accepted: matches that were waiting for it go now (after the caller's own run, if any).</summary>
+        private void OnConsentForTcgkb()
+        {
+            _tcgkbConsentLogged = false;
+            Post(() => UploadMatches(false));
         }
 
         private async void DisconnectTcgkb()

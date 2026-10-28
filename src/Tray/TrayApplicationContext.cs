@@ -216,6 +216,7 @@ namespace PtcglAutoBattleLog.Tray
             {
                 _daemon.Poke();   // repairs and updates the mod again
                 OnConsentForPokematch();
+                OnConsentForTcgkb();
                 return;
             }
             try { WindowsIntegration.RemoveStartWithWindows(_session.Paths.InstalledExe); }

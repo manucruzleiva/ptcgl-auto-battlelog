@@ -192,6 +192,7 @@ and **Help ▸**.
 | Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
 | tcgkb account ▸ | Optional. Connect to tcgkb, claim or release your PTCGL accounts, disconnect. See [tcgkb account](#tcgkb-account). |
 | Pokematch ▸ | Optional. Set your Pokematch API token, upload new battle logs automatically, upload past ones, remove the token. See [Pokematch](#pokematch). |
+| Review the updated disclaimer... | In red, under the status lines, only when the disclaimer changed since you accepted it. Uploads to tcgkb and Pokematch wait until you accept it. |
 | Settings ▸ Notify when a log is saved | Turns the "battle log saved" notifications on or off. |
 | Settings ▸ Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
 | Settings ▸ Change logs folder... | Shows the current logs folder. New logs go there (from the next game start if the game is running). Folders whose path contains `'` or `"`, and network paths (`\\server\...`), are not supported by BepInEx's settings file. Folders inside the game's `BepInEx` folder or the app's own folders are refused, because uninstalling removes those. |
