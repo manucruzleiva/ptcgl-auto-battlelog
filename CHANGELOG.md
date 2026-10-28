@@ -11,15 +11,15 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [1.3.2-beta.1] - 2026-10-28
 
-A beta for testers, to research the queue type (#14) and decklists (#15). Installed apps never
-update to it on their own; it updates itself to 1.3.2 once that is released.
+A beta for testers, to research the queue type (#14) and decklists (#15). Installed apps
+(1.3.1 and earlier) never update to it on their own: install it by hand. It updates itself to
+1.3.2 once that is released, or to later betas on the Beta channel.
 
 ### Added
 
 - **Beta update channel.** **Update channel ▸ Beta** in the tray menu also installs test versions
   (GitHub pre-releases such as `v1.3.2-beta.1`) before they are released. **Stable** stays the
   default and only gets releases; switching back keeps your beta until the next release replaces it.
-
 - **Research aid: dump the match fields.** With `DumpMatchFields = true` under `[Diagnostics]` in
   `BepInEx\config\ptcgl.autobattlelog.cfg` (off by default) the plugin writes the fields of the
   game's match objects to `LogOutput.log` at the start and end of every match, plus the loaded
@@ -30,7 +30,7 @@ update to it on their own; it updates itself to 1.3.2 once that is released.
   (issue #15). Your own deck is written with its values; the opponent's only as member names and
   types. It stays in `BepInEx\LogOutput.log` on your computer and is never sent anywhere.
 - **Beta releases.** A tag like `v1.3.2-beta.1` is published as a GitHub pre-release: never the
-  latest release, so the app's updater (which only reads the latest release) never offers it.
+  latest release, so apps on the Stable channel never get it.
 
 ## [1.3.1] - 2026-10-22
 

@@ -175,7 +175,7 @@ jobs:
           built="Built from $(git rev-parse HEAD) on Linux with the .NET SDK $(dotnet --version) and $(python3 --version 2>&1)."
           {
             if [ "$PRERELEASE" = true ]; then
-              echo "> **Beta for testing.** Installed apps never update to it on their own: install it by hand. It updates itself to v$CORE (or later) once that is released. For the stable version use the [latest release]($base/releases/latest)."
+              echo "> **Beta for testing.** Apps on the Stable update channel never get it: install it by hand, or choose **Update channel ▸ Beta** in the tray menu (1.3.2-beta.1 and later). It updates itself to v$CORE (or later) once that is released. For the stable version use the [latest release]($base/releases/latest)."
               echo
             fi
             echo "## Download"
