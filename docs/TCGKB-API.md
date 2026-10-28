@@ -124,10 +124,13 @@ user gives the account up; its matches stay, unowned.
 * The match's queue and format need no field of their own: tcgkb reads them from the verified
   seal (v2 `queue` and `format`, docs/LOG-SEAL.md §3).
 * tcgkb checks a `deck` against the seal's `deckSha256`, then upserts the user's deck by its
-  `deckGuid` (a new version when the cards changed) and links the match to it. Without `deck`,
-  a v2 seal whose `deckSha256` tcgkb already has for this user (the SHA-256 of a deck file it was
-  sent before) is linked to that deck version; an unknown one leaves the match without a deck. The
-  card ids are PTCGL codes (`sv8_174`); unknown ones are kept and listed in `unmatched`.
+  `deckGuid` and card list (other cards under the same `deckGuid` and name are a new tcgkb deck)
+  and links the match to it. Without `deck`, a v2 seal whose `deckSha256` tcgkb already has for
+  this user (the SHA-256 of a deck file it was sent before) is linked to that deck; an unknown one
+  leaves the match without a deck. A deck the user deleted on tcgkb is only hidden there: a match
+  played after the deletion that uses it (with `deck` or by its hash alone) brings it back, so the
+  tray needs nothing special for it. The card ids are PTCGL codes (`sv8_174`); unknown ones are
+  kept and listed in `unmatched`.
 * → `200 {"added":true,"account":{"accountHash","name","status"},"playerDeck":"Dragapult ex","opponentDeck":"Gardevoir ex","deckRef":{"deckId","version","changed"},"unmatched":["…"]}`.
   `added` is false when tcgkb already had this log (same match, seat and key): not an error.
   `playerDeck` and `opponentDeck` are tcgkb's guess from the cards seen in the log (Limitless
