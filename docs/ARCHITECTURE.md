@@ -119,7 +119,8 @@ running".
   "skippedVersion": null,
   "disclaimerAccepted": 0,
   "pokematchAutoUpload": false,
-  "pokematchSinceUtc": null
+  "pokematchSinceUtc": null,
+  "updateChannel": "stable"
 }
 ```
 
@@ -214,7 +215,8 @@ Status lines (version and mode; daemon summary; last saved log; logs folder; dat
 portable fallback is in use; "Choose the game folder..." while the game is not found) · **Open logs
 folder** (also the double-click action) · Open last log · Change logs folder... · Use the default logs
 folder (only when a custom one is set; writes an empty `OutputFolder`) · Notify when a log is saved ·
-Install updates automatically · Check for updates now · Update vX available ▸ (Install now, What's
+Install updates automatically · Update channel ▸ (Stable (recommended), Beta: writes
+`updateChannel` and checks right away) · Check for updates now · Update vX available ▸ (Install now, What's
 new, Skip this version) · Start with Windows · Repair now · Battle log seal ▸ ("Footer (in the log
 file, default)", "Sidecar (separate .seal file)", "Off": writes `[Metadata] Mode`, effective at the
 next game start) · Diagnostics ▸ (app log, BepInEx log, game folder, app data folder, choose game
@@ -259,6 +261,13 @@ game... · Exit.
 
 * Source: GitHub Releases of `BuildInfo.RepoOwner/BuildInfo.RepoName`.
   Manifest URL: `https://github.com/{owner}/{repo}/releases/latest/download/update.json`.
+* Channels (`settings.json` `updateChannel`; anything but `beta` is stable). **Stable** reads the
+  manifest URL above, so only the release GitHub marks latest. **Beta** reads
+  `https://api.github.com/repos/{owner}/{repo}/releases?per_page=30` (at most 4 MB), drops drafts,
+  takes the highest tag that is a SemVer version without `+build` and a safe name (pre-release or
+  not), and reads `https://github.com/{owner}/{repo}/releases/download/{tag}/update.json`, whose
+  `version` must equal the tag's. Versions compare as SemVer 2.0 (`1.3.2-beta.1` < `1.3.2-beta.2`
+  < `1.3.2`). A beta build back on stable updates to the release of its number or a higher one.
 * Checked 1 minute after start and then every 6 hours (and from the menu).
 * Release assets: `PtcglAutoBattleLog.exe`, `PtcglAutoBattleLog-portable.zip`, `update.json`,
   `SHA256SUMS.txt` (hashes of the exe and the zip). `update.json` lists only the exe: installed and
@@ -288,7 +297,7 @@ game... · Exit.
 
 * An update is applied only when **all** hold: `version` parses as `major.minor.patch` and is
   strictly greater than `BuildInfo.Version` (versions with a `-suffix` are pre-releases and are
-  ignored); the asset URL is `https`, host exactly `github.com`, path starting
+  ignored on the stable channel; `+build` metadata is never offered); the asset URL is `https`, host exactly `github.com`, path starting
   `/{owner}/{repo}/releases/download/` (owner/repo compared case-insensitively); the downloaded
   byte count equals `size` and its SHA-256 equals `sha256`. Downloads follow GitHub's redirect to
   its asset CDN.
@@ -537,6 +546,8 @@ public sealed class GameInstall
     [DataMember(Name="lastUpdateCheckUtc")] public string LastUpdateCheckUtc;
     [DataMember(Name="skippedVersion")] public string SkippedVersion;
     [DataMember(Name="disclaimerAccepted")] public int DisclaimerAccepted;   // Disclaimer.Version once accepted
+    [DataMember(Name="updateChannel")] public string UpdateChannel = "stable";  // or "beta"
+    public bool BetaUpdates { get; }                                          // updateChannel is "beta" (any case)
     public static Settings Load(string path, Action<string> log);   // never throws
     public void Save(string path);                                   // atomic
 }
@@ -560,9 +571,12 @@ public sealed class UpdateChecker
     public const string ExeAssetName = "PtcglAutoBattleLog.exe";
     public UpdateChecker(string owner, string repo, string currentVersion,
                          Func<string, CancellationToken, Task<Stream>> openUrl);  // HTTP GET, follows redirects
-    public string ManifestUrl { get; }
-    public Task<UpdateManifest> FetchManifestAsync(CancellationToken ct);
-    public bool IsNewer(UpdateManifest m);             // strictly greater, no pre-releases
+    public string ManifestUrl { get; }                 // stable: releases/latest/download/update.json
+    public string ReleasesApiUrl { get; }              // beta: api.github.com/repos/{owner}/{repo}/releases?per_page=30
+    public string ManifestUrlFor(string tag);          // releases/download/{tag}/update.json
+    public Task<UpdateManifest> FetchManifestAsync(CancellationToken ct);   // stable
+    public Task<UpdateManifest> FetchManifestAsync(bool includePreReleases, CancellationToken ct);
+    public bool IsNewer(UpdateManifest m, bool includePreReleases = false);  // strictly greater (SemVer 2.0)
     public bool IsTrustedAssetUrl(string url);
     public Task<string> DownloadAsync(UpdateAsset asset, string updatesDir, CancellationToken ct);
         // .partial → verify size + sha256 → rename; throws UpdateVerificationException; returns final path

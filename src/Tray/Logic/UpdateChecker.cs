@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,6 +23,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public const string ManifestAssetName = "update.json";
         public const long MaxAssetBytes = 100L * 1024 * 1024;
         internal const int MaxManifestBytes = 1024 * 1024;
+        internal const int MaxReleaseListBytes = 4 * 1024 * 1024;
 
         private readonly string _owner;
         private readonly string _repo;
@@ -35,38 +39,100 @@ namespace PtcglAutoBattleLog.Tray.Logic
             CurrentVersion = currentVersion ?? throw new ArgumentNullException(nameof(currentVersion));
             _openUrl = openUrl ?? throw new ArgumentNullException(nameof(openUrl));
             ManifestUrl = "https://github.com/" + owner + "/" + repo + "/releases/latest/download/" + ManifestAssetName;
+            ReleasesApiUrl = "https://api.github.com/repos/" + owner + "/" + repo + "/releases?per_page=30";
         }
 
+        /// <summary>update.json of the release GitHub marks latest: the stable channel.</summary>
         public string ManifestUrl { get; }
+        /// <summary>The newest releases, pre-releases included: the beta channel picks from these.</summary>
+        public string ReleasesApiUrl { get; }
         public string CurrentVersion { get; }
 
-        /// <summary>Downloads and parses update.json. Throws on network errors, oversize or invalid manifests.</summary>
-        public async Task<UpdateManifest> FetchManifestAsync(CancellationToken ct)
+        /// <summary>update.json of release {tag} of this repository.</summary>
+        public string ManifestUrlFor(string tag)
         {
-            byte[] bytes;
-            using (var s = await _openUrl(ManifestUrl, ct).ConfigureAwait(false))
-            {
-                if (s == null) throw new IOException("No response from " + ManifestUrl);
-                bytes = await ReadCappedAsync(s, MaxManifestBytes, ct).ConfigureAwait(false);
-            }
-            using (var r = new StreamReader(new MemoryStream(bytes), FileOps.Utf8NoBom, true))
-                return UpdateManifest.Parse(r.ReadToEnd());
+            if (!IsSafeName(tag)) throw new ArgumentException("Invalid release tag: " + tag, nameof(tag));
+            return "https://github.com/" + _owner + "/" + _repo + "/releases/download/" + tag + "/" + ManifestAssetName;
+        }
+
+        /// <summary>Downloads and parses update.json of the latest release. Throws on network errors, oversize or invalid manifests.</summary>
+        public Task<UpdateManifest> FetchManifestAsync(CancellationToken ct) => FetchManifestAsync(false, ct);
+
+        /// <summary>
+        /// Stable channel (includePreReleases false): update.json of the release GitHub marks latest.
+        /// Beta channel: lists the newest releases, takes the highest version among those that are
+        /// not drafts (a pre-release or a release, whichever is higher) and reads that release's
+        /// update.json, which must describe the same version as its tag.
+        /// </summary>
+        public async Task<UpdateManifest> FetchManifestAsync(bool includePreReleases, CancellationToken ct)
+        {
+            if (!includePreReleases) return UpdateManifest.Parse(await FetchTextAsync(ManifestUrl, MaxManifestBytes, ct).ConfigureAwait(false));
+
+            var tag = NewestTag(ParseReleaseList(await FetchTextAsync(ReleasesApiUrl, MaxReleaseListBytes, ct).ConfigureAwait(false)));
+            if (tag == null) throw new FormatException("The repository lists no release with a version tag.");
+            var m = UpdateManifest.Parse(await FetchTextAsync(ManifestUrlFor(tag), MaxManifestBytes, ct).ConfigureAwait(false));
+            if (!TryParseSemVer(m.Version, out var mv) || !TryParseSemVer(tag, out var tv) || mv.CompareTo(tv) != 0)
+                throw new UpdateVerificationException("Release " + tag + " has an update.json for version " + m.Version + ".");
+            return m;
         }
 
         /// <summary>
-        /// True only for a release version strictly greater than ours. Pre-releases (a "-suffix")
-        /// and unparseable versions are never offered. A pre-release build of ours is older than
-        /// the release of the same number.
+        /// True only for a version strictly greater than ours. Pre-releases (a "-suffix") are offered
+        /// only with includePreReleases; versions with "+build" metadata and unparseable versions
+        /// never are. Versions compare as SemVer 2.0: 1.3.2-beta.1 &lt; 1.3.2-beta.2 &lt; 1.3.2, so a
+        /// pre-release build of ours is older than the release of the same number.
         /// </summary>
-        public bool IsNewer(UpdateManifest m)
+        public bool IsNewer(UpdateManifest m, bool includePreReleases = false)
         {
-            if (m == null || !TryParseVersion(m.Version, out var remote)) return false;
-            if (TryParseVersion(CurrentVersion, out var current)) return remote > current;
+            if (m == null || m.Version == null || m.Version.IndexOf('+') >= 0 || !TryParseSemVer(m.Version, out var remote)) return false;
+            if (remote.IsPreRelease && !includePreReleases) return false;
+            if (!TryParseSemVer(CurrentVersion, out var current)) return false;
+            return remote.CompareTo(current) > 0;
+        }
 
-            int cut = CurrentVersion.IndexOfAny(new[] { '-', '+' });
-            if (cut <= 0 || cut == CurrentVersion.Length - 1 ||
-                !TryParseVersion(CurrentVersion.Substring(0, cut), out var core)) return false;
-            return CurrentVersion[cut] == '-' ? remote >= core : remote > core;   // "+build" does not change precedence
+        /// <summary>The release tags of GitHub's "list releases" answer that are not drafts.</summary>
+        internal static List<string> ParseReleaseList(string json)
+        {
+            var trimmed = (json ?? "").TrimStart();
+            if (trimmed.Length == 0 || trimmed[0] != '[') throw new FormatException("The release list is not a JSON array.");
+            List<GitHubRelease> list;
+            try
+            {
+                var ser = new DataContractJsonSerializer(typeof(List<GitHubRelease>));
+                using (var ms = new MemoryStream(FileOps.Utf8NoBom.GetBytes(json)))
+                    list = (List<GitHubRelease>)ser.ReadObject(ms);
+            }
+            catch (Exception e) { throw new FormatException("The release list is not valid JSON: " + e.Message, e); }
+            var tags = new List<string>();
+            if (list != null)
+                foreach (var r in list)
+                    if (r != null && !r.Draft && !string.IsNullOrEmpty(r.TagName)) tags.Add(r.TagName);
+            return tags;
+        }
+
+        /// <summary>The highest tag that is a safe name and a version without "+build"; null if none.</summary>
+        internal static string NewestTag(IEnumerable<string> tags)
+        {
+            string best = null;
+            SemVer bestV = null;
+            foreach (var t in tags)
+            {
+                if (!IsSafeName(t) || t.IndexOf('+') >= 0 || !TryParseSemVer(t, out var v)) continue;
+                if (bestV == null || v.CompareTo(bestV) > 0) { best = t; bestV = v; }
+            }
+            return best;
+        }
+
+        private async Task<string> FetchTextAsync(string url, int max, CancellationToken ct)
+        {
+            byte[] bytes;
+            using (var s = await _openUrl(url, ct).ConfigureAwait(false))
+            {
+                if (s == null) throw new IOException("No response from " + url);
+                bytes = await ReadCappedAsync(s, max, ct).ConfigureAwait(false);
+            }
+            using (var r = new StreamReader(new MemoryStream(bytes), FileOps.Utf8NoBom, true))
+                return r.ReadToEnd();
         }
 
         /// <summary>
@@ -116,7 +182,9 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 throw new UpdateVerificationException("The update manifest has an unsafe asset name: " + asset.Name);
 
             var tag = new Uri(asset.Url).AbsolutePath.Split('/')[5];
-            var label = TryParseVersion(tag, out var v) ? v.ToString(3) : asset.Sha256.Substring(0, 12).ToLowerInvariant();
+            var label = TryParseVersion(tag, out var v) ? v.ToString(3)
+                      : TryParseSemVer(tag, out var sv) && tag.IndexOf('+') < 0 ? sv.ToString()
+                      : asset.Sha256.Substring(0, 12).ToLowerInvariant();
             var final = Path.Combine(updatesDir, Path.GetFileNameWithoutExtension(asset.Name) + "-" + label + Path.GetExtension(asset.Name));
             var partial = final + ".partial";
 
@@ -217,6 +285,94 @@ namespace PtcglAutoBattleLog.Tray.Logic
             return TryParseVersion(s, out core);
         }
 
+        /// <summary>
+        /// SemVer 2.0 with an optional 'v': "1.2.3", "v1.3.2-beta.1", "1.2.3-rc1+commit". Also
+        /// "1.2.3.0" as TryParseVersion takes it. Pre-release identifiers are ASCII letters, digits
+        /// and '-', none empty, numeric ones without leading zeros; build metadata is ignored.
+        /// </summary>
+        internal static bool TryParseSemVer(string s, out SemVer v)
+        {
+            v = null;
+            if (string.IsNullOrEmpty(s)) return false;
+            int plus = s.IndexOf('+');
+            if (plus >= 0)
+            {
+                if (!IsIdentifierList(s.Substring(plus + 1), false)) return false;
+                s = s.Substring(0, plus);
+            }
+            string[] pre = new string[0];
+            int dash = s.IndexOf('-');
+            if (dash >= 0)
+            {
+                var p = s.Substring(dash + 1);
+                if (!IsIdentifierList(p, true)) return false;
+                pre = p.Split('.');
+                s = s.Substring(0, dash);
+            }
+            if (!TryParseVersion(s, out var core)) return false;
+            v = new SemVer(core, pre);
+            return true;
+        }
+
+        private static bool IsIdentifierList(string s, bool noLeadingZeros)
+        {
+            if (s.Length == 0 || s.Length > 64) return false;
+            foreach (var id in s.Split('.'))
+            {
+                if (id.Length == 0) return false;
+                bool numeric = true;
+                foreach (var c in id)
+                {
+                    if (c >= '0' && c <= '9') continue;
+                    numeric = false;
+                    if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '-')) return false;
+                }
+                if (noLeadingZeros && numeric && (id.Length > 9 || (id.Length > 1 && id[0] == '0'))) return false;
+            }
+            return true;
+        }
+
+        /// <summary>A parsed SemVer: the numbers and the pre-release identifiers (empty for a release).</summary>
+        internal sealed class SemVer : IComparable<SemVer>
+        {
+            public SemVer(Version core, string[] preRelease) { Core = core; PreRelease = preRelease; }
+            public Version Core { get; }
+            public string[] PreRelease { get; }
+            public bool IsPreRelease => PreRelease.Length > 0;
+
+            /// <summary>SemVer 2.0 §11: a release beats its pre-releases; identifiers compare numerically, else ordinally; more of them wins a tie.</summary>
+            public int CompareTo(SemVer other)
+            {
+                int c = Core.CompareTo(other.Core);
+                if (c != 0) return c;
+                if (!IsPreRelease) return other.IsPreRelease ? 1 : 0;
+                if (!other.IsPreRelease) return -1;
+                for (int i = 0; i < Math.Min(PreRelease.Length, other.PreRelease.Length); i++)
+                {
+                    string a = PreRelease[i], b = other.PreRelease[i];
+                    bool an = int.TryParse(a, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var ai);
+                    bool bn = int.TryParse(b, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var bi);
+                    if (an && bn) c = ai.CompareTo(bi);
+                    else if (an) c = -1;
+                    else if (bn) c = 1;
+                    else c = string.CompareOrdinal(a, b);
+                    if (c != 0) return Math.Sign(c);
+                }
+                return PreRelease.Length.CompareTo(other.PreRelease.Length);
+            }
+
+            public override string ToString() => Core.ToString(3) + (IsPreRelease ? "-" + string.Join(".", PreRelease) : "");
+        }
+
+        /// <summary>The fields of a GitHub release object the beta channel needs; the rest is ignored.</summary>
+        [DataContract]
+        internal sealed class GitHubRelease
+        {
+            [DataMember(Name = "tag_name")] public string TagName;
+            [DataMember(Name = "draft")] public bool Draft;
+            [DataMember(Name = "prerelease")] public bool PreRelease;
+        }
+
         private static bool TryParseNumber(string s, out int value)
         {
             value = 0;
@@ -247,7 +403,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 int n;
                 while ((n = await s.ReadAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false)) > 0)
                 {
-                    if (ms.Length + n > max) throw new UpdateVerificationException("update.json is larger than " + max + " bytes.");
+                    if (ms.Length + n > max) throw new UpdateVerificationException("The update information is larger than " + max + " bytes.");
                     ms.Write(buffer, 0, n);
                 }
                 return ms.ToArray();

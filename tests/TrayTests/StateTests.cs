@@ -34,7 +34,8 @@ static partial class Program
 }";
 
     static bool IsDefault(Settings s) =>
-        s != null && s.GameDir == null && !s.BepInExInstalledByUs && s.AutoUpdate && s.NotifyOnSave && s.LastUpdateCheckUtc == null && s.SkippedVersion == null && s.DisclaimerAccepted == 0;
+        s != null && s.GameDir == null && !s.BepInExInstalledByUs && s.AutoUpdate && s.NotifyOnSave && s.LastUpdateCheckUtc == null && s.SkippedVersion == null && s.DisclaimerAccepted == 0 &&
+        s.UpdateChannel == Settings.StableChannel && !s.BetaUpdates;
 
     static void SettingsTests()
     {
@@ -84,6 +85,17 @@ static partial class Program
         logged.Clear();
         File.WriteAllText(path, "{\"disclaimerAccepted\":\"yes\"}");
         Check(Settings.Load(path, log).DisclaimerAccepted == 0 && logged.Count == 1, "a non-number disclaimerAccepted -> corrupt -> asked again");
+        File.WriteAllText(path, "{\"updateChannel\":\"beta\"}");
+        Check(Settings.Load(path, log).BetaUpdates, "updateChannel beta read");
+        File.WriteAllText(path, "{\"updateChannel\":\"BETA\"}");
+        Check(Settings.Load(path, log).BetaUpdates, "updateChannel compared case-insensitively");
+        foreach (var other in new[] { "{\"updateChannel\":\"nightly\"}", "{\"updateChannel\":null}", "{\"updateChannel\":\"\"}" })
+        {
+            File.WriteAllText(path, other);
+            Check(!Settings.Load(path, log).BetaUpdates, "unknown or empty updateChannel reads as stable: " + other);
+        }
+        new Settings { UpdateChannel = Settings.BetaChannel }.Save(path);
+        Check(Settings.Load(path, log).BetaUpdates && File.ReadAllText(path).Contains("\"updateChannel\": \"beta\""), "beta channel round trip");
         Check(json.Contains("\n"), "indented for humans");
         Check(!File.Exists(path + ".tmp"), "atomic save left no temp file");
         new Settings().Save(Path.Combine(dir, "new", "settings.json"));

@@ -31,7 +31,9 @@ BepInEx or the game itself (report those to their authors).
   and the plugin). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the complete list.
 - **Network**: the tray app's only connections are HTTPS requests to `github.com` for this
   repository's releases (`releases/latest/download/update.json`, then the exe it names, following
-  GitHub's redirect to its download servers), with the `User-Agent` `PtcglAutoBattleLog/<version>`.
+  GitHub's redirect to its download servers; on the beta update channel, which the player has to
+  choose, first `https://api.github.com/repos/{owner}/{repo}/releases` to find the newest
+  pre-release), with the `User-Agent` `PtcglAutoBattleLog/<version>`.
   No telemetry and nothing uploaded, unless the player connects a tcgkb account: then HTTPS
   requests to `https://tcgkb.app` only (no redirects), with a bearer token kept encrypted with DPAPI
   for the Windows user, and battle logs sent only for the PTCGL accounts the player claims

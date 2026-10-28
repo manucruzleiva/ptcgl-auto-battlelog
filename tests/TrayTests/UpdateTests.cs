@@ -77,6 +77,23 @@ static partial class Program
         Check(!Newer(Checker("dev"), "9.9.9") && !Newer(Checker("1.2.0-"), "1.2.0"), "unparseable current version never updates");
         Check(UpdateChecker.TryParseVersion(BuildInfo.Version, out _), "this build's version parses: " + BuildInfo.Version);
 
+        // Beta channel: SemVer 2.0 precedence.
+        bool Beta(UpdateChecker ch, string version) => ch.IsNewer(new UpdateManifest { Version = version }, true);
+        Check(Beta(Checker("1.3.1"), "1.3.2-beta.1") && Beta(Checker("1.3.1"), "v1.3.2-beta.1") && Beta(Checker("1.3.1"), "1.3.2"), "beta: a pre-release or release above ours is newer");
+        Check(!Newer(Checker("1.3.1"), "1.3.2-beta.1"), "stable: the same pre-release is not offered");
+        Check(Beta(Checker("1.3.2-beta.1"), "1.3.2-beta.2") && Beta(Checker("1.3.2-beta.2"), "1.3.2-beta.10") && Beta(Checker("1.3.2-beta.1"), "1.3.2"),
+              "beta.1 < beta.2 < beta.10 < release");
+        Check(!Beta(Checker("1.3.2-beta.2"), "1.3.2-beta.1") && !Beta(Checker("1.3.2-beta.1"), "1.3.2-beta.1") && !Beta(Checker("1.3.2"), "1.3.2-beta.9") &&
+              !Beta(Checker("1.3.2"), "1.3.1"), "older or equal versions are not newer on beta either");
+        Check(Beta(Checker("1.3.2-alpha"), "1.3.2-beta") && Beta(Checker("1.3.2-beta"), "1.3.2-beta.1") && Beta(Checker("1.3.2-1"), "1.3.2-alpha") &&
+              Beta(Checker("1.3.2-rc.1"), "1.3.2-rc.1.1"), "SemVer identifier rules: ordinal, more fields win, numeric before text");
+        Check(!Beta(Checker("1.3.1"), "1.3.2-beta.01") && !Beta(Checker("1.3.1"), "1.3.2-") && !Beta(Checker("1.3.1"), "1.3.2-beta..1") &&
+              !Beta(Checker("1.3.1"), "1.3.2-b\u00e9ta") && !Beta(Checker("1.3.1"), "1.3.2-beta+x") && !Beta(Checker("1.3.1"), "1.3.2-beta_1"),
+              "malformed pre-releases and build metadata are never offered");
+        Check(Newer(Checker("1.3.2-beta.1"), "1.3.2") && !Newer(Checker("1.3.2-beta.1"), "1.3.1"), "back on stable: a beta stays until its release");
+        Check(UpdateChecker.TryParseSemVer("v1.3.2-beta.1", out var sv) && sv.ToString() == "1.3.2-beta.1" && sv.IsPreRelease &&
+              UpdateChecker.TryParseSemVer("1.3.2+abc", out var rel) && !rel.IsPreRelease && rel.ToString() == "1.3.2", "SemVer parse and print");
+
         // Installing over a newer copy (an old download run again) must not downgrade it.
         Check(UpdateChecker.IsInstalledNewer("1.2.0", "1.1.0") && UpdateChecker.IsInstalledNewer("1.2.0+16fdb0f52796cca94b7a9eb700cc6ae08187c70f", "1.1.0") &&
               UpdateChecker.IsInstalledNewer("1.10.0", "1.9.9") && UpdateChecker.IsInstalledNewer(" 2.0.0 ", "1.1.0+abc"), "a newer installed copy (ProductVersion with +commit) is newer");
@@ -298,6 +315,44 @@ static partial class Program
         Check(await Catch(() => Checker(open: Serve(big)).FetchManifestAsync(CancellationToken.None)) is UpdateVerificationException, "oversize manifest refused");
         Check(await Catch(() => Checker(open: Serve(Encoding.UTF8.GetBytes("<html>rate limited</html>"))).FetchManifestAsync(CancellationToken.None)) is FormatException, "HTML instead of JSON -> FormatException");
         Check(await Catch(() => Checker(open: (u, ct) => Task.FromResult<Stream>(null)).FetchManifestAsync(CancellationToken.None)) is IOException, "no response -> IOException");
+
+        // Beta channel: list the releases, read the update.json of the highest one.
+        const string ReleaseList = @"[
+  {""tag_name"": ""v1.4.0-beta.1"", ""draft"": true, ""prerelease"": true, ""assets"": []},
+  {""tag_name"": ""v1.3.2-beta.2"", ""draft"": false, ""prerelease"": true, ""body"": ""notes \u00e9"", ""author"": {""login"": ""x""}},
+  {""tag_name"": ""v1.3.2-beta.10"", ""draft"": false, ""prerelease"": true},
+  {""tag_name"": ""v1.3.1"", ""draft"": false, ""prerelease"": false},
+  {""tag_name"": ""nightly"", ""draft"": false, ""prerelease"": true},
+  {""tag_name"": ""v9.9.9+x"", ""draft"": false, ""prerelease"": false},
+  {""tag_name"": ""../v9.9.9"", ""draft"": false, ""prerelease"": false},
+  {""tag_name"": null}
+]";
+        var tags = UpdateChecker.ParseReleaseList(ReleaseList);
+        Check(!tags.Contains("v1.4.0-beta.1") && tags.Contains("v1.3.1") && tags.Count == 6, "drafts and tagless releases dropped");
+        Check(UpdateChecker.NewestTag(tags) == "v1.3.2-beta.10", "newest tag: SemVer order, odd tags skipped");
+        Check(UpdateChecker.NewestTag(new[] { "v1.3.2-beta.1", "v1.3.2" }) == "v1.3.2" && UpdateChecker.NewestTag(new string[0]) == null, "a release beats its betas; none -> null");
+        foreach (var bad in new[] { "", "{}", "<html>", "[{\"tag_name\": 5,", "null" })
+            Check(Throws<FormatException>(() => UpdateChecker.ParseReleaseList(bad)), "bad release list -> FormatException: " + bad);
+
+        var betaManifest = ContractManifestJson.Replace("1.2.0", "1.3.2-beta.10");
+        var asked = new List<string>();
+        Func<string, CancellationToken, Task<Stream>> Site(string list, string manifest) => (u, ct) =>
+        {
+            asked.Add(u);
+            var body = u.StartsWith("https://api.github.com/") ? list : manifest;
+            return Task.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(body)));
+        };
+        var bm = await Checker("1.3.1", Site(ReleaseList, betaManifest)).FetchManifestAsync(true, CancellationToken.None);
+        Check(bm.Version == "1.3.2-beta.10" && Checker("1.3.1").IsNewer(bm, true) && !Checker("1.3.1").IsNewer(bm), "beta manifest fetched; newer on beta only");
+        Check(asked.Count == 2 && asked[0] == "https://api.github.com/repos/manucruzleiva/ptcgl-auto-battlelog/releases?per_page=30" &&
+              asked[1] == "https://github.com/manucruzleiva/ptcgl-auto-battlelog/releases/download/v1.3.2-beta.10/update.json", "beta: release list, then that release's update.json");
+        Check(await Catch(() => Checker("1.3.1", Site(ReleaseList, ContractManifestJson)).FetchManifestAsync(true, CancellationToken.None)) is UpdateVerificationException,
+              "an update.json for another version than its tag is refused");
+        Check(await Catch(() => Checker("1.3.1", Site("[]", betaManifest)).FetchManifestAsync(true, CancellationToken.None)) is FormatException, "no releases -> FormatException");
+        asked.Clear();
+        var sm = await Checker("1.3.1", Site(ReleaseList, ContractManifestJson)).FetchManifestAsync(false, CancellationToken.None);
+        Check(sm.Version == "1.2.0" && asked.Count == 1 && asked[0].EndsWith("/releases/latest/download/update.json"), "stable: only the latest release's update.json");
+        Check(Throws<ArgumentException>(() => Checker().ManifestUrlFor("../x")) && Throws<ArgumentException>(() => Checker().ManifestUrlFor(null)), "ManifestUrlFor refuses unsafe tags");
     }
 
     static void SelfUpdateTests()

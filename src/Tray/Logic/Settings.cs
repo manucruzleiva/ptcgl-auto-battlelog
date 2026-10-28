@@ -27,6 +27,14 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "pokematchAutoUpload", Order = 9)] public bool PokematchAutoUpload;
         /// <summary>When automatic Pokematch uploads were turned on: older logs go only with "Upload past logs...". UTC, "o".</summary>
         [DataMember(Name = "pokematchSinceUtc", Order = 10)] public string PokematchSinceUtc;
+        /// <summary>"stable" (releases only, default) or "beta" (pre-releases too). Anything else reads as stable.</summary>
+        [DataMember(Name = "updateChannel", Order = 11)] public string UpdateChannel = StableChannel;
+
+        public const string StableChannel = "stable";
+        public const string BetaChannel = "beta";
+
+        /// <summary>True when the player chose the beta channel.</summary>
+        public bool BetaUpdates => string.Equals(UpdateChannel, BetaChannel, StringComparison.OrdinalIgnoreCase);
 
         // The serializer skips constructors and field initializers; without this, a field missing
         // from the file would read as false instead of its default.
@@ -35,6 +43,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         {
             AutoUpdate = true;
             NotifyOnSave = true;
+            UpdateChannel = StableChannel;
         }
 
         public static Settings Load(string path, Action<string> log)
