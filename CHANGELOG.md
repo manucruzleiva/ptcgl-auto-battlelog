@@ -9,6 +9,11 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.3.2-beta.2] - 2026-10-28
+
+A second beta for testers of the queue research (#14): play a ranked and a friend match with
+`DumpMatchFields = true`. On the Beta channel it installs itself.
+
 ### Changed
 
 - **Match fields dump: every value an enum field can take.** An enum field now lists all its
