@@ -32,6 +32,7 @@ namespace PtcglAutoBattleLog
         private ConfigEntry<string> _folder;
         private ConfigEntry<bool> _manual;
         private ConfigEntry<SealMode> _sealMode;
+        private ConfigEntry<bool> _dumpFields;
         private Harmony _harmony;
         private GameObject _host;
         private static bool _quitting;
@@ -49,6 +50,9 @@ namespace PtcglAutoBattleLog
             _sealMode = Config.Bind(PluginConfig.MetadataSection, PluginConfig.SealModeKey, PluginConfig.SealModeDefault,
                 "Signed metadata (a \"seal\") added to every battle log, so a leaderboard can tell whether the log was edited after it was saved. " +
                 "Footer: at the end of the .txt. Sidecar: in a .seal file next to it. Off: no seal.");
+            _dumpFields = Config.Bind(PluginConfig.DiagnosticsSection, PluginConfig.DumpMatchFieldsKey, PluginConfig.DumpMatchFieldsDefault,
+                "Research aid: write the fields of the game's match objects to LogOutput.log at the start and end of every match " +
+                "(to find which queue a match came from). Player names and account ids are hidden. Leave off otherwise.");
             var folder = ResolveFolder(defaultFolder);
 
             // Unity's own value; read here, on the main thread.
@@ -66,7 +70,7 @@ namespace PtcglAutoBattleLog
             DontDestroyOnLoad(_host);
             var runner = _host.AddComponent<Runner>();
             var mode = _sealMode;
-            runner.Init(folder, _manual.Value, () => mode.Value, gameVersion);
+            runner.Init(folder, _manual.Value, () => mode.Value, gameVersion, _dumpFields.Value);
 
             Log.LogInfo(Name + " " + Version + " loaded. Logs go to: " + folder + " (seal: " + _sealMode.Value + ")");
         }
@@ -139,13 +143,14 @@ namespace PtcglAutoBattleLog
         private bool _reportedMissing;
         private string _lastTickError;
 
-        public void Init(string folder, bool saveManual, Func<SealMode> sealMode, string gameVersion)
+        public void Init(string folder, bool saveManual, Func<SealMode> sealMode, string gameVersion, bool dumpMatchFields)
         {
             _store = new LogStore(folder);
             _store.MigrateLegacy(m => Plugin.Log.LogInfo(m));
             _store.Sealer = CreateSealer(folder, sealMode, gameVersion);
             _api = new ReflectionGameApi(m => Plugin.Log.LogInfo(m), new ClipboardGuard());
             _api.FallbackExportData = FindMenuExportData;
+            _api.DumpMatchFields = dumpMatchFields;
             _watcher = new MatchWatcher(_api, _store, m => Plugin.Log.LogInfo(m)) { SaveManualExports = saveManual };
             _startedAt = Time.unscaledTime;
 

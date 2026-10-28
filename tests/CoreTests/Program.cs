@@ -37,6 +37,7 @@ static partial class Program
         OutputFolderSetting();
         SealChainRepair();
         SealSamples();
+        MatchFieldsDump();
         DeckShape();
 
         Console.WriteLine(failures == 0 ? "\nALL PASSED (" + checks + " checks)" : "\n" + failures + " FAILED (of " + checks + " checks)");
@@ -157,6 +158,33 @@ static partial class Program
     {
         Info.gameOver = true;
         Info.winner = winner;
+    }
+
+    static void MatchFieldsDump()
+    {
+        Console.WriteLine("\nmatch fields dump (research aid, issue #14)");
+        var lines = new List<string>();
+        var api = new ReflectionGameApi(lines.Add, null) { Assemblies = () => new[] { typeof(Program).Assembly } };
+        StartMatch("q-1", iAmP1: true, opp: "Misty");
+        api.ReadMatch();
+        Check(lines.All(l => !l.StartsWith("Match fields")), "off by default");
+
+        api.DumpMatchFields = true;
+        api.ReadMatch(); api.ReadMatch();
+        var dumps = lines.Where(l => l.StartsWith("Match fields (start)")).ToList();
+        Check(dumps.Count == 1, "dumped once per match start");
+        var d = dumps.FirstOrDefault() ?? "";
+        Check(d.Contains("queueType: QueueKind = Ranked   <<"), "queue-like field shown with its value and marked");
+        Check(d.Contains("QueueKind [") && d.Contains("enum { Casual, Ranked, BuildAndBattle }"), "queue-like enum listed with its names");
+        Check(d.Contains("gameOver: Boolean = False"), "plain fields shown");
+        Check(!d.Contains("me-123") && !d.Contains("Misty") && !d.Contains("Ash"), "account ids and player names hidden");
+        Check(d.Contains("accountID: String = <6 chars, hidden>"), "a hidden string says it was hidden");
+
+        GameOver(1);
+        api.ReadMatch();
+        Check(lines.Count(l => l.StartsWith("Match fields (game over)")) == 1, "dumped again at game over");
+        api.Unhook();
+        NetworkMatchController.currentMatchInfo = null;
     }
 
     static bool HasBom(byte[] b) => b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF;

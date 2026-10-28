@@ -11,6 +11,11 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ### Added
 
+- **Research aid: dump the match fields.** With `DumpMatchFields = true` under `[Diagnostics]` in
+  `BepInEx\config\ptcgl.autobattlelog.cfg` (off by default) the plugin writes the fields of the
+  game's match objects to `LogOutput.log` at the start and end of every match, plus the loaded
+  enums and types that look queue related, to find out whether the client says which queue a
+  match came from (#14). Player names and account ids are hidden.
 - **Deck research line in the BepInEx log.** Once per game session the plugin writes what the
   client's `deckInfo` holds, to find out whether the player's decklist can be saved with the log
   (issue #15). Your own deck is written with its values; the opponent's only as member names and

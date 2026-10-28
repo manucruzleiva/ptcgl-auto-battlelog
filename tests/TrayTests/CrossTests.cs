@@ -247,8 +247,8 @@ static partial class Program
         Check(PluginConfig.OutputFolderDefault == "" && LogsFolder.DefaultFolderName == AppPaths.LogsFolderName, "empty OutputFolder = Documents\\" + AppPaths.LogsFolderName + " on both sides");
         var pluginSource = File.ReadAllText(Path.Combine(RepoRoot(), "src", "Plugin", "Plugin.cs"));
         var binds = Regex.Matches(pluginSource, @"Config\.Bind\(\s*([^,]+),\s*([^,]+),\s*([^,]+),").Cast<Match>().ToList();
-        Check(binds.Count == 3 && binds.All(b => b.Groups[1].Value.StartsWith("PluginConfig.") && b.Groups[2].Value.StartsWith("PluginConfig.") && b.Groups[3].Value.StartsWith("PluginConfig.")),
-              "Plugin.cs binds its 3 entries with PluginConfig's names and defaults");
+        Check(binds.Count == 4 && binds.All(b => b.Groups[1].Value.StartsWith("PluginConfig.") && b.Groups[2].Value.StartsWith("PluginConfig.") && b.Groups[3].Value.StartsWith("PluginConfig.")),
+              "Plugin.cs binds its 4 entries with PluginConfig's names and defaults");
         Check(Regex.IsMatch(pluginSource, @"public const string Guid = PluginConfig\.Guid;"), "Plugin.cs takes its GUID from PluginConfig");
 
         if (BepInEx() == null) { Check(false, "lib/BepInEx.dll present for the BepInEx checks"); return; }

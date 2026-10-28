@@ -79,6 +79,13 @@ namespace PtcglAutoBattleLog.Core
         /// <summary>Optional extra place to look for log data when MatchManager has none.</summary>
         public Func<object> FallbackExportData;
 
+        /// <summary>
+        /// Research aid (issue #14, which queue a match came from): log the members of the match
+        /// objects once when a match starts and once at game over. Off by default.
+        /// </summary>
+        public bool DumpMatchFields;
+        private readonly HashSet<string> _dumped = new HashSet<string>();
+
         /// <summary>Overridable for tests; defaults to every loaded assembly.</summary>
         public Func<IEnumerable<Assembly>> Assemblies = () => AppDomain.CurrentDomain.GetAssemblies();
 
@@ -185,6 +192,8 @@ namespace PtcglAutoBattleLog.Core
                     }
                     else if (other != null) WarnOnce("seat", "Our account is not among playerDetails; the opponent name is left out until it is.");
                 }
+                if (DumpMatchFields && _dumped.Add((snap.MatchId ?? "?") + (snap.GameOver ? "/over" : "/start")))
+                    _log("Match fields (" + (snap.GameOver ? "game over" : "start") + "):\n" + DescribeMatch());
                 return snap;
             }
             catch (Exception e)
@@ -192,6 +201,152 @@ namespace PtcglAutoBattleLog.Core
                 WarnOnce("read", "Reading the match failed: " + Unwrap(e).Message);
                 return null;
             }
+        }
+
+        // ------------------------------------------------------------------ research dump
+
+        /// <summary>Words that suggest a member or type says which queue or format a match is.</summary>
+        private static readonly string[] QueueWords =
+            { "queue", "mode", "ranked", "casual", "format", "matchtype", "battletype", "build", "friend", "event", "ladder", "tournament", "rule" };
+
+        /// <summary>String values of members with these words are left out: names, account ids, tokens.</summary>
+        private static readonly string[] PrivateWords =
+            { "name", "account", "player", "user", "token", "email", "auth", "session", "password", "friend" };
+
+        /// <summary>
+        /// Every field and property of the match objects (MatchInfo, its board state, MatchManager,
+        /// NetworkMatchController's statics) with simple values shown, members that look queue
+        /// related marked "&lt;&lt;" and expanded one level, then the loaded enums and types whose names
+        /// look queue related. Personal strings are redacted. For the BepInEx log only.
+        /// </summary>
+        public string DescribeMatch()
+        {
+            var sb = new System.Text.StringBuilder();
+            if (!Resolve()) return "(game types not found)";
+            object info = null, board = null, mm = null;
+            try { info = GetStatic(_netController, "currentMatchInfo", "CurrentMatchInfo"); } catch { }
+            try { board = info == null ? null : Call(info, "GetBoardState"); } catch { }
+            try { mm = GetStatic(_matchManager, "instance", "Instance"); } catch { }
+
+            DescribeObject(sb, "MatchInfo", info, 1);
+            DescribeObject(sb, "BoardState", board, 1);
+            DescribeObject(sb, "MatchManager", mm, 1);
+            DescribeStatics(sb, _netController);
+
+            sb.Append("Queue-like types:\n");
+            var types = AllTypes()
+                .Where(t => LooksLikeQueue(t.Name) && !t.IsGenericTypeDefinition &&
+                            !(t.Namespace != null && (t.Namespace.StartsWith("System") || t.Namespace.StartsWith("Unity") || t.Namespace.StartsWith("Mono"))))
+                .OrderBy(t => t.IsEnum ? 0 : 1)     // the enums say the most: their names are the queues
+                .Take(201).ToList();
+            int n = 0;
+            foreach (var t in types)
+            {
+                if (++n > 200) { sb.Append("  ...\n"); break; }
+                sb.Append("  ").Append(t.FullName).Append(" [").Append(t.Assembly.GetName().Name).Append(']');
+                if (t.IsEnum)
+                {
+                    try { sb.Append(" enum { ").Append(string.Join(", ", Enum.GetNames(t))).Append(" }"); } catch { }
+                }
+                sb.Append('\n');
+            }
+            if (n == 0) sb.Append("  (none)\n");
+            return sb.ToString();
+        }
+
+        private static void DescribeObject(System.Text.StringBuilder sb, string label, object obj, int depth, string indent = "")
+        {
+            if (obj == null) { sb.Append(indent).Append(label).Append(": null\n"); return; }
+            var t = obj.GetType();
+            sb.Append(indent).Append(label).Append(" (").Append(t.FullName).Append("):\n");
+            foreach (var m in Members(t))
+            {
+                object value = null;
+                string error = null;
+                try { value = m.Value(obj); } catch (Exception e) { error = Unwrap(e).GetType().Name; }
+                DescribeMember(sb, m.Name, m.Type, value, error, depth, indent + "  ");
+            }
+        }
+
+        private static void DescribeStatics(System.Text.StringBuilder sb, Type type)
+        {
+            sb.Append("NetworkMatchController statics (").Append(type.FullName).Append("):\n");
+            for (var t = type; t != null && t != typeof(object); t = t.BaseType)
+            {
+                foreach (var f in t.GetFields(AnyStatic))
+                {
+                    if (f.Name.Contains("<")) continue;
+                    object v = null; string error = null;
+                    try { v = f.GetValue(null); } catch (Exception e) { error = Unwrap(e).GetType().Name; }
+                    DescribeMember(sb, f.Name, f.FieldType, v, error, 1, "  ");
+                }
+                foreach (var p in t.GetProperties(AnyStatic))
+                {
+                    if (p.GetIndexParameters().Length != 0 || p.GetGetMethod(true) == null) continue;
+                    object v = null; string error = null;
+                    try { v = p.GetValue(null, null); } catch (Exception e) { error = Unwrap(e).GetType().Name; }
+                    DescribeMember(sb, p.Name, p.PropertyType, v, error, 1, "  ");
+                }
+            }
+        }
+
+        private static void DescribeMember(System.Text.StringBuilder sb, string name, Type type, object value, string error, int depth, string indent)
+        {
+            bool queueLike = LooksLikeQueue(name) || LooksLikeQueue(type.Name);
+            sb.Append(indent).Append(name).Append(": ").Append(type.Name);
+            if (error != null) sb.Append(" (threw ").Append(error).Append(')');
+            else if (value == null) sb.Append(" = null");
+            else if (IsSimple(value.GetType()))
+            {
+                var text = value.ToString();
+                if (value is string && HasWord(name, PrivateWords)) text = "<" + text.Length + " chars, hidden>";
+                else if (text.Length > 80) text = text.Substring(0, 80) + "...";
+                sb.Append(" = ").Append(text);
+            }
+            else if (value is ICollection c) sb.Append(" (count ").Append(c.Count).Append(')');
+            if (queueLike) sb.Append("   <<");
+            sb.Append('\n');
+            if (queueLike && depth > 0 && value != null && error == null && !IsSimple(value.GetType()) && !(value is IEnumerable))
+                DescribeObject(sb, name, value, depth - 1, indent + "  ");
+        }
+
+        private struct MemberRead { public string Name; public Type Type; public Func<object, object> Value; }
+
+        private static IEnumerable<MemberRead> Members(Type type)
+        {
+            var seen = new HashSet<string>();
+            for (var t = type; t != null && t != typeof(object); t = t.BaseType)
+            {
+                if (t.Namespace != null && t.Namespace.StartsWith("UnityEngine")) break;   // MonoBehaviour plumbing
+                foreach (var f in t.GetFields(AnyInstance | BindingFlags.DeclaredOnly))
+                {
+                    if (f.Name.Contains("<") || !seen.Add(f.Name)) continue;   // backing fields show up as properties
+                    var field = f;
+                    yield return new MemberRead { Name = f.Name, Type = f.FieldType, Value = o => field.GetValue(o) };
+                }
+                foreach (var p in t.GetProperties(AnyInstance | BindingFlags.DeclaredOnly))
+                {
+                    if (p.GetIndexParameters().Length != 0 || p.GetGetMethod(true) == null || !seen.Add(p.Name)) continue;
+                    var prop = p;
+                    yield return new MemberRead { Name = p.Name, Type = p.PropertyType, Value = o => prop.GetValue(o, null) };
+                }
+            }
+        }
+
+        private static bool IsSimple(Type t)
+        {
+            return t.IsPrimitive || t.IsEnum || t == typeof(string) || t == typeof(decimal) || t == typeof(Guid) ||
+                   t == typeof(DateTime) || t == typeof(TimeSpan);
+        }
+
+        private static bool LooksLikeQueue(string name) { return HasWord(name, QueueWords); }
+
+        private static bool HasWord(string name, string[] words)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            foreach (var w in words)
+                if (name.IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            return false;
         }
 
         /// <summary>
