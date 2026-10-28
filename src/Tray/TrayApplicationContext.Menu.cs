@@ -226,8 +226,11 @@ namespace PtcglAutoBattleLog.Tray
             {
                 RefreshMenu();
                 _window = new StatusWindow(
-                    MenuText(AppInfo.ProductName + " v" + AppInfo.Version + (_session.Portable ? " (portable)" : "")),
-                    new ToolStripItem[] { _statusItem, _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem },
+                    AppInfo.ProductName,
+                    "Version " + AppInfo.Version + (_session.Portable ? " · portable" : ""),
+                    _statusItem,
+                    () => _last?.Decision?.Health ?? TrayHealth.Idle,
+                    new ToolStripItem[] { _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem },
                     new[]
                     {
                         ("General", _settingsMenu.DropDownItems.Cast<ToolStripItem>().ToArray()),

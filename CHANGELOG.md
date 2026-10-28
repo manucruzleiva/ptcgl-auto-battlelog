@@ -9,6 +9,13 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Changed
+
+- **A new look for the status and settings window** (#41). A white header with the app icon and the
+  status next to a dot in the tray icon's colour, a navigation column instead of tabs, settings in
+  cards, switches instead of check boxes and flat buttons (Open logs folder in the accent colour, the
+  updated disclaimer in red). It works as before; high contrast mode keeps the system colours.
+
 ### Fixed
 
 - **Decks not reaching tcgkb after an update** (#39). The mod inside the game is only replaced while

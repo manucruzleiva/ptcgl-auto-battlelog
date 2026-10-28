@@ -23,9 +23,21 @@ namespace PtcglAutoBattleLog.Tray
             using (var art = LoadArt(size.Width))
             {
                 _idle = Draw(art, size, null);
-                _active = Draw(art, size, Color.FromArgb(0x2E, 0xB8, 0x4F));
-                _attention = Draw(art, size, Color.FromArgb(0xF5, 0xA6, 0x23));
-                _error = Draw(art, size, Color.FromArgb(0xE0, 0x3A, 0x3A));
+                _active = Draw(art, size, DotColor(TrayHealth.Active));
+                _attention = Draw(art, size, DotColor(TrayHealth.Attention));
+                _error = Draw(art, size, DotColor(TrayHealth.Error));
+            }
+        }
+
+        /// <summary>The dot's colour for a state, Color.Empty for none (Idle). The status window's dot uses the same.</summary>
+        public static Color DotColor(TrayHealth health)
+        {
+            switch (health)
+            {
+                case TrayHealth.Active: return Color.FromArgb(0x2E, 0xB8, 0x4F);
+                case TrayHealth.Attention: return Color.FromArgb(0xF5, 0xA6, 0x23);
+                case TrayHealth.Error: return Color.FromArgb(0xE0, 0x3A, 0x3A);
+                default: return Color.Empty;
             }
         }
 
