@@ -126,6 +126,12 @@ namespace PtcglAutoBattleLog.Tray
                             AppInfo.GameName + " is running without the mod. Restart the game to start saving your battle logs.",
                             ToolTipIcon.Warning, null);
                     break;
+                case DaemonNotice.ModUpdateReady:
+                    Balloon("Restart " + AppInfo.GameName + " to finish the update",
+                            "The game is still running the previous version of the mod. Battle logs are still saved, but what the new " +
+                            "version adds (such as sending your decklist) starts after you close the game and open it again.",
+                            ToolTipIcon.Info, null);
+                    break;
                 case DaemonNotice.PluginError:
                     Balloon("The mod reported a problem",
                             (string.IsNullOrWhiteSpace(r.Status?.Message) ? "See the BepInEx log." : r.Status.Message.Trim()) + " Click to open the BepInEx log.",

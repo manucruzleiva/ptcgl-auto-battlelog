@@ -265,8 +265,11 @@ the window.
   missing and the game is **not** running, wait 5 s more (an updater may still be writing), then
   `GameInstall.Repair`. If pieces are missing while the game **is** running, notify once: the game
   must be restarted after it finishes updating.
-  A plugin that is only outdated (file present, hash differs) while the game runs is not reported:
-  it is replaced once the game closes. A failed repair is retried after 30 s.
+  A plugin that is only outdated (file present, hash differs) while the game runs keeps the icon
+  green (logs are still saved) and is replaced once the game closes; the status ends in "· restart
+  the game to finish the mod update" and one notification per episode says so (`ModUpdateReady`,
+  not while consent is pending): what the new plugin adds, such as the deck file, starts only
+  after a restart (#39). A failed repair is retried after 30 s.
   While consent to the current `Disclaimer.Version` is pending (a tray started with `--background`
   or `--updated-from` after a bump), nothing is repaired or updated and no "restart" notice is shown;
   the status reads "Accept the updated disclaimer to keep the mod updated" (see "Disclaimer and

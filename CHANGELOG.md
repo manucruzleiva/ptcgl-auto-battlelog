@@ -9,6 +9,13 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Fixed
+
+- **Decks not reaching tcgkb after an update** (#39). The mod inside the game is only replaced while
+  the game is closed, so after updating the app the game kept running the previous mod (without
+  decklists) and the tray said nothing. Now, while a newer mod waits, the status reads "... · restart
+  the game to finish the mod update" and a notification asks once to restart Pokémon TCG Live.
+
 ## [1.3.2-beta.4] - 2026-10-28
 
 A beta with a shorter tray menu and a new status and settings window. On the Beta channel it
