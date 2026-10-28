@@ -256,7 +256,9 @@ mirrors one menu item (text, `Available`, `Enabled`, `Checked`) and a click is t
 switches (still check boxes to keyboards and screen readers), a submenu whose options carry a string
 tag (seal mode, update channel) radio buttons, the rest buttons. Header (white): the app icon, product
 name and version, the status line with a dot in the tray icon's colour (`StatusIcons.DotColor`, grey
-when the tray shows none), then the other status lines (the red disclaimer item a filled red button).
+when the tray shows none), then the other status lines (the red disclaimer item a filled red button), including one only the window
+shows: the mod version the game has loaded or last loaded (`pluginVersion` from `plugin-status.json`,
+`PluginStatus.ModVersionLine`) and whether it is the app's.
 Body: a navigation column (General (Settings ▸), Updates (the waiting update and Updates ▸), Accounts
 (tcgkb account ▸, Pokematch ▸), Help (Help ▸)) and the page, whose items sit in white rounded cards on
 a light grey surface: a separator starts a new card, a submenu gets a card titled with its name.

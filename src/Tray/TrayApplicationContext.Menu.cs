@@ -18,7 +18,7 @@ namespace PtcglAutoBattleLog.Tray
         private readonly ContextMenuStrip _menu;
         private Font _boldFont;
 
-        private ToolStripMenuItem _statusItem, _lastSavedItem, _logsInfoItem, _dataInfoItem, _findGameItem;
+        private ToolStripMenuItem _statusItem, _modVersionItem, _lastSavedItem, _logsInfoItem, _dataInfoItem, _findGameItem;
         private ToolStripMenuItem _openLastItem, _changeFolderItem, _defaultFolderItem;
         private ToolStripMenuItem _notifyItem, _autoUpdateItem, _updateItem, _startupItem, _repairItem;
         private ToolStripMenuItem _sealItem, _bepInExLogItem, _gameFolderItem, _channelItem;
@@ -37,6 +37,7 @@ namespace PtcglAutoBattleLog.Tray
             var title = Info(MenuText(AppInfo.ProductName + " v" + AppInfo.Version + (_session.Portable ? " (portable)" : "")));
             title.Font = _boldFont;
             _statusItem = Info("Starting...");
+            _modVersionItem = Info("");   // the window's header only: the menu stays short
             _lastSavedItem = Info("");
             _logsInfoItem = Info("");
             _dataInfoItem = Info(MenuText("Settings kept in " + PathUtil.Friendly(_session.Paths.Root) + " (this folder is read-only)"));
@@ -179,6 +180,7 @@ namespace PtcglAutoBattleLog.Tray
             var game = _session.Game;
             var r = _last;
             _statusItem.Text = MenuText(Clip(r?.Decision?.Summary ?? "Starting...", 90));
+            _modVersionItem.Text = MenuText(PluginStatus.ModVersionLine(r?.Status, AppInfo.Version, DateTime.UtcNow));
             _findGameItem.Visible = game == null;
             _consentItem.Visible = !HasConsent();
 
@@ -230,7 +232,7 @@ namespace PtcglAutoBattleLog.Tray
                     "Version " + AppInfo.Version + (_session.Portable ? " · portable" : ""),
                     _statusItem,
                     () => _last?.Decision?.Health ?? TrayHealth.Idle,
-                    new ToolStripItem[] { _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem },
+                    new ToolStripItem[] { _modVersionItem, _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem },
                     new[]
                     {
                         ("General", _settingsMenu.DropDownItems.Cast<ToolStripItem>().ToArray()),

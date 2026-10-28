@@ -9,6 +9,12 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **Mod version in the status window** (#42). The "Status and settings" window shows which version
+  of the mod the game has loaded (or last loaded) and says when it is not the app's version, with
+  what to do: restart the game, or nothing if the game is closed and will load the new one.
+
 ### Changed
 
 - **A new look for the status and settings window** (#41). A white header with the app icon and the
