@@ -144,7 +144,7 @@ installed, an older download installs nothing and starts the installed one inste
 ## Where your logs are
 
 By default in **`Documents\PTCGL Battle Logs`** (wherever Windows keeps your Documents folder,
-which may be inside OneDrive). Use **Change logs folder...** in the tray menu to pick another one.
+which may be inside OneDrive). Use **Settings ▸ Change logs folder...** in the tray menu to pick another one.
 
 - One file per match: `yyyy-MM-dd HH.mm.ss - RESULT vs OPPONENT.txt`, in your local time of the
   match end. `RESULT` is `VICTORY`, `DEFEAT`, `NO-RESULT` (no winner known, e.g. a disconnection)
@@ -173,7 +173,7 @@ which may be inside OneDrive). Use **Change logs folder...** in the tray menu to
   ```
 
   Everything before that block is the original log. If another tool chokes on it, remove those
-  lines from a *copy*, or switch the tray menu's **Battle log seal** to **Sidecar** (the seal then
+  lines from a *copy*, or switch the tray menu's **Settings ▸ Battle log seal** to **Sidecar** (the seal then
   goes to a `.seal` file next to the `.txt`) or **Off**. Editing a sealed file breaks its seal;
   that is the point of it.
 
@@ -182,24 +182,27 @@ which may be inside OneDrive). Use **Change logs folder...** in the tray menu to
 Right-click the icon in the notification area (it may be hidden behind the `^` arrow).
 Double-click it to open your logs folder.
 
+Only what you use often is at the top; everything else is grouped in **Settings ▸**, **Updates ▸**
+and **Help ▸**.
+
 | Item | What it does |
 |---|---|
-| Status lines | Version (and "portable"), what the app is doing, the last saved log, the logs folder. |
+| Status lines | Version (and "portable"), what the app is doing, the last saved log. |
 | Open logs folder · Open last log | |
-| Change logs folder... | New logs go there (from the next game start if the game is running). Folders whose path contains `'` or `"`, and network paths (`\\server\...`), are not supported by BepInEx's settings file. Folders inside the game's `BepInEx` folder or the app's own folders are refused, because uninstalling removes those. |
-| Use the default logs folder | Back to `Documents\PTCGL Battle Logs` (only shown when you changed it). |
-| Notify when a log is saved | Turns the "battle log saved" notifications on or off. |
-| Install updates automatically · Update channel ▸ · Check for updates now | See [Automatic updates](#automatic-updates). |
 | Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
-| Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
-| Repair now | Puts back any missing BepInEx or plugin file (with the game closed). |
-| Battle log seal ▸ | Footer (default), Sidecar or Off. Takes effect the next time the game starts. |
 | tcgkb account ▸ | Optional. Connect to tcgkb, claim or release your PTCGL accounts, disconnect. See [tcgkb account](#tcgkb-account). |
 | Pokematch ▸ | Optional. Set your Pokematch API token, upload new battle logs automatically, upload past ones, remove the token. See [Pokematch](#pokematch). |
-| Diagnostics ▸ | Open the app log, the BepInEx log, the game folder or the app data folder; choose the game folder; copy diagnostic info for a bug report. |
-| Review the updated disclaimer... | In red, only when the disclaimer changed since you accepted it. Uploads to tcgkb and Pokematch wait until you accept it. |
-| Project page · View disclaimer · Licenses | Licenses shows this app's license and those of BepInEx and the other files it carries. |
-| Uninstall... (portable: Remove mod from game...) | See [Uninstall](#uninstall). |
+| Review the updated disclaimer... | In red, under the status lines, only when the disclaimer changed since you accepted it. Uploads to tcgkb and Pokematch wait until you accept it. |
+| Settings ▸ Notify when a log is saved | Turns the "battle log saved" notifications on or off. |
+| Settings ▸ Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
+| Settings ▸ Change logs folder... | Shows the current logs folder. New logs go there (from the next game start if the game is running). Folders whose path contains `'` or `"`, and network paths (`\\server\...`), are not supported by BepInEx's settings file. Folders inside the game's `BepInEx` folder or the app's own folders are refused, because uninstalling removes those. |
+| Settings ▸ Use the default logs folder | Back to `Documents\PTCGL Battle Logs` (only shown when you changed it). |
+| Settings ▸ Battle log seal ▸ | Footer (default), Sidecar or Off. Takes effect the next time the game starts. |
+| Updates ▸ | Install updates automatically, Update channel ▸, Check for updates now. See [Automatic updates](#automatic-updates). |
+| Help ▸ Diagnostics ▸ | Open the app log, the BepInEx log, the game folder or the app data folder; choose the game folder; copy diagnostic info for a bug report. |
+| Help ▸ Repair now | Puts back any missing BepInEx or plugin file (with the game closed). |
+| Help ▸ Project page · View disclaimer · Licenses | Licenses shows this app's license and those of BepInEx and the other files it carries. |
+| Help ▸ Uninstall... (portable: Remove mod from game...) | See [Uninstall](#uninstall). |
 | Exit | Closes the tray app. Logs are still saved while it is closed (the plugin runs inside the game), but nothing is repaired or updated. |
 
 The icon shows the state at a glance: **green dot** = the game is running with the mod; **no
@@ -223,14 +226,14 @@ An update is installed only if **all** of these hold:
 Anything else is discarded and written to the app log. The new exe replaces the old one and
 restarts; the plugin inside the game is updated the next time the game is closed.
 
-**Beta channel.** **Update channel ▸ Beta** also installs test versions (GitHub pre-releases such
+**Beta channel.** **Updates ▸ Update channel ▸ Beta** also installs test versions (GitHub pre-releases such
 as `v1.3.2-beta.1`) before they become a release: the app then lists the repository's newest
 releases through `https://api.github.com/repos/manucruzleiva/ptcgl-auto-battlelog/releases` and
 takes the highest version, beta or not. The same download checks apply. Betas may have bugs. **Stable**
 (the default) gets releases only; switching back to it keeps the beta you have until the next
 release, which replaces it.
 
-**To turn it off**, untick **Install updates automatically**. You then get one notification per
+**To turn it off**, untick **Updates ▸ Install updates automatically**. You then get one notification per
 new version and can install it from the menu (**Update vX available ▸ Install now**), read
 **What's new**, or **Skip this version**.
 
@@ -331,7 +334,7 @@ battle logs automatically** off, or **Remove API token**, at any time. Details:
 ## Uninstall
 
 **Installed app:** *Settings → Apps → Installed apps → PTCGL Auto Battle Log → Uninstall*, or
-**Uninstall...** in the tray menu. Close the game first (the uninstaller waits for it; a silent
+**Help ▸ Uninstall...** in the tray menu. Close the game first (the uninstaller waits for it; a silent
 uninstall, `--uninstall --quiet`, stops with exit code 1 and changes nothing while the game runs).
 This removes:
 
@@ -340,7 +343,7 @@ This removes:
 - the app, its Start menu and desktop shortcuts, "Start with Windows" and the Apps & Features
   entry, and `%LOCALAPPDATA%\PtcglAutoBattleLog\` except its `identity\` folder.
 
-**Portable app:** tray menu → **Remove mod from game...** (same removal from the game folder, and
+**Portable app:** tray menu → **Help ▸ Remove mod from game...** (same removal from the game folder, and
 "Start with Windows" off), then delete the portable folder yourself.
 
 **Always kept:** your battle logs, and `%LOCALAPPDATA%\PtcglAutoBattleLog\identity\` (your seal key).
@@ -374,7 +377,7 @@ Doorstop) placed in the game folder; Windows loads it when the game starts. Some
 products flag DLLs like this, unsigned executables, or apps that install other files, as
 suspicious. You can check the downloaded files against `SHA256SUMS.txt`, read the source, or
 build it yourself. If you trust it, report the false positive to your antivirus vendor. If the
-antivirus removed `winhttp.dll`, use **Repair now** after allowing it.
+antivirus removed `winhttp.dll`, use **Help ▸ Repair now** after allowing it.
 
 **Does it work on Mac, iPhone/iPad, Android or a Chromebook?**
 No. Windows only (Windows 10/11, 64-bit).
@@ -396,14 +399,14 @@ updates and updates.
 
 ## Troubleshooting
 
-Start with **Diagnostics ▸ Copy diagnostic info** in the tray menu and paste it into a
+Start with **Help ▸ Diagnostics ▸ Copy diagnostic info** in the tray menu and paste it into a
 [bug report](https://github.com/manucruzleiva/ptcgl-auto-battlelog/issues/new/choose). The files
 worth looking at:
 
 | File | What it tells you |
 |---|---|
 | `%LOCALAPPDATA%\PtcglAutoBattleLog\tray.log` (portable: `data\tray.log`) | What the tray app did: install, repairs, updates, errors. |
-| `<game folder>\BepInEx\LogOutput.log` | The game-side log, rewritten at every game start. The plugin's lines are tagged `PTCGL Auto Battle Log`, e.g. `[Info   :PTCGL Auto Battle Log]`. If this file is not updated when you start the game, BepInEx is not loading: use **Repair now** with the game closed and check your antivirus. |
+| `<game folder>\BepInEx\LogOutput.log` | The game-side log, rewritten at every game start. The plugin's lines are tagged `PTCGL Auto Battle Log`, e.g. `[Info   :PTCGL Auto Battle Log]`. If this file is not updated when you start the game, BepInEx is not loading: use **Help ▸ Repair now** with the game closed and check your antivirus. |
 | `%LOCALAPPDATA%\PtcglAutoBattleLog\plugin-status.json` | The plugin's heartbeat while the game runs (refreshed at least every 30 seconds): `state` (`starting`, `ok` or `error`), `message`, the logs folder and the last saved file. |
 
 Common cases:

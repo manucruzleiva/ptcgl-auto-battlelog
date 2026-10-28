@@ -227,23 +227,26 @@ running" and is reported as such, never as a crash.
 
 ### Menu
 
-Status lines (version and mode; daemon summary; last saved log; logs folder; data folder when the
-portable fallback is in use; "Choose the game folder..." while the game is not found) · **Open logs
-folder** (also the double-click action) · Open last log · Change logs folder... · Use the default logs
-folder (only when a custom one is set; writes an empty `OutputFolder`) · Notify when a log is saved ·
-Install updates automatically · Update channel ▸ (Stable (recommended), Beta: writes
-`updateChannel` and checks right away) · Check for updates now · Update vX available ▸ (Install now, What's
-new, Skip this version) · Start with Windows · Repair now · Battle log seal ▸ ("Footer (in the log
-file, default)", "Sidecar (separate .seal file)", "Off": writes `[Metadata] Mode`, effective at the
-next game start) · Diagnostics ▸ (app log, BepInEx log, game folder, app data folder, choose game
-folder, copy diagnostic info) · tcgkb account ▸ ("Not connected" / "Connected as <name>", Connect to
-tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") · Pokematch ▸ ("Not set up" / a status line, Set API token... /
-Change API token..., Upload new battle logs automatically, Upload past battle logs..., Remove API
-token; see "Pokematch") · Project page · View disclaimer (while consent to the current
-`Disclaimer.Version` is pending it opens the updated disclaimer with its Accept button, and a red
-"Review the updated disclaimer..." item also shows under the status line) · Licenses (the embedded
-`THIRD-PARTY-NOTICES.md`, `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from
-game... · Exit.
+Top level, kept short: status lines (version and mode; daemon summary; last saved log; data folder
+when the portable fallback is in use; "Choose the game folder..." while the game is not found; a red
+"Review the updated disclaimer..." while consent to the current `Disclaimer.Version` is pending) ·
+**Open logs folder** (also the double-click action) · Open last log · Update vX available ▸ (Install
+now, What's new, Skip this version; only while an update waits) · tcgkb account ▸ ("Not connected" /
+"Connected as <name>", Connect to tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") ·
+Pokematch ▸ ("Not set up" / a status line, Set API token... / Change API token..., Upload new battle
+logs automatically, Upload past battle logs..., Remove API token; see "Pokematch") · Settings ▸ ·
+Updates ▸ · Help ▸ · Exit.
+
+* **Settings ▸** Notify when a log is saved · Start with Windows · the logs folder (a status line) ·
+  Change logs folder... · Use the default logs folder (only when a custom one is set; writes an empty
+  `OutputFolder`) · Battle log seal ▸ ("Footer (in the log file, default)", "Sidecar (separate .seal
+  file)", "Off": writes `[Metadata] Mode`, effective at the next game start).
+* **Updates ▸** Install updates automatically · Update channel ▸ (Stable (recommended), Beta: writes
+  `updateChannel` and checks right away) · Check for updates now.
+* **Help ▸** Diagnostics ▸ (app log, BepInEx log, game folder, app data folder, choose game folder,
+  copy diagnostic info) · Repair now · Project page · View disclaimer (the updated one, with its
+  Accept button, while consent is pending) · Licenses (the embedded `THIRD-PARTY-NOTICES.md`,
+  `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from game....
 
 ### Daemon loop
 

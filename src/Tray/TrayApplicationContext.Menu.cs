@@ -87,23 +87,46 @@ namespace PtcglAutoBattleLog.Tray
 
             var uninstall = Item(_session.Portable ? "Remove mod from game..." : "Uninstall...", Uninstall);
 
-            menu.Items.AddRange(new ToolStripItem[]
-            {
-                title, _statusItem, _consentItem, _lastSavedItem, _logsInfoItem, _dataInfoItem, _findGameItem,
+            // Only what is used often stays at the top: the rest is grouped in three submenus.
+            var settings = Submenu("Settings", true,
+                _notifyItem, _startupItem,
                 new ToolStripSeparator(),
-                openLogs, _openLastItem, _changeFolderItem, _defaultFolderItem,
+                _logsInfoItem, _changeFolderItem, _defaultFolderItem,
                 new ToolStripSeparator(),
-                _notifyItem, _autoUpdateItem, _channelItem, checkNow, _updateItem, _startupItem, _repairItem, _sealItem, BuildTcgkbMenu(), BuildPokematchMenu(), diagnostics,
+                _sealItem);
+            var updates = Submenu("Updates", true, _autoUpdateItem, _channelItem, new ToolStripSeparator(), checkNow);
+            var help = Submenu("Help", false,
+                diagnostics, _repairItem,
                 new ToolStripSeparator(),
                 Item("Project page", () => Shell.Open(AppInfo.ProjectUrl)),
                 Item("View disclaimer", ViewDisclaimer),
                 Item("Licenses", ViewLicenses),
                 new ToolStripSeparator(),
-                uninstall,
+                uninstall);
+
+            menu.Items.AddRange(new ToolStripItem[]
+            {
+                title, _statusItem, _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem,
+                new ToolStripSeparator(),
+                openLogs, _openLastItem, _updateItem,
+                new ToolStripSeparator(),
+                BuildTcgkbMenu(), BuildPokematchMenu(),
+                new ToolStripSeparator(),
+                settings, updates, help,
+                new ToolStripSeparator(),
                 Item("Exit", () => ExitThread()),
             });
             menu.Opening += (s, e) => Run("menu refresh", RefreshMenu);
             return menu;
+        }
+
+        /// <summary>A submenu; checkMargin for one whose items are ticked on and off.</summary>
+        private static ToolStripMenuItem Submenu(string text, bool checkMargin, params ToolStripItem[] items)
+        {
+            var item = new ToolStripMenuItem(text);
+            item.DropDownItems.AddRange(items);
+            if (item.DropDown is ToolStripDropDownMenu dropDown) { dropDown.ShowImageMargin = false; dropDown.ShowCheckMargin = checkMargin; }
+            return item;
         }
 
         private static ToolStripMenuItem Info(string text) => new ToolStripMenuItem(text) { Enabled = false };
