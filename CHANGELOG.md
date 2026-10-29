@@ -9,6 +9,11 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-29
+
+Connect PAB to tcgkb before you play: the app now offers to claim your PTCGL account right after
+your first match.
+
 ### Added
 
 - **Connect to tcgkb before your first match.** Connected with **Upload my matches automatically**
@@ -272,7 +277,8 @@ First version, never published: the BepInEx plugin, a Spanish PowerShell install
 (`Instalar.bat`, `Desinstalar.bat`) with a hidden watchdog that restored the mod after game
 updates, and Spanish file names and documentation.
 
-[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.1...v1.4.0
 [1.3.2-beta.1]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.1...v1.3.2-beta.1
 [1.3.1]: https://github.com/manucruzleiva/ptcgl-auto-battlelog/compare/v1.3.0...v1.3.1
