@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
 using PtcglAutoBattleLog.Tray.Logic;
@@ -12,7 +13,12 @@ namespace PtcglAutoBattleLog.Tray
         /// <summary>Uploads that failed for a passing reason (offline, tcgkb busy) are retried this often.</summary>
         private static readonly TimeSpan UploadRetryInterval = TimeSpan.FromMinutes(30);
 
+        /// <summary>Only a match this recent is offered for claiming: the offer follows a match, not an old log.</summary>
+        private static readonly TimeSpan ClaimOfferWindow = TimeSpan.FromHours(1);
+
         private TcgkbService _tcgkb;
+        /// <summary>When the accounts window last closed: the matches before it were already there to claim.</summary>
+        private DateTime _accountsSeenUtc = DateTime.MinValue;
         private LogUploader _uploader;
         private Timer _uploadTimer;
         private string _lastUploadLabel;
@@ -75,6 +81,7 @@ namespace PtcglAutoBattleLog.Tray
         {
             if (!Tcgkb.Connection.IsConnected) { ConnectTcgkb(); return; }
             using (Modal()) TcgkbAccountsDialog.Show(Tcgkb.Connection, _session.LogsFolder(_session.Game));
+            _accountsSeenUtc = DateTime.UtcNow;
             if (_session.Read(s => s.TcgkbAutoUpload) == null) AskAutoUpload();
             else UploadMatches(true);
         }
@@ -173,8 +180,26 @@ namespace PtcglAutoBattleLog.Tray
                 else
                     Balloon("tcgkb is up to date", "Every match of your claimed accounts is on tcgkb.", ToolTipIcon.Info, null);
             }
+            OfferClaim(run.Unclaimed);
             // The per-run limit: carry on right away rather than in 30 minutes.
             if (run.HitLimit) Post(() => UploadMatches(false));
+        }
+
+        /// <summary>
+        /// A new match of a PTCGL account that is not the player's on tcgkb: offer claiming it, once per account.
+        /// This is how a player who connected before playing claims after the first match.
+        /// </summary>
+        private void OfferClaim(SealSummary unclaimed)
+        {
+            if (unclaimed == null || unclaimed.SealedUtc < _accountsSeenUtc || DateTime.UtcNow - unclaimed.SealedUtc > ClaimOfferWindow) return;
+            var hash = unclaimed.PlayerAccountHash;
+            if (_session.Read(s => s.TcgkbClaimOffered?.Contains(hash) == true)) return;
+            _session.Update(s => (s.TcgkbClaimOffered = s.TcgkbClaimOffered ?? new List<string>()).Add(hash));
+            var name = string.IsNullOrEmpty(unclaimed.PlayerName) ? "your PTCGL account" : unclaimed.PlayerName;
+            Log.Info("Offering to claim a PTCGL account on tcgkb.");
+            Balloon("Claim " + name + " on tcgkb?",
+                    "Your matches go to tcgkb once you claim the PTCGL account you play with. Click to claim it.",
+                    ToolTipIcon.Info, ShowTcgkbAccounts);
         }
 
         /// <summary>The disclaimer was accepted: matches that were waiting for it go now (after the caller's own run, if any).</summary>

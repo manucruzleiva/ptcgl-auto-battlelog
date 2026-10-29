@@ -24,7 +24,9 @@
     "pm2b": "3. Paste the token and click OK",
     "pm3": "Click Yes",
     "pm4": "Optional: older matches",
-    "pm5": "Uploaded by PAB"
+    "pm5": "Uploaded by PAB",
+    "claim1": "1. Click the notification",
+    "claim2": "2. Pick your account and click Claim"
   },
   "es": {
     "onb1": "Entra o crea tu cuenta",
@@ -51,7 +53,9 @@
     "pm2b": "3. Pega el token y toca OK",
     "pm3": "Toca Yes",
     "pm4": "Opcional: partidas anteriores",
-    "pm5": "Subida por PAB"
+    "pm5": "Subida por PAB",
+    "claim1": "1. Clic en el aviso",
+    "claim2": "2. Elige tu cuenta y toca Claim"
   },
   "pt": {
     "onb1": "Entre ou crie sua conta",
@@ -78,7 +82,9 @@
     "pm2b": "3. Cole o token e clique em OK",
     "pm3": "Clique em Yes",
     "pm4": "Opcional: partidas anteriores",
-    "pm5": "Enviada pelo PAB"
+    "pm5": "Enviada pelo PAB",
+    "claim1": "1. Clique no aviso",
+    "claim2": "2. Escolha sua conta e clique em Claim"
   },
   "fr": {
     "onb1": "Connectez-vous ou créez votre compte",
@@ -105,7 +111,9 @@
     "pm2b": "3. Collez le jeton et cliquez sur OK",
     "pm3": "Cliquez sur Yes",
     "pm4": "Facultatif : parties précédentes",
-    "pm5": "Envoyée par PAB"
+    "pm5": "Envoyée par PAB",
+    "claim1": "1. Cliquez sur la notification",
+    "claim2": "2. Choisissez votre compte et cliquez sur Claim"
   },
   "de": {
     "onb1": "Melde dich an oder erstelle ein Konto",
@@ -132,7 +140,9 @@
     "pm2b": "3. Token einfügen und OK klicken",
     "pm3": "Auf Yes klicken",
     "pm4": "Optional: ältere Matches",
-    "pm5": "Von PAB hochgeladen"
+    "pm5": "Von PAB hochgeladen",
+    "claim1": "1. Klicke auf die Benachrichtigung",
+    "claim2": "2. Wähle dein Konto und klicke auf Claim"
   },
   "it": {
     "onb1": "Accedi o crea il tuo account",
@@ -159,7 +169,9 @@
     "pm2b": "3. Incolla il token e clicca OK",
     "pm3": "Clicca Yes",
     "pm4": "Facoltativo: partite precedenti",
-    "pm5": "Caricata da PAB"
+    "pm5": "Caricata da PAB",
+    "claim1": "1. Clicca sulla notifica",
+    "claim2": "2. Scegli il tuo account e clicca su Claim"
   },
   "ja": {
     "onb1": "ログインまたはアカウント作成",
@@ -186,7 +198,9 @@
     "pm2b": "3. トークンを貼り付けて OK",
     "pm3": "Yes をクリック",
     "pm4": "任意: 過去の試合",
-    "pm5": "PAB がアップロード"
+    "pm5": "PAB がアップロード",
+    "claim1": "1. 通知をクリック",
+    "claim2": "2. アカウントを選んで Claim"
   },
   "ko": {
     "onb1": "로그인 또는 계정 만들기",
@@ -213,7 +227,9 @@
     "pm2b": "3. 토큰을 붙여넣고 OK",
     "pm3": "Yes 클릭",
     "pm4": "선택: 이전 경기",
-    "pm5": "PAB가 업로드함"
+    "pm5": "PAB가 업로드함",
+    "claim1": "1. 알림 클릭",
+    "claim2": "2. 계정을 고르고 Claim"
   },
   "zh": {
     "onb1": "登录或创建账号",
@@ -240,6 +256,8 @@
     "pm2b": "3. 粘贴令牌并点击 OK",
     "pm3": "点击 Yes",
     "pm4": "可选：以前的对战",
-    "pm5": "由 PAB 上传"
+    "pm5": "由 PAB 上传",
+    "claim1": "1. 点击通知",
+    "claim2": "2. 选择账号并点击 Claim"
   }
 }

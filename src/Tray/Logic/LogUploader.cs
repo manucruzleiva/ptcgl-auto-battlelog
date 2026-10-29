@@ -32,6 +32,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public string StoppedBecause;
         /// <summary>tcgkb's answer to the newest log sent in this run, or null.</summary>
         public UploadResponse Newest;
+        /// <summary>The newest tracked match of a PTCGL account that is not the player's on tcgkb, or null: an account to offer claiming.</summary>
+        public SealSummary Unclaimed;
     }
 
     /// <summary>
@@ -86,6 +88,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                     return run;
                 }
                 var mine = new HashSet<string>(me.Accounts.Select(a => a.AccountHash), StringComparer.Ordinal);
+                run.Unclaimed = NewestUnclaimed(logsFolder, mine);
                 var pending = Pending(logsFolder, mine, done);
 
                 int i = 0;
@@ -156,6 +159,25 @@ namespace PtcglAutoBattleLog.Tray.Logic
             }
             catch (Exception) { }
             return found.OrderByDescending(s => s.SealedUtc).ThenByDescending(s => s.LogFile, StringComparer.Ordinal).ToList();
+        }
+
+        /// <summary>The folder's newest sealed log of a tracked match of an account not in accounts, or null. Never throws.</summary>
+        public static SealSummary NewestUnclaimed(string logsFolder, ISet<string> accounts)
+        {
+            SealSummary newest = null;
+            try
+            {
+                if (string.IsNullOrEmpty(logsFolder) || !Directory.Exists(logsFolder)) return null;
+                foreach (var file in Directory.EnumerateFiles(logsFolder, "*.txt"))
+                {
+                    if (!LogFileName.TryParse(file, out _, out _)) continue;
+                    var s = SealSummary.TryRead(file);
+                    if (s?.PlayerAccountHash == null || accounts.Contains(s.PlayerAccountHash) || !PtcglAccountScanner.IsEvidence(s)) continue;
+                    if (newest == null || s.SealedUtc > newest.SealedUtc) newest = s;
+                }
+            }
+            catch (Exception) { }
+            return newest;
         }
 
         /// <summary>The saved state, or an empty one when the file is missing or unreadable (logs are then offered again: harmless).</summary>

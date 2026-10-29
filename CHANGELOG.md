@@ -9,6 +9,16 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Added
+
+- **Connect to tcgkb before your first match.** Connected with **Upload my matches automatically**
+  on, the app offers to claim your PTCGL account right after you play with it ("Claim <name> on
+  tcgkb?"; click to open **My PTCGL accounts...**), once per account. Before, you had to come back
+  to the menu after playing, because a claim needs a saved match.
+- **Quick-setup guides:** the tcgkb guide now connects before the first match, and the pictures
+  look like the real thing: a Windows 11 desktop and taskbar, the real SmartScreen steps, the app's
+  own windows, real cards and the tcgkb ranking with deck sprites.
+
 ## [1.4.0] - 2026-10-28
 
 Everything from the 1.3.2 betas, now for everyone: your decklist, queue and format with each

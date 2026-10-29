@@ -3,8 +3,11 @@
   The pictures of the quick-setup guides (docs/quick-setup/). tools/quick-setup/render.mjs opens this
   page, calls render(step, text, lang) for every step and language and saves docs/quick-setup/images/.
   Drawn in HTML so the callouts translate; the app's own labels stay in English, as in the app.
+  Each picture is a Windows 11 desktop as players see it: the taskbar, the app's own windows (light,
+  WinForms), the browser on tcgkb.app, real cards and the deck sprites tcgkb shows.
   Open it in a browser to look at one picture: illustrations.html?step=pokematch-set-token&lang=es
-  (from a local web server, so it can read illustration-text.json).
+  (from a local web server, so it can read illustration-text.json). Cards and sprites load from
+  images.pokemontcg.io and r2.limitlesstcg.net, so drawing needs the network.
 -->
 <html lang="en">
 <head>
@@ -12,45 +15,79 @@
 <title>PAB quick-setup illustrations</title>
 <style>
   :root {
-    --bg: #0E1116; --panel: #151A21; --raise: #1A2029; --line: #1F252F; --edge: #2A3240;
+    --bg: #12161C; --panel: #171C23; --raise: #1E242D; --line: #232A34; --edge: #2E3644;
     --ink: #E8ECF2; --muted: #97A1AF; --accent: #F5C518;
-    --ui: "Segoe UI", Inter, "DejaVu Sans", sans-serif;
+    --ui: "Segoe UI Variable", "Segoe UI", Inter, "DejaVu Sans", sans-serif;
   }
   html[lang=ja] { --cjk: "Noto Sans CJK JP"; }
   html[lang=ko] { --cjk: "Noto Sans CJK KR"; }
   html[lang=zh] { --cjk: "Noto Sans CJK SC"; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); font-family: Inter, var(--cjk, sans-serif), "DejaVu Sans", sans-serif; color: var(--ink); }
-  #stage {
-    position: relative; width: 960px; height: 540px; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    background: #13263D;   /* flat: a gradient makes every PNG several times larger */
-  }
-  .win { border-radius: 8px; background: #fff; font-family: var(--ui), var(--cjk, sans-serif); font-size: 14px; color: #1B1B1B; box-shadow: 0 18px 50px rgba(0,0,0,.45); }
-  .titlebar { border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 8px; background: #F3F3F3; padding: 8px 12px; font-size: 12px; color: #444; }
-  .wbtn { display: inline-flex; height: 32px; min-width: 88px; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid #C9C9C9; background: #FDFDFD; padding: 0 14px; font-size: 13px; position: relative; }
-  .wbtn.primary { border-color: #0067C0; background: #0067C0; color: #fff; }
-  .hl { position: relative; border-radius: 6px; outline: 3px solid var(--accent); outline-offset: 3px; }
-  .tag { position: absolute; white-space: nowrap; border-radius: 999px; background: var(--accent); padding: 4px 10px; font-family: Inter, var(--cjk, sans-serif), sans-serif; font-size: 13px; font-weight: 600; color: #111418; box-shadow: 0 6px 16px rgba(0,0,0,.35); z-index: 5; }
-  .tray { display: inline-flex; height: 22px; width: 22px; align-items: center; justify-content: center; border-radius: 5px; background: var(--accent); font: 700 9px Inter, sans-serif; color: #111418; flex: none; }
-  .tray.small { height: 16px; width: 16px; font-size: 6px; }
-  .taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 16px; background: rgba(20,24,32,.92); font: 12px var(--ui); color: #DDE3EA; }
-  .menu { border-radius: 8px; border: 1px solid #D5D5D5; background: #F9F9F9; padding: 4px; font: 13px var(--ui); color: #1B1B1B; box-shadow: 0 12px 32px rgba(0,0,0,.4); }
-  .menu .it { position: relative; border-radius: 4px; padding: 7px 12px 7px 30px; white-space: nowrap; }
-  .menu .grey { color: #8A8A8A; }
-  .menu .sel { background: #E5F0FB; }
-  .menu .sep { margin: 4px 8px; height: 1px; background: #E2E2E2; }
-  .menu .check { position: absolute; left: 10px; top: 6px; font-size: 12px; }
-  .menu .sub { position: absolute; right: 10px; }
-  .browser { overflow: hidden; border-radius: 10px; border: 1px solid var(--edge); background: var(--bg); box-shadow: 0 18px 50px rgba(0,0,0,.5); }
-  .browser .bar { display: flex; align-items: center; gap: 8px; background: var(--raise); padding: 8px 12px; }
-  .browser .url { flex: 1; border-radius: 6px; background: var(--bg); padding: 4px 10px; font: 12px "DejaVu Sans Mono", monospace; color: var(--muted); }
-  .kb-btn { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; border-radius: 10px; background: var(--accent); padding: 0 18px; font-size: 14px; font-weight: 600; color: #111418; }
-  .kb-ghost { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid var(--edge); padding: 0 16px; font-size: 14px; }
+  body { margin: 0; background: #000; font-family: Inter, var(--cjk, sans-serif), "DejaVu Sans", sans-serif; color: var(--ink); }
+
+  /* The desktop: Windows 11's default wallpaper colours, and its taskbar. */
+  #stage { position: relative; width: 960px; height: 540px; overflow: hidden; }
+  .desk { position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 55% 70% at 68% 58%, rgba(120,190,255,.55), transparent 60%),
+      radial-gradient(ellipse 40% 55% at 35% 75%, rgba(40,110,230,.55), transparent 70%),
+      linear-gradient(160deg, #0B2A63 0%, #0E4BA6 45%, #0A2D6E 75%, #061638 100%); }
+  .taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; display: flex; align-items: center;
+    background: rgba(28,30,36,.94); border-top: 1px solid rgba(255,255,255,.07); font: 11px var(--ui); color: #fff; z-index: 3; }
+  .taskbar .mid { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; }
+  .taskbar .app { width: 36px; height: 36px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+  .taskbar .app.on { background: rgba(255,255,255,.08); }
+  .taskbar .search { display: flex; align-items: center; gap: 8px; height: 30px; width: 150px; border-radius: 15px; background: rgba(255,255,255,.08); padding: 0 12px; color: #C9CDD3; font-size: 12px; }
+  .taskbar .right { margin-left: auto; display: flex; align-items: center; gap: 4px; padding-right: 8px; }
+  .taskbar .tray-icon { width: 30px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+  .taskbar .clock { text-align: right; line-height: 1.35; padding: 0 6px 0 8px; font-size: 11px; }
+  .pab { width: 18px; height: 18px; display: block; }
+
+  /* The app's windows: WinForms on Windows 11 (light). */
+  .win { position: relative; border-radius: 8px; background: #F0F0F0; border: 1px solid #A0A0A0; font: 12px var(--ui), var(--cjk, sans-serif); color: #1B1B1B; box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.25); }
+  .titlebar { height: 32px; border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 8px; background: #fff; padding-left: 10px; font-size: 12px; color: #1B1B1B; }
+  .titlebar .t { flex: 1; white-space: nowrap; overflow: hidden; }
+  .titlebar .ctl { width: 44px; height: 32px; display: flex; align-items: center; justify-content: center; color: #333; }
+  .wbtn { position: relative; display: inline-flex; height: 26px; min-width: 76px; align-items: center; justify-content: center; border: 1px solid #ADADAD; background: #E1E1E1; padding: 0 12px; font-size: 12px; }
+  .wbtn.def { border: 2px solid #0078D7; }
+  .field { background: #fff; border: 1px solid #7A7A7A; }
+
+  /* WinForms tray menu (ContextMenuStrip, check margin). */
+  .menu { position: relative; background: #F2F2F2; border: 1px solid #A0A0A0; padding: 2px; font: 12px var(--ui); color: #1B1B1B; box-shadow: 3px 3px 6px rgba(0,0,0,.35); }
+  .menu .it { position: relative; padding: 4px 26px 4px 30px; white-space: nowrap; border: 1px solid transparent; }
+  .menu .grey { color: #8D8D8D; }
+  .menu .sel { background: #CCE8FF; border-color: #99D1FF; }
+  .menu .sep { margin: 3px 2px 3px 28px; height: 1px; background: #D7D7D7; }
+  .menu .check { position: absolute; left: 9px; top: 3px; font-size: 12px; }
+  .menu .sub { position: absolute; right: 8px; top: 3px; }
+
+  /* Windows notification (toast), dark. */
+  .toast { position: absolute; right: 12px; bottom: 56px; width: 364px; border-radius: 8px; background: #2B2B2B; border: 1px solid rgba(255,255,255,.08); color: #fff; font: 13px var(--ui), var(--cjk, sans-serif); padding: 12px 14px 14px; box-shadow: 0 16px 40px rgba(0,0,0,.5); z-index: 4; }
+  .toast .head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #D0D0D0; margin-bottom: 10px; }
+  .toast .head .x { margin-left: auto; color: #A0A0A0; }
+  .toast .ttl { font-weight: 600; margin-bottom: 3px; }
+  .toast .txt { color: #D0D0D0; font-size: 12.5px; line-height: 1.4; }
+
+  /* Edge, dark, on tcgkb.app. */
+  .browser { position: absolute; overflow: hidden; border-radius: 8px; border: 1px solid #3A3A3A; background: var(--bg); box-shadow: 0 24px 60px rgba(0,0,0,.55); }
+  .browser .tabs { height: 34px; display: flex; align-items: flex-end; gap: 6px; background: #1F1F1F; padding: 0 8px; }
+  .browser .tab { height: 28px; width: 220px; display: flex; align-items: center; gap: 8px; border-radius: 8px 8px 0 0; background: #2E2E2E; padding: 0 10px; font: 12px var(--ui); color: #E6E6E6; }
+  .browser .tab img { width: 14px; height: 14px; }
+  .browser .bar { height: 38px; display: flex; align-items: center; gap: 10px; background: #2E2E2E; padding: 0 10px; border-bottom: 1px solid #000; color: #CFCFCF; font: 14px var(--ui); }
+  .browser .url { flex: 1; height: 28px; display: flex; align-items: center; gap: 8px; border-radius: 14px; background: #1F1F1F; padding: 0 12px; font: 13px var(--ui); color: #E6E6E6; }
+  .browser .url .host { color: #fff; }
+  .browser .url .path { color: #9B9B9B; }
+  .browser .page { position: relative; background: var(--bg); color: var(--ink); font-family: Inter, var(--cjk, sans-serif), sans-serif; }
+
+  .kb-btn { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; border-radius: 8px; background: var(--accent); padding: 0 18px; font-size: 14px; font-weight: 600; color: #111418; }
+  .kb-ghost { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--edge); padding: 0 16px; font-size: 14px; }
   .mono { font-family: "DejaVu Sans Mono", monospace; }
+
+  /* Callouts. */
+  .hl { position: relative; outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .tag { position: absolute; white-space: nowrap; border-radius: 999px; background: var(--accent); padding: 5px 12px; font-family: Inter, var(--cjk, sans-serif), sans-serif; font-size: 14px; font-weight: 700; color: #111418; box-shadow: 0 6px 18px rgba(0,0,0,.45); z-index: 6; }
+  .toast.hl { position: absolute; }
   table { border-collapse: collapse; }
-  .card { width: 92px; height: 128px; border-radius: 8px; border: 3px solid #E8C547; background: linear-gradient(160deg, #3D6FB5, #1F3A66); box-shadow: 0 10px 24px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; font: 700 13px Inter, sans-serif; color: #fff; text-align: center; padding: 6px; }
-  .card.b { background: linear-gradient(160deg, #7B4FB5, #3C2366); }
 </style>
 </head>
 <body>
@@ -58,12 +95,77 @@
 <script>
 'use strict';
 
+const PAB_ICON = 'assets/pab-icon.png';
+const TCGKB_ICON = 'assets/tcgkb-icon.png';
+const TCGKB_LOGO = 'assets/tcgkb-logo.png';
+const card = (set, number) => `https://images.pokemontcg.io/${set}/${number}_hires.png`;
+const sprite = (slug) => `https://r2.limitlesstcg.net/pokemon/gen9/${slug}.png`;
+
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const tag = (text, style) => `<span class="tag" style="${style}">${esc(text)}</span>`;
-const tray = (cls = '') => `<span class="tray ${cls}">PAB</span>`;
-const titlebar = (text) => `<div class="titlebar">${tray('small')}${esc(text)}</div>`;
-const taskbar = (highlight = false) => `<div class="taskbar"><span>^</span>${tray(highlight ? 'hl' : '')}<span>ENG</span><span>21:40</span></div>`;
-const browser = (url, width, body) => `<div class="browser" style="width:${width}px"><div class="bar"><span class="url">${esc(url)}</span></div>${body}</div>`;
+const pab = (size = 18) => `<img class="pab" src="${PAB_ICON}" style="width:${size}px;height:${size}px" alt="">`;
+
+const ICONS = {
+  start: `<svg width="20" height="20" viewBox="0 0 20 20"><rect x="1" y="1" width="8.5" height="8.5" fill="#4CC2FF"/><rect x="10.5" y="1" width="8.5" height="8.5" fill="#4CC2FF"/><rect x="1" y="10.5" width="8.5" height="8.5" fill="#4CC2FF"/><rect x="10.5" y="10.5" width="8.5" height="8.5" fill="#4CC2FF"/></svg>`,
+  search: `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#C9CDD3" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="5"/><path d="M10.5 10.5 15 15"/></svg>`,
+  folder: `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M2 6a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" fill="#F8C440"/><path d="M2 9h20v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" fill="#FFD866"/></svg>`,
+  edge: `<svg width="22" height="22" viewBox="0 0 24 24"><defs><linearGradient id="eg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#36C6F4"/><stop offset=".55" stop-color="#1A7FD6"/><stop offset="1" stop-color="#2FCB6F"/></linearGradient></defs><circle cx="12" cy="12" r="10" fill="url(#eg)"/><path d="M6 13c0-4 3-6 6.5-6S19 9 19 12c0 2-2 3-4 3H9.5c.3 2.2 2.4 3.6 5 3.6 1.4 0 2.6-.3 3.6-.9-1.4 2-3.8 3.3-6.3 3.3C8.3 21 6 17.5 6 13z" fill="#fff" opacity=".85"/></svg>`,
+  ball: `<svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M2 12a10 10 0 0 1 20 0z" fill="#E3350D"/><rect x="2" y="11" width="20" height="2" fill="#222"/><circle cx="12" cy="12" r="3.4" fill="#fff" stroke="#222" stroke-width="2"/></svg>`,
+  chevron: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="1.3"><path d="M2 8l4-4 4 4"/></svg>`,
+  wifi: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.3"><path d="M1.5 6a9.5 9.5 0 0 1 13 0M3.8 8.6a6 6 0 0 1 8.4 0M6 11.1a2.8 2.8 0 0 1 4 0"/><circle cx="8" cy="13.3" r=".9" fill="#fff"/></svg>`,
+  sound: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.3"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/></svg>`,
+  lock: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#CFCFCF" stroke-width="1.2"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V3.5a2 2 0 0 1 4 0V5"/></svg>`,
+  min: `<svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="#333"/></svg>`,
+  max: `<svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="#333"/></svg>`,
+  close: `<svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0l10 10M10 0 0 10" stroke="#333"/></svg>`,
+  info: `<svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#0067C0"/><text x="16" y="22" text-anchor="middle" font-family="Segoe UI, Inter, sans-serif" font-size="18" font-weight="700" fill="#fff">?</text></svg>`,
+  shield: `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1 2 3.5V8c0 3.5 2.6 6 6 7 3.4-1 6-3.5 6-7V3.5z" fill="#fff"/></svg>`,
+};
+
+/** The Windows 11 desktop: wallpaper, then the picture, then the taskbar. trayHl: outline PAB's tray icon. */
+function desktop(content, { trayHl = false, game = false } = {}) {
+  return `<div class="desk"></div>${content}
+    <div class="taskbar">
+      <div class="mid">
+        <span class="app">${ICONS.start}</span>
+        <span class="search">${ICONS.search}Search</span>
+        <span class="app">${ICONS.folder}</span>
+        <span class="app on">${ICONS.edge}</span>
+        <span class="app ${game ? 'on' : ''}">${ICONS.ball}</span>
+      </div>
+      <div class="right">
+        <span class="tray-icon">${ICONS.chevron}</span>
+        <span class="tray-icon ${trayHl ? 'hl' : ''}">${pab()}</span>
+        <span class="tray-icon" style="gap:8px;width:auto;padding:0 6px">${ICONS.wifi}${ICONS.sound}</span>
+        <span class="clock">21:40<br>28/10/2026</span>
+      </div>
+    </div>`;
+}
+
+/** One of the app's windows. */
+function win(title, width, body, style = '') {
+  return `<div class="win" style="width:${width}px;${style}">
+    <div class="titlebar">${pab(16)}<span class="t">${esc(title)}</span>
+      <span class="ctl">${ICONS.min}</span><span class="ctl">${ICONS.max}</span><span class="ctl">${ICONS.close}</span></div>
+    ${body}</div>`;
+}
+
+/** Edge on a tcgkb.app page; title is the tab's. */
+function browser(host, path, title, style, body) {
+  return `<div class="browser" style="${style}">
+    <div class="tabs"><span class="tab"><img src="${TCGKB_ICON}" alt="">${esc(title)}</span></div>
+    <div class="bar"><span>←</span><span>→</span><span>↻</span>
+      <span class="url">${ICONS.lock}<span><span class="host">${esc(host)}</span><span class="path">${esc(path)}</span></span></span></div>
+    <div class="page">${body}</div></div>`;
+}
+
+/** A Windows notification from the app. */
+function toast(title, text, { hl = false, tagText = null } = {}) {
+  return `<div class="toast ${hl ? 'hl' : ''}">
+    <div class="head">${pab(16)}PTCGL Auto Battle Log<span class="x">✕</span></div>
+    <div class="ttl">${esc(title)}</div><div class="txt">${esc(text)}</div>
+    ${tagText ? tag(tagText, 'right:0;bottom:100%;margin-bottom:14px') : ''}</div>`;
+}
 
 /** items: a string, null for a separator, or {text, grey, sel, hl, check, sub, tag}. */
 function menu(items, width, style = '') {
@@ -72,7 +174,7 @@ function menu(items, width, style = '') {
     const o = typeof it === 'string' ? { text: it } : it;
     const cls = ['it', o.grey && 'grey', o.sel && 'sel', o.hl && 'hl'].filter(Boolean).join(' ');
     return `<div class="${cls}">${o.check ? '<span class="check">✓</span>' : ''}${esc(o.text)}${o.sub ? '<span class="sub">›</span>' : ''}` +
-           `${o.tag ? tag(o.tag, 'right:100%;top:2px;margin-right:14px') : ''}</div>`;
+           `${o.tag ? tag(o.tag, 'right:100%;top:-2px;margin-right:16px') : ''}</div>`;
   });
   return `<div class="menu" style="width:${width}px;${style}">${rows.join('')}</div>`;
 }
@@ -80,218 +182,257 @@ function menu(items, width, style = '') {
 const PAB_MENU_TOP = [{ text: 'PTCGL Auto Battle Log', grey: true }, { text: 'Ready · mod installed', grey: true }, null, 'Open logs folder', 'Open last log', null];
 const PAB_MENU_BOTTOM = [null, 'Settings', 'Updates', 'Help', null, 'Exit'];
 
+/** The tray menu with a submenu open, above the taskbar's right end, at 1.25× so it reads in the picture. */
+function trayMenus(sub, subWidth, subOffset, which) {
+  return `<div style="position:absolute;bottom:52px;right:58px;display:flex;align-items:flex-end;gap:2px;zoom:1.25">
+    ${menu(sub, subWidth, `margin-bottom:${subOffset}px`)}
+    ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sel: which === 'tcgkb', sub: true }, { text: 'Pokematch', sel: which === 'pokematch', sub: true }, ...PAB_MENU_BOTTOM], 190)}
+  </div>`;
+}
+
+/** The tcgkb header row, as on the site. */
+const kbHeader = (right = '') => `
+  <div style="display:flex;align-items:center;gap:22px;padding:14px 26px;font-size:13px;color:var(--muted)">
+    <img src="${TCGKB_LOGO}" style="height:30px" alt="">
+    <span style="margin-left:auto">Ranking</span><span>Meta</span><span>My matches</span><span>Decks</span><span>Events</span>${right}
+  </div>`;
+
+const GOOGLE = `<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
+
+/** The app's "My PTCGL accounts" window. */
+const accountsWindow = (t, style) => win('PTCGL Auto Battle Log - My PTCGL accounts', 560, `
+  <div style="display:flex;flex-direction:column;gap:10px;padding:14px 14px 16px">
+    <div>Signed in to tcgkb as ManuCL. Claim the PTCGL accounts you play with; each one keeps its own stats.</div>
+    <table class="field" style="width:100%">
+      <thead style="background:#fff;text-align:left;color:#444">
+        <tr><th style="padding:5px 8px;font-weight:400;border-bottom:1px solid #E5E5E5">PTCGL account</th><th style="padding:5px 8px;font-weight:400;border-bottom:1px solid #E5E5E5">Matches on this PC</th><th style="padding:5px 8px;font-weight:400;border-bottom:1px solid #E5E5E5">On tcgkb</th></tr>
+      </thead>
+      <tbody>
+        <tr style="background:#CCE8FF"><td style="padding:5px 8px">ManuCL</td><td style="padding:5px 8px">1</td><td style="padding:5px 8px">Not claimed</td></tr>
+        <tr><td style="padding:5px 8px">&nbsp;</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <span class="wbtn">Release</span>
+      <span class="wbtn def hl">Claim${tag(t.claim2, 'right:0;top:100%;margin-top:14px')}</span>
+      <span class="wbtn">Close</span>
+    </div>
+  </div>`, style);
+
 /** Every picture, by the step ids of docs/quick-setup/steps.json. t: that language's illustration-text.json entry. */
 const PICTURES = {
-  'tcgkb-account': (t) => browser('https://tcgkb.app/login', 600, `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 48px">
-      <div style="font:800 34px Inter,sans-serif;letter-spacing:-.02em">TCG<span style="color:var(--accent)">KB</span></div>
-      <div style="font-size:18px">${esc(t.onb1)}</div>
-      <span class="hl" style="display:inline-flex;align-items:center;gap:10px;border-radius:8px;background:#fff;padding:12px 20px;font-size:14px;font-weight:500;color:#1B1B1B">
-        <b style="color:#4285F4">G</b>${esc(t.onb2)}${tag(t.onb3, 'left:100%;top:8px;margin-left:14px')}
-      </span>
-      <span style="font-size:13px;color:var(--muted)">${esc(t.onb4)}</span>
-    </div>`),
-
-  'download': (t) => `
-    <div style="position:relative;width:520px;background:#1E5AA8;padding:28px;font:14px var(--ui);color:#fff;box-shadow:0 18px 50px rgba(0,0,0,.45)">
-      ${tag(t.onb5, 'top:-16px;left:24px')}
-      <div style="margin-bottom:14px;font-size:24px;font-weight:300">Windows protected your PC</div>
-      <div style="line-height:1.5;opacity:.9">Microsoft Defender SmartScreen prevented an unrecognized app from starting. Running this app might put your PC at risk.</div>
-      <div style="margin:16px 0;line-height:1.6">App: PtcglAutoBattleLog.exe<br>Publisher: Unknown publisher</div>
-      <div style="display:flex;justify-content:flex-end;gap:10px">
-        <span class="hl" style="border:2px solid #fff;padding:6px 20px">Run anyway${tag(t.onb6, 'bottom:100%;right:0;margin-bottom:12px')}</span>
-        <span style="border:2px solid #fff;padding:6px 20px">Don't run</span>
+  'tcgkb-account': (t) => desktop(browser('tcgkb.app', '/login', 'Sign in · TCGKB', 'left:60px;right:60px;top:22px;height:450px', `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:30px 0">
+      <img src="${TCGKB_LOGO}" style="height:44px" alt="">
+      <div style="margin-top:14px;font:700 24px Inter,var(--cjk,sans-serif),sans-serif">${esc(t.onb1)}</div>
+      <div style="margin-top:22px;width:380px;display:flex;flex-direction:column;gap:12px">
+        <div style="height:38px;border-radius:8px;background:var(--raise);border:1px solid var(--edge)"></div>
+        <div style="height:38px;border-radius:8px;background:var(--accent)"></div>
+        <div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px"><span style="flex:1;height:1px;background:var(--edge)"></span>${esc(t.onb4)}<span style="flex:1;height:1px;background:var(--edge)"></span></div>
+        <span class="hl" style="display:flex;align-items:center;justify-content:center;gap:10px;height:40px;border-radius:8px;background:var(--panel);border:1px solid var(--edge);font-size:14px;font-weight:500">
+          ${GOOGLE}${esc(t.onb2)}${tag(t.onb3, 'left:100%;top:4px;margin-left:16px')}
+        </span>
       </div>
-    </div>`,
+    </div>`)),
 
-  'install': (t) => `
-    <div class="win" style="width:540px">
-      ${titlebar('PTCGL Auto Battle Log - Disclaimer')}
-      <div style="display:flex;flex-direction:column;gap:12px;padding:20px">
-        <div>Please read this before installing PTCGL Auto Battle Log.</div>
-        <div style="height:150px;overflow:hidden;border-radius:4px;border:1px solid #DDD;padding:10px 12px;font-size:12px;line-height:1.6;color:#444">
-          This is a community project, not affiliated with The Pokémon Company. It installs a small mod (BepInEx) that saves the battle log of every match you play.
-          Nothing is uploaded unless you connect a tcgkb account or a Pokematch API token and turn on automatic uploads…
+  'download': (t) => {
+    const panel = (second) => `
+      <div style="position:relative;width:410px;height:330px;background:#0063B1;color:#fff;font:13px var(--ui);padding:24px 26px;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+        <span style="position:absolute;right:14px;top:10px;font-size:14px">✕</span>
+        <div style="font-size:26px;font-weight:300;margin-bottom:16px">Windows protected your PC</div>
+        <div style="line-height:1.55">Microsoft Defender SmartScreen prevented an unrecognized app from starting. Running this app might put your PC at risk.</div>
+        ${second
+          ? `<div style="margin-top:14px;line-height:1.7">App:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PtcglAutoBattleLog.exe<br>Publisher:&nbsp;&nbsp;Unknown publisher</div>`
+          : `<div style="margin-top:12px"><span class="hl" style="text-decoration:underline;padding:1px 2px">More info${tag(t.onb5, 'left:0;top:100%;margin-top:14px')}</span></div>`}
+        <div style="position:absolute;left:0;right:0;bottom:0;height:62px;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:0 22px;border-top:1px solid rgba(255,255,255,.25)">
+          ${second ? `<span class="hl" style="border:2px solid #fff;padding:6px 18px">Run anyway${tag(t.onb6, 'bottom:100%;right:0;margin-bottom:16px')}</span>` : ''}
+          <span style="border:2px solid #fff;padding:6px 18px">Don't run</span>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px">
-          <span class="wbtn">Cancel</span>
-          <span class="wbtn primary hl">I understand, install${tag(t.onb7, 'right:0;top:100%;margin-top:12px')}</span>
-        </div>
+      </div>`;
+    return desktop(`<div style="position:absolute;top:56px;left:0;right:0;display:flex;justify-content:center;gap:40px">${panel(false)}${panel(true)}</div>`);
+  },
+
+  'install': (t) => desktop(`<div style="position:absolute;left:50%;top:22px;transform:translateX(-50%)">${win('PTCGL Auto Battle Log - Disclaimer', 600, `
+    <div style="display:flex;flex-direction:column;gap:8px;padding:12px">
+      <div>Please read this before installing PTCGL Auto Battle Log.</div>
+      <div class="field" style="height:300px;overflow:hidden;padding:6px 8px;font-size:12px;line-height:1.5">
+        Disclaimer<br><br>
+        PTCGL Auto Battle Log is an unofficial, free and open-source fan project. It is provided "as is", without warranty of any kind (see LICENSE).<br><br>
+        It works by loading a BepInEx plugin into the Pokémon TCG Live client. Modifying the game client may violate the game's Terms of Service. Installing and using this software is entirely your own decision and at your own risk.<br><br>
+        The authors and contributors of this project are not responsible for any consequence of using it, including but not limited to warnings, suspensions or bans of your game account, loss of data, or any other damage.<br><br>
+        What it does: it automates obtaining data that the game itself already offers you, the battle log text produced by the Export button of the Battle Log screen, and saves it to a folder on your computer.
       </div>
-    </div>`,
-
-  'play': (t) => `
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:90px">
-      <div class="card">Raging Bolt ex</div>
-      <span style="font:700 20px Inter,sans-serif;color:var(--muted)">vs</span>
-      <div class="card b">Dragapult ex</div>
-    </div>
-    <div class="win hl" style="position:absolute;bottom:60px;right:18px;display:flex;gap:12px;width:360px;padding:14px 16px">
-      ${tray()}
-      <div><div style="font-weight:600">Victory vs Kairo_TCG — battle log saved</div><div style="margin-top:4px;font-size:12px;color:#555">Click to open the log.</div></div>
-      ${tag(t.onb8, 'bottom:100%;right:0;margin-bottom:12px')}
-    </div>
-    ${taskbar()}`,
-
-  'tcgkb-connect': (t) => `
-    ${tag(t.onb9, 'left:24px;top:24px')}
-    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
-      ${menu([{ text: 'Not connected', grey: true }, { text: 'Connect to tcgkb...', sel: true, hl: true, tag: t.onb10 }, { text: 'My PTCGL accounts...', grey: true }, { text: 'Upload my matches automatically', grey: true }], 270, 'margin-bottom:110px')}
-      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sel: true, sub: true }, { text: 'Pokematch', sub: true }, ...PAB_MENU_BOTTOM], 230)}
-    </div>
-    ${taskbar(true)}`,
-
-  'tcgkb-approve': (t) => `
-    ${tag(t.onb11, 'left:50%;top:22px;transform:translateX(-50%)')}
-    <div style="display:flex;align-items:center;gap:24px;margin-top:30px">
-      <div class="win" style="width:300px">
-        ${titlebar('Connect to tcgkb')}
-        <div style="display:flex;flex-direction:column;gap:12px;padding:16px">
-          <div style="font-size:13px;line-height:1.5">Sign in to tcgkb in your browser and approve this code. It must match the code on the page:</div>
-          <div class="hl mono" style="padding:8px 0;text-align:center;font-size:26px;font-weight:600;letter-spacing:.05em">WDJB-MJHT</div>
-          <div style="display:flex;justify-content:flex-end;gap:6px"><span class="wbtn">Cancel</span><span class="wbtn">Open tcgkb.app</span></div>
-        </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px">
+        <span class="wbtn def hl">I understand, install${tag(t.onb7, 'right:100%;top:-2px;margin-right:16px')}</span>
+        <span class="wbtn">Cancel</span>
       </div>
-      ${browser('tcgkb.app/link', 360, `
-        <div style="display:flex;flex-direction:column;gap:12px;padding:24px">
-          <div style="font:700 20px Inter,var(--cjk,sans-serif),sans-serif">${esc(t.onb12)}</div>
-          <div style="font-size:13px;line-height:1.5;color:var(--muted)">${esc(t.onb13)}</div>
-          <div class="hl mono" style="background:var(--panel);padding:8px 0;text-align:center;font-size:24px;letter-spacing:.05em">WDJB-MJHT</div>
-          <div style="display:flex;gap:8px"><span class="kb-btn" style="flex:1">${esc(t.onb14)}</span><span class="kb-ghost">${esc(t.onb15)}</span></div>
-        </div>`)}
-    </div>`,
+    </div>`)}</div>`),
 
-  'tcgkb-claim': (t) => `
-    <div class="win" style="width:580px">
-      ${titlebar('PTCGL Auto Battle Log - My PTCGL accounts')}
-      <div style="display:flex;flex-direction:column;gap:10px;padding:16px">
-        <div style="font-size:13px">Signed in to tcgkb as ManuCL. Claim the PTCGL accounts you play with; each one keeps its own stats.</div>
-        <table style="width:100%;border:1px solid #DDD;font-size:13px">
-          <thead style="background:#F7F7F7;text-align:left;font-size:12px;color:#555">
-            <tr><th style="padding:6px 10px;font-weight:400">PTCGL account</th><th style="padding:6px 10px;font-weight:400">Matches on this PC</th><th style="padding:6px 10px;font-weight:400">On tcgkb</th></tr>
-          </thead>
-          <tbody>
-            <tr style="background:#CCE4F7"><td style="padding:6px 10px">ManuCL</td><td style="padding:6px 10px">205</td><td style="padding:6px 10px">Not claimed</td></tr>
-            <tr><td style="padding:6px 10px">ManuCL_alt</td><td style="padding:6px 10px">17</td><td style="padding:6px 10px">Not claimed</td></tr>
-          </tbody>
-        </table>
-        <div style="display:flex;justify-content:flex-end;gap:8px">
-          <span class="wbtn">Release</span>
-          <span class="wbtn primary hl">Claim${tag(t.onb16, 'right:0;top:100%;margin-top:12px')}</span>
-          <span class="wbtn">Close</span>
-        </div>
+  'play': (t) => desktop(`
+    <div class="win" style="position:absolute;left:24px;top:16px;width:640px;overflow:hidden;background:#000">
+      <div class="titlebar" style="background:#202020;color:#fff">${ICONS.ball}<span class="t">Pokémon TCG Live</span></div>
+      <div style="position:relative;height:400px;background:radial-gradient(ellipse at 50% 50%, #2C6E7E 0%, #134352 55%, #0A2630 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+        <img src="${card('sv6', 130)}" style="height:150px;border-radius:7px;box-shadow:0 10px 24px rgba(0,0,0,.5);transform:rotate(180deg)" alt="">
+        <div style="font:800 34px Inter,sans-serif;letter-spacing:.08em;color:#FFE27A;text-shadow:0 3px 12px rgba(0,0,0,.6)">VICTORY</div>
+        <img src="${card('sv5', 123)}" style="height:150px;border-radius:7px;box-shadow:0 10px 24px rgba(0,0,0,.5)" alt="">
       </div>
-    </div>`,
-
-  'tcgkb-auto-upload': (t) => `
-    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
-      ${menu([{ text: 'Connected as ManuCL', grey: true }, 'My PTCGL accounts...', { text: 'Upload my matches automatically', sel: true, hl: true, check: true, tag: t.onb17 }, 'Upload matches now', null, 'Disconnect'], 270, 'margin-bottom:110px')}
-      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sel: true, sub: true }, { text: 'Pokematch', sub: true }, ...PAB_MENU_BOTTOM], 230)}
     </div>
-    ${taskbar()}`,
+    ${toast('VICTORY vs Kairo_TCG — battle log saved', 'Saved in Documents\\PTCGL Battle Logs. Click to open it.', { hl: true, tagText: t.onb8 })}`, { game: true }),
+
+  'tcgkb-connect': (t) => desktop(`
+    ${tag(t.onb9, 'right:560px;bottom:58px')}
+    ${trayMenus([{ text: 'Not connected', grey: true }, { text: 'Connect to tcgkb...', sel: true, hl: true, tag: t.onb10 }], 200, 98, 'tcgkb')}`, { trayHl: true }),
+
+  'tcgkb-approve': (t) => desktop(`
+    ${tag(t.onb11, 'left:50%;top:14px;transform:translateX(-50%)')}
+    ${browser('tcgkb.app', '/link', 'Connect PAB · TCGKB', 'left:372px;right:24px;top:56px;height:380px', `
+      <div style="padding:30px 36px;display:flex;flex-direction:column;gap:14px;max-width:440px">
+        <div style="font:700 24px Inter,var(--cjk,sans-serif),sans-serif">${esc(t.onb12)}</div>
+        <div style="font-size:14px;line-height:1.5;color:var(--muted)">${esc(t.onb13)}</div>
+        <div class="hl mono" style="background:var(--panel);border-radius:8px;padding:10px 0;text-align:center;font-size:28px;letter-spacing:.08em">WDJB-MJHT</div>
+        <div style="display:flex;gap:10px;margin-top:6px"><span class="kb-btn" style="flex:1">${esc(t.onb14)}</span><span class="kb-ghost">${esc(t.onb15)}</span></div>
+      </div>`)}
+    <div style="position:absolute;left:24px;top:150px;z-index:2">${win('PTCGL Auto Battle Log - Connect to tcgkb', 320, `
+      <div style="display:flex;flex-direction:column;gap:12px;padding:14px">
+        <div style="line-height:1.5">Sign in to tcgkb in your browser and approve this code. It must match the code on the page:</div>
+        <div class="hl mono field" style="padding:8px 0;text-align:center;font-size:24px;font-weight:600;letter-spacing:.06em">WDJB-MJHT</div>
+        <div style="display:flex;justify-content:flex-end;gap:6px"><span class="wbtn">Open tcgkb.app</span><span class="wbtn">Cancel</span></div>
+      </div>`)}</div>`),
+
+  'tcgkb-auto-upload': (t) => desktop(`<div style="position:absolute;left:50%;top:90px;transform:translateX(-50%)">${win('PTCGL Auto Battle Log', 540, `
+    <div style="display:flex;gap:14px;padding:20px 22px 18px;background:#fff">
+      <span style="flex:none">${ICONS.info}</span>
+      <div style="line-height:1.55">
+        <div style="margin-bottom:10px">Upload your matches to tcgkb automatically?</div>
+        <div>After each match, the app sends tcgkb.app the sealed battle log and your decklist, if the player is one of the PTCGL accounts you claimed. The matches already in your logs folder are sent too.</div>
+        <div style="margin-top:10px">You can turn this off any time in the tcgkb account menu.</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-radius:0 0 8px 8px">
+      <span class="wbtn def hl">Yes${tag(t.pm3, 'right:100%;top:-2px;margin-right:16px')}</span><span class="wbtn">No</span>
+    </div>`)}</div>`),
+
+  'tcgkb-claim': (t) => desktop(`
+    <div style="position:absolute;left:24px;top:24px">${accountsWindow(t, '')}</div>
+    ${toast('Claim ManuCL on tcgkb?', 'Your matches go to tcgkb once you claim the PTCGL account you play with. Click to claim it.', { hl: true, tagText: t.claim1 })}`),
 
   'tcgkb-done': (t) => {
-    const row = (n, name, elo, wr, hl) => `
-      <div class="${hl ? 'hl' : ''}" style="display:flex;align-items:center;gap:14px;padding:10px 8px;${hl ? 'background:var(--raise)' : 'border-bottom:1px solid #1A1F27;color:var(--muted)'}">
-        <span class="mono" style="width:20px">${n}</span><span style="flex:1">${name}</span>
-        <span class="mono">${elo}</span><span class="mono" style="width:44px;text-align:right">${wr}</span>
+    const decks = (slugs) => slugs.map((s) => `<img src="${sprite(s)}" style="width:34px;height:34px;object-fit:contain" alt="">`).join('');
+    const row = (n, name, slugs, elo, wr, rec, me) => `
+      <div class="${me ? 'hl' : ''}" style="display:flex;align-items:center;gap:16px;padding:10px 10px;${me ? 'background:var(--raise);border-radius:6px' : 'border-bottom:1px solid var(--line)'}">
+        <span class="mono" style="width:16px;color:var(--muted);font-size:13px">${n}</span>
+        <span style="width:150px;font-size:15px">${name}</span>
+        <span style="display:flex;gap:6px;width:130px">${decks(slugs)}</span>
+        <span class="mono" style="width:60px;text-align:right;font-size:15px;${me ? 'color:var(--accent)' : ''}">${elo}</span>
+        <span style="width:70px;text-align:right;line-height:1.2"><span class="mono" style="font-size:14px">${wr}</span><br><span class="mono" style="font-size:11px;color:var(--muted)">${rec}</span></span>
       </div>`;
-    return browser('tcgkb.app', 640, `
-      <div style="padding:20px 24px">
-        <div style="margin-bottom:12px;font:700 22px Inter,sans-serif">Ranking</div>
-        ${row(2, 'nebulosa', 1874, '64%')}
-        ${row(3, `ManuCL <span style="font-size:12px;color:var(--accent)">${esc(t.onb18)}</span>`, 1851, '62%', true)}
-        ${row(4, 'pikasso', 1820, '61%')}
-      </div>`);
+    return desktop(browser('tcgkb.app', '', 'Ranking · TCGKB', 'left:60px;right:60px;top:16px;height:466px', `
+      ${kbHeader()}
+      <div style="padding:6px 40px">
+        <div style="font:700 28px Inter,sans-serif;margin-bottom:12px">Ranking</div>
+        <div style="display:flex;gap:16px;padding:0 10px 8px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">
+          <span style="width:16px">#</span><span style="width:150px">Player</span><span style="width:130px">Decks</span><span style="width:60px;text-align:right;color:var(--accent)">Elo</span><span style="width:70px;text-align:right">Winrate</span>
+        </div>
+        ${row(1, 'shiero', ['dragapult', 'raging-bolt', 'terapagos'], 1650, '55%', '40-33')}
+        ${row(2, 'nebulosa', ['gardevoir', 'gholdengo', 'lugia'], 1627, '63%', '40-23')}
+        <div style="position:relative">
+          ${row(3, `ManuCL <span style="font-size:12px;color:var(--accent)">${esc(t.onb18)}</span>`, ['raging-bolt', 'charizard', 'dragapult'], 1604, '61%', '43-27', true)}
+        </div>
+        ${row(4, 'pikasso', ['charizard', 'terapagos', 'gholdengo'], 1581, '54%', '37-31')}
+      </div>`));
   },
 
   // Pokematch's own pages are drawn plainly: the guide points at the labels, not at Pokematch's look.
-  'pokematch-token': (t) => browser('pokematch-vslogger.onrender.com', 620, `
-    <div style="display:flex;flex-direction:column;gap:14px;padding:26px 30px">
-      <div style="font-size:12px;color:var(--muted)">Profile Settings › Account</div>
-      <div style="font:700 22px Inter,sans-serif">API Tokens</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <span class="hl" style="flex:1;border:1px solid var(--edge);border-radius:8px;padding:9px 12px;font-size:14px">PTCGL uploader${tag(t.pm1a, 'left:0;top:100%;margin-top:10px')}</span>
-        <span class="kb-btn">Create token</span>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:30px;background:var(--panel);border-radius:8px;padding:12px">
-        <span class="mono hl" style="flex:1;font-size:14px">pmk_7Fq2…x9Lw${tag(t.pm1b, 'right:0;top:100%;margin-top:12px')}</span>
-        <span class="kb-ghost">Copy</span>
+  'pokematch-token': (t) => desktop(`
+    <div class="browser" style="left:60px;right:60px;top:22px;height:440px">
+      <div class="tabs"><span class="tab">Pokematch</span></div>
+      <div class="bar"><span>←</span><span>→</span><span>↻</span><span class="url">${ICONS.lock}<span class="host">pokematch-vslogger.onrender.com</span></span></div>
+      <div class="page" style="height:100%">
+        <div style="display:flex;flex-direction:column;gap:14px;padding:30px 40px;max-width:640px">
+          <div style="font-size:13px;color:var(--muted)">Profile Settings › Account</div>
+          <div style="font:700 24px Inter,sans-serif">API Tokens</div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="hl" style="flex:1;border:1px solid var(--edge);border-radius:8px;padding:10px 12px;font-size:14px">PTCGL uploader${tag(t.pm1a, 'left:0;top:100%;margin-top:12px')}</span>
+            <span class="kb-btn">Create token</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:40px;background:var(--panel);border-radius:8px;padding:12px">
+            <span class="mono hl" style="flex:1;font-size:14px">pmk_7Fq2…x9Lw${tag(t.pm1b, 'right:0;top:100%;margin-top:14px')}</span>
+            <span class="kb-ghost">Copy</span>
+          </div>
+        </div>
       </div>
     </div>`),
 
-  'pokematch-set-token': (t) => `
-    ${tag(t.onb9, 'left:24px;top:24px')}
-    <div style="position:absolute;left:24px;top:70px;width:380px">
-    <div class="win">
-      ${titlebar('PTCGL Auto Battle Log - Pokematch API token')}
-      <div style="display:flex;flex-direction:column;gap:10px;padding:14px">
-        <div style="font-size:12px;line-height:1.5;color:#333">Make a token on Pokematch (Profile Settings &gt; Account &gt; API Tokens, for example named "PTCGL uploader") and paste it here.</div>
-        <div class="hl mono" style="border:1px solid #999;border-radius:3px;padding:6px 8px;font-size:12px">pmk_7Fq2…x9Lw</div>
-        <div style="display:flex;justify-content:flex-end;gap:6px">
-          <span class="wbtn">Open Pokematch</span><span class="wbtn primary">OK</span><span class="wbtn">Cancel</span>
-        </div>
-      </div>
+  'pokematch-set-token': (t) => desktop(`
+    <div style="position:absolute;left:24px;top:20px;width:400px">
+      ${win('PTCGL Auto Battle Log - Pokematch API token', 400, `
+        <div style="display:flex;flex-direction:column;gap:10px;padding:14px">
+          <div style="line-height:1.5">Make a token on Pokematch (Profile Settings &gt; Account &gt; API Tokens, for example named "PTCGL uploader") and paste it here.</div>
+          <div class="hl mono field" style="padding:6px 8px;font-size:12px">pmk_7Fq2…x9Lw</div>
+          <div style="display:flex;justify-content:flex-end;gap:6px">
+            <span class="wbtn">Open Pokematch</span><span class="wbtn def">OK</span><span class="wbtn">Cancel</span>
+          </div>
+        </div>`)}
+      ${tag(t.pm2b, 'left:14px;top:100%;margin-top:16px')}
     </div>
-    ${tag(t.pm2b, 'left:14px;top:100%;margin-top:14px')}
-    </div>
-    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
-      ${menu([{ text: 'Not set up', grey: true }, { text: 'Set API token...', sel: true, hl: true, tag: t.pm2a }], 200, 'margin-bottom:84px')}
-      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sub: true }, { text: 'Pokematch', sel: true, sub: true }, ...PAB_MENU_BOTTOM], 230)}
-    </div>
-    ${taskbar(true)}`,
+    ${tag(t.onb9, 'right:560px;bottom:58px')}
+    ${trayMenus([{ text: 'Not set up', grey: true }, { text: 'Set API token...', sel: true, hl: true, tag: t.pm2a }], 160, 74, 'pokematch')}`, { trayHl: true }),
 
-  'pokematch-auto-upload': (t) => `
-    <div class="win" style="width:560px">
-      ${titlebar('PTCGL Auto Battle Log')}
-      <div style="display:flex;gap:14px;padding:20px 20px 8px">
-        <span style="flex:none;display:inline-flex;width:32px;height:32px;border-radius:50%;background:#0067C0;color:#fff;align-items:center;justify-content:center;font-weight:700">?</span>
-        <div style="font-size:13px;line-height:1.55">
-          <div style="margin-bottom:8px">Upload your new battle logs to Pokematch automatically?</div>
-          <div style="color:#333">After each finished match (victory or defeat), the app adds it to your Pokematch logs: your deck name, the result and the date.
-          Your opponent's deck shows as "Unknown": fill it in on Pokematch if you like. Your opponent's name and the battle log text stay on this computer.</div>
-        </div>
+  'pokematch-auto-upload': (t) => desktop(`<div style="position:absolute;left:50%;top:90px;transform:translateX(-50%)">${win('PTCGL Auto Battle Log', 560, `
+    <div style="display:flex;gap:14px;padding:20px 22px 18px;background:#fff">
+      <span style="flex:none">${ICONS.info}</span>
+      <div style="line-height:1.55">
+        <div style="margin-bottom:10px">Upload your new battle logs to Pokematch automatically?</div>
+        <div>After each finished match (victory or defeat), the app adds it to your Pokematch logs: your deck name, the result and the date.
+        Your opponent's deck shows as "Unknown": fill it in on Pokematch if you like. Your opponent's name and the battle log text stay on this computer.</div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;background:#F3F3F3;padding:12px 16px;margin-top:10px;border-radius:0 0 8px 8px">
-        <span class="wbtn primary hl">Yes${tag(t.pm3, 'right:100%;top:3px;margin-right:14px')}</span><span class="wbtn">No</span>
-      </div>
-    </div>`,
-
-  'pokematch-past': (t) => `
-    <div style="position:absolute;bottom:54px;right:24px;display:flex;align-items:flex-end;gap:6px">
-      ${menu([{ text: 'Uploads new battle logs', grey: true }, 'Change API token...', { text: 'Upload new battle logs automatically', check: true }, { text: 'Upload past battle logs...', sel: true, hl: true, tag: t.pm4 }, 'Remove API token'], 290, 'margin-bottom:84px')}
-      ${menu([...PAB_MENU_TOP, { text: 'tcgkb account', sub: true }, { text: 'Pokematch', sel: true, sub: true }, ...PAB_MENU_BOTTOM], 230)}
     </div>
-    ${taskbar()}`,
+    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px">
+      <span class="wbtn def hl">Yes${tag(t.pm3, 'right:100%;top:-2px;margin-right:16px')}</span><span class="wbtn">No</span>
+    </div>`)}</div>`),
+
+  'pokematch-past': (t) => desktop(
+    trayMenus([{ text: 'Uploads new battle logs', grey: true }, 'Change API token...', { text: 'Upload new battle logs automatically', check: true },
+               { text: 'Upload past battle logs...', sel: true, hl: true, tag: t.pm4 }, 'Remove API token'], 240, 74, 'pokematch')),
 
   'pokematch-done': (t) => {
     const chip = (s) => `<span style="border-radius:999px;background:var(--raise);border:1px solid var(--edge);padding:2px 8px;font-size:11px;color:var(--muted)">${s}</span>`;
     const row = (deck, res, date, hl, tags) => `
-      <div class="${hl ? 'hl' : ''}" style="display:flex;align-items:center;gap:12px;padding:10px;${hl ? 'background:var(--raise)' : 'border-bottom:1px solid #1A1F27;color:var(--muted)'}">
+      <div class="${hl ? 'hl' : ''}" style="display:flex;align-items:center;gap:12px;padding:11px 10px;${hl ? 'background:var(--raise)' : 'border-bottom:1px solid var(--line);color:var(--muted)'}">
+        <img src="${sprite(deck === 'Raging Bolt ex' ? 'raging-bolt' : 'dragapult')}" style="width:30px;height:30px;object-fit:contain" alt="">
         <span style="flex:1">${deck} <span style="color:var(--muted)">vs</span> Unknown</span>
         ${tags || ''}
-        <span style="width:42px;color:${res === 'Win' ? 'var(--good,#7FB4FF)' : '#F2A066'}">${res}</span><span class="mono" style="font-size:12px">${date}</span>
+        <span style="width:42px;color:${res === 'Win' ? '#7FB4FF' : '#F2A066'}">${res}</span><span class="mono" style="font-size:12px">${date}</span>
       </div>`;
-    return browser('pokematch-vslogger.onrender.com', 660, `
-      <div style="padding:20px 22px">
-        <div style="margin-bottom:12px;font:700 22px Inter,sans-serif">TCG logs</div>
-        <div style="position:relative">
-          ${row('Raging Bolt ex', 'Win', '2026-10-28', true, chip('ptcgl-auto-battle-log') + chip('ranked'))}
-          ${tag(t.pm5, 'right:0;bottom:100%;margin-bottom:12px')}
+    return desktop(`
+      <div class="browser" style="left:60px;right:60px;top:22px;height:440px">
+        <div class="tabs"><span class="tab">Pokematch</span></div>
+        <div class="bar"><span>←</span><span>→</span><span>↻</span><span class="url">${ICONS.lock}<span class="host">pokematch-vslogger.onrender.com</span></span></div>
+        <div class="page" style="height:100%;padding:28px 36px">
+          <div style="margin-bottom:14px;font:700 24px Inter,sans-serif">TCG logs</div>
+          <div style="position:relative;margin-top:40px">
+            ${row('Raging Bolt ex', 'Win', '2026-10-28', true, chip('ptcgl-auto-battle-log') + chip('ranked'))}
+            ${tag(t.pm5, 'right:0;bottom:100%;margin-bottom:14px')}
+          </div>
+          ${row('Raging Bolt ex', 'Loss', '2026-10-27')}
+          ${row('Dragapult ex', 'Win', '2026-10-27')}
         </div>
-        ${row('Raging Bolt ex', 'Loss', '2026-10-27')}
-        ${row('Dragapult ex', 'Win', '2026-10-27')}
       </div>`);
   },
 };
 
-/** Draws one picture; the renderer screenshots #stage. */
-function render(step, text, lang) {
+/** Draws one picture; the renderer screenshots #stage once its fonts and images have loaded. */
+async function render(step, text, lang) {
   document.documentElement.lang = lang;
   const draw = PICTURES[step];
   if (!draw) throw new Error('No picture for step ' + step);
-  document.getElementById('stage').innerHTML = draw(text);
-  return document.fonts.ready;
+  const stage = document.getElementById('stage');
+  stage.innerHTML = draw(text);
+  await document.fonts.ready;
+  await Promise.all([...stage.querySelectorAll('img')].map((img) => img.complete ? null : new Promise((ok, fail) => {
+    img.onload = ok;
+    img.onerror = () => fail(new Error('Could not load ' + img.src));
+  })));
 }
 window.render = render;
 window.PICTURE_IDS = Object.keys(PICTURES);

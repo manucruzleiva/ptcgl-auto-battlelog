@@ -36,15 +36,7 @@ PAB tells you what it does and what it sends. Click “I understand, install”.
 
 > If you can't see the icon, look under the ^ arrow in the taskbar.
 
-## 4. Play a match in PTCGL
-
-![Windows notification: battle log saved](images/en/play.png)
-
-Open Pokémon TCG Live and play any match. When it ends you get a “battle log saved” notification: PAB is saving your matches.
-
-> If the game was open while you installed, close it and open it again.
-
-## 5. Connect PAB to your account
+## 4. Connect PAB to your account
 
 *Connect*
 
@@ -52,7 +44,7 @@ Open Pokémon TCG Live and play any match. When it ends you get a “battle log 
 
 Right-click the PAB icon, open “tcgkb account” and choose “Connect to tcgkb...”. Your browser opens.
 
-## 6. Approve the code on tcgkb.app
+## 5. Approve the code on tcgkb.app
 
 ![PAB code next to the tcgkb.app page with the same code](images/en/tcgkb-approve.png)
 
@@ -60,17 +52,27 @@ PAB shows a code and tcgkb.app shows another. If they match, click “Approve”
 
 > You can disconnect this PC any time from your profile.
 
-## 7. Claim your PTCGL account
+## 6. Turn on automatic uploads
+
+![PAB asking Upload your matches to tcgkb automatically? with the Yes button](images/en/tcgkb-auto-upload.png)
+
+Right after you approve, PAB asks “Upload your matches to tcgkb automatically?”: click “Yes”. If the accounts window says to play a match first, that is fine: close it, you claim your account after your first match.
+
+## 7. Play a match in PTCGL
+
+![Windows notification: battle log saved](images/en/play.png)
+
+Open Pokémon TCG Live and play any match. When it ends you get a “battle log saved” notification: PAB is saving your matches.
+
+> If the game was open while you installed, close it and open it again.
+
+## 8. Claim your PTCGL account
+
+*After your first match*
 
 ![List of PTCGL accounts with the Claim button](images/en/tcgkb-claim.png)
 
-From the “Connected to tcgkb” notification (or “My PTCGL accounts...”), pick your PTCGL name and click “Claim”. If you play on several accounts, claim them all: the ranking shows them as one row.
-
-## 8. Turn on automatic uploads
-
-![PAB menu with Upload my matches automatically ticked](images/en/tcgkb-auto-upload.png)
-
-In the same menu, tick “Upload my matches automatically”. Your matches, older ones included, upload on their own from now on.
+After your first match, PAB asks “Claim <your name> on tcgkb?”. Click the notification, pick your PTCGL name and click “Claim” (you can also open “My PTCGL accounts...” in the tcgkb account menu). If you play on several accounts, claim them all: the ranking shows them as one row.
 
 ## 9. Done! You're playing for the ranking
 

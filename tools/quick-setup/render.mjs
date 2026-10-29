@@ -5,8 +5,11 @@
 //   node tools/quick-setup/render.mjs [step ...]
 //
 // Japanese, Korean and Chinese need the Noto Sans CJK fonts installed (Debian/Ubuntu: fonts-noto-cjk).
+// The cards and deck sprites load from images.pokemontcg.io and r2.limitlesstcg.net: it needs the network.
+// With pngquant on PATH (pip install pngquant-cli) the pictures are then compressed about 4x, so keep it installed.
 // Run it after changing the pictures, their texts or a step, and commit the images it writes.
 import { chromium } from 'playwright';
+import { spawnSync } from 'node:child_process';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -36,3 +39,8 @@ for (const lang of guide.languages) {
   console.log(lang + ': ' + steps.length + ' pictures');
 }
 await browser.close();
+
+const written = guide.languages.flatMap((lang) => steps.map((step) => join(root, 'docs', 'quick-setup', 'images', lang, step + '.png')));
+const quant = spawnSync('pngquant', ['--quality', '80-95', '--speed', '1', '--skip-if-larger', '--force', '--ext', '.png', ...written], { stdio: 'inherit' });
+if (quant.error) console.log('pngquant not found: the pictures are not compressed (pip install pngquant-cli)');
+else if (quant.status !== 0 && quant.status !== 98 && quant.status !== 99) throw new Error('pngquant failed: ' + quant.status);

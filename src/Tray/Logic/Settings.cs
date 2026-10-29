@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -29,6 +30,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "pokematchSinceUtc", Order = 10)] public string PokematchSinceUtc;
         /// <summary>"stable" (releases only, default) or "beta" (pre-releases too). Anything else reads as stable.</summary>
         [DataMember(Name = "updateChannel", Order = 11)] public string UpdateChannel = StableChannel;
+        /// <summary>PTCGL account hashes the app already offered to claim on tcgkb after a match: each is offered once.</summary>
+        [DataMember(Name = "tcgkbClaimOffered", Order = 12, EmitDefaultValue = false)] public List<string> TcgkbClaimOffered;
 
         public const string StableChannel = "stable";
         public const string BetaChannel = "beta";

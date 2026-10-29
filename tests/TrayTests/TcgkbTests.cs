@@ -358,6 +358,8 @@ static partial class Program
         var order = received.Select(e => e.FileName).ToList();
         Check(order.SequenceEqual(order.OrderByDescending(f => f, StringComparer.Ordinal)), "newest first");
         Check(run.Newest?.PlayerDeck == "Mega Chandelure ex" && run.Newest.OpponentDeck == "Alakazam", "tcgkb's decks read back");
+        Check(run.Unclaimed?.PlayerName == "Misty" && LogUploader.NewestUnclaimed(folder, new HashSet<string> { ashHash, LogSealer.AccountHash("misty-id") }) == null,
+              "the newest match of an account that is not the player's is named, to offer claiming it");
         var sentDeck = received.Single(e => e.FileName == Path.GetFileName(withDeck));
         Check(sentDeck.Deck != null && Convert.FromBase64String(sentDeck.Deck).SequenceEqual(File.ReadAllBytes(deckFile)),
               "the newest log with the deck carries the deck file, exactly as on disk");
