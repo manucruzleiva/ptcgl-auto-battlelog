@@ -393,6 +393,12 @@ tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
   start, after each saved log and every 30 minutes; `not_claimed` leaves the log for later,
   `invalid_log` records it as rejected, any other error ends the run until the next one. One run
   at a time. **Upload matches now** runs it on demand; **Last upload** shows the newest result.
+* **Claim offer after a match.** Each run also names the newest tracked match of an account that is
+  not the user's on tcgkb (`UploadRun.Unclaimed`). When that match is under an hour old and newer
+  than the last accounts dialog, a balloon offers to claim it ("Claim <name> on tcgkb?", click =
+  **My PTCGL accounts...**), once per account (`Settings.TcgkbClaimOffered`). So a player can
+  connect and turn uploads on before the first match, and claim right after it: a claim needs a
+  sealed match as proof.
 * **Disconnect** forgets the connection here, then revokes it on tcgkb (best effort: offline, the
   balloon says to remove the computer in the tcgkb profile).
 * HTTP: its own `HttpClient`, `https://tcgkb.app` only, no redirects, no cookies, 30 s per request,

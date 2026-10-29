@@ -297,7 +297,9 @@ to tcgkb...** links this computer to it:
    password), check that the code matches and approve. The app never sees your password.
 2. **My PTCGL accounts...** lists the PTCGL accounts that played on this computer (found in your
    sealed logs) and the ones your tcgkb account already owns. **Claim** the ones that are yours: you
-   can own several, and each keeps its own stats.
+   can own several, and each keeps its own stats. You can connect before your first match: a
+   claim needs a saved match, so after you play with an account that is not yours on tcgkb yet,
+   the app offers to claim it ("Claim <name> on tcgkb?", once per account).
 3. A claim sends tcgkb that account's 3 newest battle logs, sealed, as proof. They contain your
    opponents' display names, as the Export text does. A claim is "not verified" until an opponent
    who also uses tcgkb uploads the same match; then it is "verified".

@@ -69,7 +69,9 @@ any version: ignore what you do not know.
 1. Edit `steps.json` (texts, steps, guides) and, for a picture, `tools/quick-setup/illustrations.html`
    (drawings) or `tools/quick-setup/illustration-text.json` (the callouts in each language).
 2. Write the English pages: `python tools/quick-setup/make_pages.py`
-3. Draw the pictures again (needs Node.js; Japanese, Korean and Chinese need the Noto Sans CJK fonts):
+3. Draw the pictures again (needs Node.js and the network; Japanese, Korean and Chinese need the
+   Noto Sans CJK fonts; with [pngquant](https://pngquant.org/) on PATH, `pip install pngquant-cli`,
+   the pictures come out about 4 times smaller):
 
    ```
    npm install --no-save playwright && npx playwright install chromium

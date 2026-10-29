@@ -130,11 +130,11 @@
         "tcgkb-account",
         "download",
         "install",
-        "play",
         "tcgkb-connect",
         "tcgkb-approve",
-        "tcgkb-claim",
         "tcgkb-auto-upload",
+        "play",
+        "tcgkb-claim",
         "tcgkb-done"
       ]
     },
@@ -570,6 +570,17 @@
       "appText": []
     },
     "tcgkb-claim": {
+      "phase": {
+        "en": "After your first match",
+        "es": "Tras tu primera partida",
+        "pt": "Depois da primeira partida",
+        "fr": "Après votre première partie",
+        "de": "Nach deiner ersten Partie",
+        "it": "Dopo la prima partita",
+        "ja": "最初の対戦のあと",
+        "ko": "첫 대전 후",
+        "zh": "第一局对战后"
+      },
       "short": {
         "en": "Claim your account",
         "es": "Reclama tu cuenta",
@@ -593,15 +604,15 @@
         "zh": "认领你的 PTCGL 账号"
       },
       "body": {
-        "en": "From the “Connected to tcgkb” notification (or “My PTCGL accounts...”), pick your PTCGL name and click “Claim”. If you play on several accounts, claim them all: the ranking shows them as one row.",
-        "es": "En el aviso “Connected to tcgkb” (o en “My PTCGL accounts...”), elige tu nombre de PTCGL y toca “Claim”. Si juegas con varias cuentas, reclámalas todas: en el ranking salen juntas en una sola fila.",
-        "pt": "No aviso “Connected to tcgkb” (ou em “My PTCGL accounts...”), escolha seu nome no PTCGL e clique em “Claim”. Se você joga com várias contas, reivindique todas: no ranking elas aparecem juntas em uma linha.",
-        "fr": "Depuis la notification “Connected to tcgkb” (ou “My PTCGL accounts...”), choisissez votre nom PTCGL et cliquez sur “Claim”. Si vous jouez avec plusieurs comptes, revendiquez-les tous : le classement les regroupe sur une seule ligne.",
-        "de": "Wähle in der Benachrichtigung “Connected to tcgkb” (oder unter “My PTCGL accounts...”) deinen PTCGL-Namen und klicke auf “Claim”. Wenn du mit mehreren Konten spielst, beanspruche alle: Die Rangliste zeigt sie in einer Zeile.",
-        "it": "Dalla notifica “Connected to tcgkb” (o da “My PTCGL accounts...”), scegli il tuo nome PTCGL e clicca su “Claim”. Se giochi con più account, rivendicali tutti: in classifica compaiono insieme in una sola riga.",
-        "ja": "“Connected to tcgkb” の通知（または “My PTCGL accounts...”）から自分の PTCGL 名を選び、“Claim” をクリックします。複数のアカウントで遊んでいる場合はすべて登録してください。ランキングでは1行にまとめて表示されます。",
-        "ko": "“Connected to tcgkb” 알림(또는 “My PTCGL accounts...”)에서 PTCGL 이름을 선택하고 “Claim”을 누르세요. 여러 계정으로 플레이한다면 모두 등록하세요. 랭킹에는 한 줄로 표시됩니다.",
-        "zh": "在 “Connected to tcgkb” 通知（或 “My PTCGL accounts...”）中，选择你的 PTCGL 名称并点击 “Claim”。如果你使用多个账号，请全部认领：排名中会合并为一行显示。"
+        "en": "After your first match, PAB asks “Claim <your name> on tcgkb?”. Click the notification, pick your PTCGL name and click “Claim” (you can also open “My PTCGL accounts...” in the tcgkb account menu). If you play on several accounts, claim them all: the ranking shows them as one row.",
+        "es": "Después de tu primera partida, PAB pregunta “Claim <tu nombre> on tcgkb?”. Haz clic en el aviso, elige tu nombre de PTCGL y toca “Claim” (también puedes abrir “My PTCGL accounts...” en el menú tcgkb account). Si juegas con varias cuentas, reclámalas todas: en el ranking salen juntas en una sola fila.",
+        "pt": "Depois da primeira partida, o PAB pergunta “Claim <seu nome> on tcgkb?”. Clique no aviso, escolha seu nome no PTCGL e clique em “Claim” (você também pode abrir “My PTCGL accounts...” no menu tcgkb account). Se você joga com várias contas, reivindique todas: no ranking elas aparecem juntas em uma linha.",
+        "fr": "Après votre première partie, PAB demande “Claim <votre nom> on tcgkb?”. Cliquez sur la notification, choisissez votre nom PTCGL et cliquez sur “Claim” (vous pouvez aussi ouvrir “My PTCGL accounts...” dans le menu tcgkb account). Si vous jouez avec plusieurs comptes, revendiquez-les tous : le classement les regroupe sur une seule ligne.",
+        "de": "Nach deiner ersten Partie fragt PAB “Claim <dein Name> on tcgkb?”. Klicke auf die Benachrichtigung, wähle deinen PTCGL-Namen und klicke auf “Claim” (oder öffne “My PTCGL accounts...” im Menü tcgkb account). Wenn du mit mehreren Konten spielst, beanspruche alle: Die Rangliste zeigt sie in einer Zeile.",
+        "it": "Dopo la prima partita, PAB chiede “Claim <il tuo nome> on tcgkb?”. Clicca sulla notifica, scegli il tuo nome PTCGL e clicca su “Claim” (puoi anche aprire “My PTCGL accounts...” nel menu tcgkb account). Se giochi con più account, rivendicali tutti: in classifica compaiono insieme in una sola riga.",
+        "ja": "最初の対戦のあと、PAB が “Claim <あなたの名前> on tcgkb?” と聞いてきます。通知をクリックし、自分の PTCGL 名を選んで “Claim” をクリックします（tcgkb account メニューの “My PTCGL accounts...” からも開けます）。複数のアカウントで遊んでいる場合はすべて登録してください。ランキングでは1行にまとめて表示されます。",
+        "ko": "첫 대전이 끝나면 PAB가 “Claim <내 이름> on tcgkb?”라고 묻습니다. 알림을 클릭하고 PTCGL 이름을 선택한 뒤 “Claim”을 누르세요(tcgkb account 메뉴의 “My PTCGL accounts...”에서도 열 수 있습니다). 여러 계정으로 플레이한다면 모두 등록하세요. 랭킹에는 한 줄로 표시됩니다.",
+        "zh": "第一局对战结束后，PAB 会询问 “Claim <你的名字> on tcgkb?”。点击通知，选择你的 PTCGL 名称并点击 “Claim”（也可以在 tcgkb account 菜单中打开 “My PTCGL accounts...”）。如果你使用多个账号，请全部认领：排名中会合并为一行显示。"
       },
       "alt": {
         "en": "List of PTCGL accounts with the Claim button",
@@ -615,7 +626,7 @@
         "zh": "带有 Claim 按钮的 PTCGL 账号列表"
       },
       "appText": [
-        "Connected to tcgkb",
+        "on tcgkb?",
         "My PTCGL accounts...",
         "Claim"
       ]
@@ -644,29 +655,29 @@
         "zh": "开启自动上传"
       },
       "body": {
-        "en": "In the same menu, tick “Upload my matches automatically”. Your matches, older ones included, upload on their own from now on.",
-        "es": "En el mismo menú, marca “Upload my matches automatically”. Tus partidas, también las antiguas, se suben solas desde ahora.",
-        "pt": "No mesmo menu, marque “Upload my matches automatically”. Suas partidas, incluindo as antigas, são enviadas sozinhas a partir de agora.",
-        "fr": "Dans le même menu, cochez “Upload my matches automatically”. Vos parties, anciennes comprises, s'envoient toutes seules à partir de maintenant.",
-        "de": "Setze im selben Menü einen Haken bei “Upload my matches automatically”. Deine Partien, auch ältere, werden ab jetzt von selbst hochgeladen.",
-        "it": "Nello stesso menu, spunta “Upload my matches automatically”. Le tue partite, anche quelle vecchie, da ora si caricano da sole.",
-        "ja": "同じメニューで “Upload my matches automatically” にチェックを入れます。これ以降、過去の対戦も含めて自動でアップロードされます。",
-        "ko": "같은 메뉴에서 “Upload my matches automatically”를 체크하세요. 이제부터 과거 대전을 포함한 모든 대전이 자동으로 업로드됩니다.",
-        "zh": "在同一菜单中勾选 “Upload my matches automatically”。从现在起，你的对战（包括以前的）会自动上传。"
+        "en": "Right after you approve, PAB asks “Upload your matches to tcgkb automatically?”: click “Yes”. If the accounts window says to play a match first, that is fine: close it, you claim your account after your first match.",
+        "es": "Justo después de aprobar, PAB pregunta “Upload your matches to tcgkb automatically?”: toca “Yes”. Si la ventana de cuentas dice que primero juegues una partida, está bien: ciérrala, reclamas tu cuenta después de tu primera partida.",
+        "pt": "Logo depois de aprovar, o PAB pergunta “Upload your matches to tcgkb automatically?”: clique em “Yes”. Se a janela de contas disser para jogar uma partida antes, tudo bem: feche-a, você reivindica sua conta depois da primeira partida.",
+        "fr": "Juste après l'approbation, PAB demande “Upload your matches to tcgkb automatically?” : cliquez sur “Yes”. Si la fenêtre des comptes vous dit de jouer d'abord une partie, c'est normal : fermez-la, vous revendiquerez votre compte après votre première partie.",
+        "de": "Direkt nach dem Bestätigen fragt PAB “Upload your matches to tcgkb automatically?”: klicke auf “Yes”. Wenn das Kontenfenster sagt, du sollst zuerst eine Partie spielen, ist das in Ordnung: schließe es, dein Konto beanspruchst du nach deiner ersten Partie.",
+        "it": "Subito dopo l'approvazione, PAB chiede “Upload your matches to tcgkb automatically?”: clicca su “Yes”. Se la finestra degli account dice di giocare prima una partita, va bene: chiudila, rivendichi il tuo account dopo la prima partita.",
+        "ja": "承認するとすぐに PAB が “Upload your matches to tcgkb automatically?” と聞いてきます。“Yes” をクリックします。アカウントのウィンドウに「先に対戦してください」と出ても大丈夫です。閉じてください。アカウントの登録は最初の対戦のあとに行います。",
+        "ko": "승인하면 바로 PAB가 “Upload your matches to tcgkb automatically?”라고 묻습니다. “Yes”를 누르세요. 계정 창에 먼저 대전을 하라고 나와도 괜찮습니다. 창을 닫으세요. 계정 등록은 첫 대전 후에 합니다.",
+        "zh": "批准后，PAB 会立即询问 “Upload your matches to tcgkb automatically?”：点击 “Yes”。如果账号窗口提示先打一局，没关系：关闭它，第一局对战后再认领账号。"
       },
       "alt": {
-        "en": "PAB menu with Upload my matches automatically ticked",
-        "es": "Menú de PAB con Upload my matches automatically marcado",
-        "pt": "Menu do PAB com Upload my matches automatically marcado",
-        "fr": "Menu de PAB avec Upload my matches automatically coché",
-        "de": "PAB-Menü mit aktiviertem Upload my matches automatically",
-        "it": "Menu di PAB con Upload my matches automatically spuntato",
-        "ja": "Upload my matches automatically にチェックが入った PAB のメニュー",
-        "ko": "Upload my matches automatically가 체크된 PAB 메뉴",
-        "zh": "勾选了 Upload my matches automatically 的 PAB 菜单"
+        "en": "PAB asking Upload your matches to tcgkb automatically? with the Yes button",
+        "es": "PAB pregunta Upload your matches to tcgkb automatically? con el botón Yes",
+        "pt": "PAB perguntando Upload your matches to tcgkb automatically? com o botão Yes",
+        "fr": "PAB demande Upload your matches to tcgkb automatically? avec le bouton Yes",
+        "de": "PAB fragt Upload your matches to tcgkb automatically? mit dem Button Yes",
+        "it": "PAB chiede Upload your matches to tcgkb automatically? con il pulsante Yes",
+        "ja": "Upload your matches to tcgkb automatically? と Yes ボタンが表示された PAB",
+        "ko": "Upload your matches to tcgkb automatically?와 Yes 버튼이 있는 PAB 창",
+        "zh": "PAB 询问 Upload your matches to tcgkb automatically? 并显示 Yes 按钮"
       },
       "appText": [
-        "Upload my matches automatically"
+        "Upload your matches to tcgkb automatically?"
       ]
     },
     "tcgkb-done": {
