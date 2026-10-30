@@ -232,7 +232,7 @@ when the portable fallback is in use; "Choose the game folder..." while the game
 "Review the updated disclaimer..." while consent to the current `Disclaimer.Version` is pending) ·
 **Open logs folder** (also the double-click action) · Open last log · Update vX available ▸ (Install
 now, What's new, Skip this version; only while an update waits) · tcgkb account ▸ ("Not connected" /
-"Connected as <name>", Connect to tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") ·
+"Connected as <name>", Sign in to tcgkb..., Upload my matches automatically, Upload matches now, Disconnect; see "tcgkb account") ·
 Pokematch ▸ ("Not set up" / a status line, Set API token... / Change API token..., Upload new battle
 logs automatically, Upload past battle logs..., Remove API token; see "Pokematch") · Status and
 settings... · Settings ▸ · Updates ▸ · Help ▸ · Exit.
@@ -365,40 +365,35 @@ the window.
 
 ## tcgkb account
 
-Optional and off until the player connects: a tray that was never connected sends nothing to
-tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
+Optional and off until the player signs in: a tray that was never connected sends nothing to
+tcgkb. Signing in is the only step; there is no claim step in the tray. The wire contract is
+[docs/TCGKB-API.md](TCGKB-API.md).
 
-* **Connect to tcgkb...** asks first (what is sent, and when), then runs the OAuth device flow
+* **Sign in to tcgkb...** asks first (what is sent, and when), then runs the OAuth device flow
   (`TcgkbConnection.ConnectAsync`): a code from `POST /api/device/code`, the browser opened on the
   `https://tcgkb.app/` page tcgkb names (any other address is refused), the code shown in a dialog,
   `POST /api/device/token` polled at tcgkb's interval until approved, declined, expired or
   cancelled. The app never sees the tcgkb password, and Google sign-in works too. The connection
   is saved only once `GET /api/ptcgl/accounts` has returned the user's name; otherwise the refresh
-  token is revoked.
+  token is revoked. A first run (fresh install) opens it by itself; a player who is not signed in
+  is offered it once by balloon (`Settings.TcgkbSignInOffered`), so installs from before sign-in
+  was the only step are not left half set up.
 * `tcgkb-connection.dat` (in `AppPaths.Root`): `TcgkbTokens` as JSON, encrypted with DPAPI
   (`CurrentUser`, with app-specific entropy), written atomically. A file that does not decrypt or
   parse is deleted (= not connected). The access token is refreshed a minute before it expires and
   once more after a 401; a refused refresh (`invalid_grant`) deletes the file.
-* **My PTCGL accounts...** lists the accounts `PtcglAccountScanner` finds in the logs folder (the
-  plugin's `.txt` names only; their seal's `player.accountHash`, grouped, newest name, match count)
-  next to the user's accounts on tcgkb, with **Claim** and **Release**. A claim asks first, then
-  sends the account's newest 3 tracked matches (`matchId` set, result not `EXPORTED`, each file at
-  most 1 MiB) exactly as on disk, `.seal` included. tcgkb verifies the seals; the tray does not.
-* **Upload my matches automatically** (`Settings.TcgkbAutoUpload`, asked once after the first
-  accounts dialog, off by default): `LogUploader.SyncAsync` lists the user's accounts on tcgkb,
-  then sends `POST /api/ptcgl/logs` for each tracked match of those accounts not yet in
-  `tcgkb-uploads.json` (`AppPaths.Root`; keys `matchId|accountHash|keyId`, accepted and rejected,
-  and the `deckSha256` of decks tcgkb linked: each distinct deck file is sent once, as `deck`),
-  newest first, at most 50 per run (another run follows at once when more are left). It runs at
-  start, after each saved log and every 30 minutes; `not_claimed` leaves the log for later,
-  `invalid_log` records it as rejected, any other error ends the run until the next one. One run
-  at a time. **Upload matches now** runs it on demand; **Last upload** shows the newest result.
-* **Claim offer after a match.** Each run also names the newest tracked match of an account that is
-  not the user's on tcgkb (`UploadRun.Unclaimed`). When that match is under an hour old and newer
-  than the last accounts dialog, a balloon offers to claim it ("Claim <name> on tcgkb?", click =
-  **My PTCGL accounts...**), once per account (`Settings.TcgkbClaimOffered`). So a player can
-  connect and turn uploads on before the first match, and claim right after it: a claim needs a
-  sealed match as proof.
+* **Upload my matches automatically** (`Settings.TcgkbAutoUpload`; null, never chosen, means on):
+  `LogUploader.SyncAsync` sends `POST /api/ptcgl/logs` for each tracked match in the logs folder
+  (`matchId` set, result not `EXPORTED`, a `player.accountHash`, each file at most 1 MiB) not yet
+  in `tcgkb-uploads.json` (`AppPaths.Root`; keys `matchId|accountHash|keyId`, accepted and
+  rejected, and the `deckSha256` of decks tcgkb linked: each distinct deck file is sent once, as
+  `deck`), newest first, at most 50 per run (another run follows at once when more are left). A
+  seal's `player` is always the account signed in on this computer, never the opponent; tcgkb adds
+  it to the user with its first upload. It runs at start, after each saved log and every 30
+  minutes; `not_claimed` (a tcgkb from before automatic claims) leaves the log for later,
+  `invalid_log` and `claimed_by_other` record it as rejected, any other error ends the run until
+  the next one. One run at a time. **Upload matches now** runs it on demand; **Last upload** shows
+  the newest result.
 * **Disconnect** forgets the connection here, then revokes it on tcgkb (best effort: offline, the
   balloon says to remove the computer in the tcgkb profile).
 * HTTP: its own `HttpClient`, `https://tcgkb.app` only, no redirects, no cookies, 30 s per request,
@@ -464,7 +459,7 @@ build/BuildInfo.targets         generated BuildInfo constants
 build/portable.txt              the portable zip's marker file text (@VERSION@, @PROJECT_URL@ filled in by the build)
 tools/make-manifest.py          writes update.json + SHA256SUMS.txt for a release
 tools/verify_log.py             checks sealed logs (python3, stdlib only; see docs/LOG-SEAL.md)
-docs/TCGKB-API.md               the tcgkb connection and PTCGL account claims, client and server contract
+docs/TCGKB-API.md               the tcgkb connection and match uploads, client and server contract
 docs/POKEMATCH-API.md           what the tray sends to Pokematch's /api/v1/tcg-matches
 licenses/LGPL-2.1.txt           Unity Doorstop's license text (embedded in the exe, packaged in the zip)
 global.json                     the exact .NET SDK (rollForward: disable): reproducible builds
@@ -676,8 +671,6 @@ public sealed class TcgkbApi   // docs/TCGKB-API.md; HTTP injected, like UpdateC
     public Task<TcgkbTokenResponse> RefreshAsync(string refreshToken, CancellationToken ct);  // invalid_grant → TcgkbAuthException
     public Task RevokeAsync(string refreshToken, CancellationToken ct);
     public Task<TcgkbAccounts> GetAccountsAsync(string accessToken, CancellationToken ct);
-    public Task<TcgkbAccount> ClaimAsync(string accessToken, ClaimRequest claim, CancellationToken ct);
-    public Task ReleaseAsync(string accessToken, string accountHash, CancellationToken ct);
     public static bool IsOwnPage(string url);   // the only pages the tray opens for tcgkb
 }
 
@@ -686,12 +679,11 @@ public sealed class TcgkbConnection   // TcgkbApi + TcgkbTokenStore (protect/unp
     public Task<string> ConnectAsync(string deviceName, Action<DeviceAuthorization> show, Func<TimeSpan, CancellationToken, Task> delay, CancellationToken ct);
     public Task<bool> DisconnectAsync(CancellationToken ct);
     public Task<T> CallAsync<T>(Func<string, CancellationToken, Task<T>> call, CancellationToken ct);   // refresh + one retry on 401
-    public static ClaimRequest BuildClaim(DetectedAccount account);
 }
 
 public static class PtcglAccountScanner
 {
-    public static List<DetectedAccount> Scan(string logsFolder);   // by player.accountHash, most matches first; never throws
+    public static bool IsEvidence(SealSummary s);   // a tracked match whose files are small enough to send
 }
 
 public sealed class SealSummary

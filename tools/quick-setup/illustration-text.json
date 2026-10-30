@@ -9,14 +9,11 @@
     "onb7": "Accept and install",
     "onb8": "This means PAB is working",
     "onb9": "1. Right-click the PAB icon",
-    "onb10": "2. Connect to tcgkb",
     "onb11": "Both codes must match",
     "onb12": "Connect PAB",
     "onb13": "DESKTOP-PC wants to upload your matches and claim your PTCGL accounts.",
     "onb14": "Approve",
     "onb15": "Decline",
-    "onb16": "Pick your account, click Claim",
-    "onb17": "Turn it on once",
     "onb18": "you",
     "pm1a": "Name it, e.g. PTCGL uploader",
     "pm1b": "Copy the token",
@@ -24,9 +21,7 @@
     "pm2b": "3. Paste the token and click OK",
     "pm3": "Click Yes",
     "pm4": "Optional: older matches",
-    "pm5": "Uploaded by PAB",
-    "claim1": "1. Click the notification",
-    "claim2": "2. Pick your account and click Claim"
+    "pm5": "Uploaded by PAB"
   },
   "es": {
     "onb1": "Entra o crea tu cuenta",
@@ -38,14 +33,11 @@
     "onb7": "Acepta e instala",
     "onb8": "Así sabes que PAB funciona",
     "onb9": "1. Clic derecho en el ícono de PAB",
-    "onb10": "2. Connect to tcgkb",
     "onb11": "Los dos códigos deben ser iguales",
     "onb12": "Conectar PAB",
     "onb13": "PC-ESCRITORIO quiere subir tus partidas y reclamar tus cuentas de PTCGL.",
     "onb14": "Aprobar",
     "onb15": "Rechazar",
-    "onb16": "Elige tu cuenta y toca Claim",
-    "onb17": "Actívalo una vez",
     "onb18": "tú",
     "pm1a": "Ponle un nombre, p. ej. PTCGL uploader",
     "pm1b": "Copia el token",
@@ -53,9 +45,7 @@
     "pm2b": "3. Pega el token y toca OK",
     "pm3": "Toca Yes",
     "pm4": "Opcional: partidas anteriores",
-    "pm5": "Subida por PAB",
-    "claim1": "1. Clic en el aviso",
-    "claim2": "2. Elige tu cuenta y toca Claim"
+    "pm5": "Subida por PAB"
   },
   "pt": {
     "onb1": "Entre ou crie sua conta",
@@ -67,14 +57,11 @@
     "onb7": "Aceite e instale",
     "onb8": "Assim você sabe que o PAB funciona",
     "onb9": "1. Botão direito no ícone do PAB",
-    "onb10": "2. Connect to tcgkb",
     "onb11": "Os dois códigos devem ser iguais",
     "onb12": "Conectar PAB",
     "onb13": "DESKTOP-PC quer enviar suas partidas e reivindicar suas contas do PTCGL.",
     "onb14": "Aprovar",
     "onb15": "Recusar",
-    "onb16": "Escolha sua conta e clique em Claim",
-    "onb17": "Ative uma vez",
     "onb18": "você",
     "pm1a": "Dê um nome, ex.: PTCGL uploader",
     "pm1b": "Copie o token",
@@ -82,9 +69,7 @@
     "pm2b": "3. Cole o token e clique em OK",
     "pm3": "Clique em Yes",
     "pm4": "Opcional: partidas anteriores",
-    "pm5": "Enviada pelo PAB",
-    "claim1": "1. Clique no aviso",
-    "claim2": "2. Escolha sua conta e clique em Claim"
+    "pm5": "Enviada pelo PAB"
   },
   "fr": {
     "onb1": "Connectez-vous ou créez votre compte",
@@ -96,14 +81,11 @@
     "onb7": "Acceptez et installez",
     "onb8": "Cela signifie que PAB fonctionne",
     "onb9": "1. Clic droit sur l'icône de PAB",
-    "onb10": "2. Connect to tcgkb",
     "onb11": "Les deux codes doivent être identiques",
     "onb12": "Connecter PAB",
     "onb13": "DESKTOP-PC veut envoyer vos parties et revendiquer vos comptes PTCGL.",
     "onb14": "Approuver",
     "onb15": "Refuser",
-    "onb16": "Choisissez votre compte, cliquez sur Claim",
-    "onb17": "Activez-le une fois",
     "onb18": "vous",
     "pm1a": "Nommez-le, ex. PTCGL uploader",
     "pm1b": "Copiez le jeton",
@@ -111,9 +93,7 @@
     "pm2b": "3. Collez le jeton et cliquez sur OK",
     "pm3": "Cliquez sur Yes",
     "pm4": "Facultatif : parties précédentes",
-    "pm5": "Envoyée par PAB",
-    "claim1": "1. Cliquez sur la notification",
-    "claim2": "2. Choisissez votre compte et cliquez sur Claim"
+    "pm5": "Envoyée par PAB"
   },
   "de": {
     "onb1": "Melde dich an oder erstelle ein Konto",
@@ -125,14 +105,11 @@
     "onb7": "Bestätigen und installieren",
     "onb8": "So weißt du, dass PAB läuft",
     "onb9": "1. Rechtsklick auf das PAB-Symbol",
-    "onb10": "2. Connect to tcgkb",
     "onb11": "Beide Codes müssen übereinstimmen",
     "onb12": "PAB verbinden",
     "onb13": "DESKTOP-PC möchte deine Partien hochladen und deine PTCGL-Konten beanspruchen.",
     "onb14": "Bestätigen",
     "onb15": "Ablehnen",
-    "onb16": "Konto wählen, Claim klicken",
-    "onb17": "Einmal aktivieren",
     "onb18": "du",
     "pm1a": "Benenne es, z. B. PTCGL uploader",
     "pm1b": "Token kopieren",
@@ -140,9 +117,7 @@
     "pm2b": "3. Token einfügen und OK klicken",
     "pm3": "Auf Yes klicken",
     "pm4": "Optional: ältere Matches",
-    "pm5": "Von PAB hochgeladen",
-    "claim1": "1. Klicke auf die Benachrichtigung",
-    "claim2": "2. Wähle dein Konto und klicke auf Claim"
+    "pm5": "Von PAB hochgeladen"
   },
   "it": {
     "onb1": "Accedi o crea il tuo account",
@@ -154,14 +129,11 @@
     "onb7": "Accetta e installa",
     "onb8": "Così sai che PAB funziona",
     "onb9": "1. Clic destro sull'icona di PAB",
-    "onb10": "2. Connect to tcgkb",
     "onb11": "I due codici devono coincidere",
     "onb12": "Collega PAB",
     "onb13": "DESKTOP-PC vuole caricare le tue partite e rivendicare i tuoi account PTCGL.",
     "onb14": "Approva",
     "onb15": "Rifiuta",
-    "onb16": "Scegli il tuo account, clicca Claim",
-    "onb17": "Attivalo una volta",
     "onb18": "tu",
     "pm1a": "Dagli un nome, es. PTCGL uploader",
     "pm1b": "Copia il token",
@@ -169,9 +141,7 @@
     "pm2b": "3. Incolla il token e clicca OK",
     "pm3": "Clicca Yes",
     "pm4": "Facoltativo: partite precedenti",
-    "pm5": "Caricata da PAB",
-    "claim1": "1. Clicca sulla notifica",
-    "claim2": "2. Scegli il tuo account e clicca su Claim"
+    "pm5": "Caricata da PAB"
   },
   "ja": {
     "onb1": "ログインまたはアカウント作成",
@@ -183,14 +153,11 @@
     "onb7": "同意してインストール",
     "onb8": "これで PAB が動いています",
     "onb9": "1. PAB のアイコンを右クリック",
-    "onb10": "2. Connect to tcgkb",
     "onb11": "2つのコードが一致すること",
     "onb12": "PAB を接続",
     "onb13": "DESKTOP-PC があなたの対戦をアップロードし、PTCGL アカウントを登録しようとしています。",
     "onb14": "承認",
     "onb15": "拒否",
-    "onb16": "アカウントを選んで Claim",
-    "onb17": "一度オンにするだけ",
     "onb18": "あなた",
     "pm1a": "名前を付ける（例: PTCGL uploader）",
     "pm1b": "トークンをコピー",
@@ -198,9 +165,7 @@
     "pm2b": "3. トークンを貼り付けて OK",
     "pm3": "Yes をクリック",
     "pm4": "任意: 過去の試合",
-    "pm5": "PAB がアップロード",
-    "claim1": "1. 通知をクリック",
-    "claim2": "2. アカウントを選んで Claim"
+    "pm5": "PAB がアップロード"
   },
   "ko": {
     "onb1": "로그인 또는 계정 만들기",
@@ -212,14 +177,11 @@
     "onb7": "동의하고 설치",
     "onb8": "PAB가 작동 중이라는 뜻입니다",
     "onb9": "1. PAB 아이콘을 오른쪽 클릭",
-    "onb10": "2. tcgkb에 연결",
     "onb11": "두 코드가 같아야 합니다",
     "onb12": "PAB 연결",
     "onb13": "DESKTOP-PC가 내 대전을 업로드하고 PTCGL 계정을 등록하려고 합니다.",
     "onb14": "승인",
     "onb15": "거절",
-    "onb16": "계정을 선택하고 Claim 클릭",
-    "onb17": "한 번만 켜세요",
     "onb18": "나",
     "pm1a": "이름 붙이기 (예: PTCGL uploader)",
     "pm1b": "토큰 복사",
@@ -227,9 +189,7 @@
     "pm2b": "3. 토큰을 붙여넣고 OK",
     "pm3": "Yes 클릭",
     "pm4": "선택: 이전 경기",
-    "pm5": "PAB가 업로드함",
-    "claim1": "1. 알림 클릭",
-    "claim2": "2. 계정을 고르고 Claim"
+    "pm5": "PAB가 업로드함"
   },
   "zh": {
     "onb1": "登录或创建账号",
@@ -241,14 +201,11 @@
     "onb7": "接受并安装",
     "onb8": "这表示 PAB 正在运行",
     "onb9": "1. 右键点击 PAB 图标",
-    "onb10": "2. 连接 tcgkb",
     "onb11": "两个代码必须一致",
     "onb12": "连接 PAB",
     "onb13": "DESKTOP-PC 想要上传你的对战并认领你的 PTCGL 账号。",
     "onb14": "批准",
     "onb15": "拒绝",
-    "onb16": "选择你的账号，点击 Claim",
-    "onb17": "开启一次即可",
     "onb18": "你",
     "pm1a": "命名，例如 PTCGL uploader",
     "pm1b": "复制令牌",
@@ -256,8 +213,6 @@
     "pm2b": "3. 粘贴令牌并点击 OK",
     "pm3": "点击 Yes",
     "pm4": "可选：以前的对战",
-    "pm5": "由 PAB 上传",
-    "claim1": "1. 点击通知",
-    "claim2": "2. 选择账号并点击 Claim"
+    "pm5": "由 PAB 上传"
   }
 }

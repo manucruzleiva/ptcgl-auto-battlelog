@@ -160,12 +160,6 @@ namespace PtcglAutoBattleLog.Tray.Logic
 
         public Task<TcgkbAccounts> GetAccountsAsync(CancellationToken ct) => CallAsync(_api.GetAccountsAsync, ct);
 
-        public Task<TcgkbAccount> ClaimAsync(ClaimRequest claim, CancellationToken ct) =>
-            CallAsync((access, c) => _api.ClaimAsync(access, claim, c), ct);
-
-        public Task<bool> ReleaseAsync(string accountHash, CancellationToken ct) =>
-            CallAsync(async (access, c) => { await _api.ReleaseAsync(access, accountHash, c).ConfigureAwait(false); return true; }, ct);
-
         public Task<UploadResponse> UploadLogAsync(ClaimEvidence log, CancellationToken ct) =>
             CallAsync((access, c) => _api.UploadLogAsync(access, log, c), ct);
 
@@ -206,24 +200,6 @@ namespace PtcglAutoBattleLog.Tray.Logic
             UserName = previous?.UserName,
             ConnectedUtc = previous?.ConnectedUtc ?? _utcNow(),
         };
-
-        /// <summary>The claim tcgkb expects for a detected account: its newest logs, exactly as on disk.</summary>
-        public static ClaimRequest BuildClaim(DetectedAccount account)
-        {
-            if (account == null) throw new ArgumentNullException(nameof(account));
-            var claim = new ClaimRequest { AccountHash = account.AccountHash, Evidence = new System.Collections.Generic.List<ClaimEvidence>() };
-            foreach (var s in account.Evidence)
-            {
-                try
-                {
-                    claim.Evidence.Add(BuildEvidence(s));
-                }
-                catch (IOException) { }   // moved or deleted since the scan: the others may do
-                catch (UnauthorizedAccessException) { }
-            }
-            if (claim.Evidence.Count == 0) throw new IOException("None of this account's battle logs could be read.");
-            return claim;
-        }
 
         /// <summary>
         /// A sealed log as tcgkb takes it: the .txt and the .seal sidecar (if any), exactly as on disk;

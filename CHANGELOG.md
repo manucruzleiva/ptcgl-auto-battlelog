@@ -9,6 +9,27 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-30
+
+Install, sign in, play: signing in to tcgkb is the only step.
+
+### Changed
+
+- **Sign in and you're done.** Right after installing, the app offers to sign in to tcgkb.app.
+  Once signed in, **Upload my matches automatically** is on and every PTCGL account that plays on
+  this computer is added to your tcgkb account with its first match: no more claiming accounts.
+  "Connect to tcgkb..." is now **Sign in to tcgkb...**.
+- **Half-finished setups finish themselves.** Signed in but never claimed an account, or never
+  answered the upload question: your matches now upload (after you accept the updated disclaimer).
+  Installed but never signed in: the app offers it once.
+- **Disclaimer version 5**: it now says uploads are on once you sign in, and that the PTCGL
+  accounts on this computer are added to your tcgkb account. Everyone is asked to accept it again.
+- **Quick-setup guide**: the tcgkb guide drops the claim and upload steps.
+
+### Removed
+
+- The **My PTCGL accounts...** window and the "Claim <name> on tcgkb?" notification.
+
 ## [1.5.0] - 2026-10-29
 
 Connect PAB to tcgkb before you play: the app now offers to claim your PTCGL account right after

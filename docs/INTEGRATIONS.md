@@ -121,12 +121,15 @@ PAB's upload body (`POST /api/ptcgl/logs` on tcgkb):
 * Only tracked matches (`matchId` set, result not `EXPORTED`), newest first, at most 50 per run.
 * PAB de-duplicates by `matchId|accountHash|keyId` (`tcgkb-uploads.json`). Answer a repeat with
   2xx (`"added": false`), not an error.
-* Refusals: a `4xx` with a code. PAB treats "this account isn't the user's" (`403 not_claimed`)
-  as "try later", "this file is bad" (`422 invalid_log`) as final for that file, anything else as
-  "stop this run".
+* Refusals: a `4xx` with a code. PAB treats "this file is bad" (`422 invalid_log`) and "this
+  account is someone else's" (`409 claimed_by_other`) as final for that file, `403 not_claimed`
+  as "try later", anything else as "stop this run".
+* PAB sends the logs of every PTCGL account that played on the computer: the seal's `player` is
+  the local account, never the opponent. tcgkb ties a new `accountHash` to the user on its first
+  upload.
 
-tcgkb also has a **claim** step (the user proves a PTCGL `accountHash` is theirs by sending 1–3
-sealed logs) and a deck API. Neither is needed to receive logs; a site that ranks players should
+tcgkb also has an explicit **claim** endpoint (the user proves a PTCGL `accountHash` is theirs by
+sending 1–3 sealed logs; PAB no longer uses it) and a deck API. Neither is needed to receive logs; a site that ranks players should
 read [TCGKB-API.md](TCGKB-API.md), "Model", before designing its own.
 
 ### 4.3 Verifying what you receive

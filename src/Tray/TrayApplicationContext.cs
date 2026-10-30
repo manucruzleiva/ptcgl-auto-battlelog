@@ -205,6 +205,7 @@ namespace PtcglAutoBattleLog.Tray
             if (!HasConsent())
                 Balloon("The disclaimer was updated", "Please review it to keep using " + AppInfo.ProductName + ". Click to read it.",
                         ToolTipIcon.Warning, AskConsent);
+            else OfferSignIn(firstRun);
         }
 
         private bool HasConsent() => _session.Read(s => s.DisclaimerAccepted) >= Disclaimer.Version;

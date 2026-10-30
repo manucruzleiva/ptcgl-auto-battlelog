@@ -62,8 +62,8 @@
 - **Notifications.** "VICTORY vs Gary — battle log saved", click to open it.
 - **Sealed logs.** Each log carries a signed seal, so edits made after saving are detectable
   (for a future online leaderboard). See [Sealed logs](#sealed-logs-and-leaderboards).
-- **Private.** Nothing is uploaded anywhere unless you connect a [tcgkb](https://tcgkb.app)
-  account and claim your PTCGL accounts (see [tcgkb account](#tcgkb-account)), or turn on
+- **Private.** Nothing is uploaded anywhere unless you sign in to a [tcgkb](https://tcgkb.app)
+  account (see [tcgkb account](#tcgkb-account)), or turn on
   uploads to Pokematch (see [Pokematch](#pokematch)). Otherwise the only network traffic is the
   update check against GitHub. Free and open source (MIT).
 
@@ -196,7 +196,7 @@ it too.
 | Review the updated disclaimer... | In red, under the status lines, only when the disclaimer changed since you accepted it. Uploads to tcgkb and Pokematch wait until you accept it. |
 | Open logs folder · Open last log | |
 | Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
-| tcgkb account ▸ | Optional. Connect to tcgkb, claim or release your PTCGL accounts, disconnect. See [tcgkb account](#tcgkb-account). |
+| tcgkb account ▸ | Optional. Sign in to tcgkb, turn automatic uploads off or on, disconnect. See [tcgkb account](#tcgkb-account). |
 | Pokematch ▸ | Optional. Set your Pokematch API token, upload new battle logs automatically, upload past ones, remove the token. See [Pokematch](#pokematch). |
 | Status and settings... | The same status lines and options as the menu, in a window with tabs. |
 | Settings ▸ Notify when a log is saved | Turns the "battle log saved" notifications on or off. |
@@ -277,7 +277,7 @@ an ordered, pseudonymous history in which deleted or rewritten results leave gap
 matching the seals of *both* players of a match. The full format, threat model and server-side
 guidance are in [docs/LOG-SEAL.md](docs/LOG-SEAL.md).
 
-**Privacy.** Nothing is uploaded unless you claim an account on tcgkb or turn on Pokematch uploads (below): the seal is just text in your files. Players are identified in
+**Privacy.** Nothing is uploaded unless you sign in to tcgkb or turn on Pokematch uploads (below): the seal is just text in your files. Players are identified in
 the seal by an `accountHash` (SHA-256 of `ptcgl-abl:v1:` + the game's account id), a pseudonym that
 lets the two seals of one match name the same accounts without writing the raw ids. It is not
 encryption: anyone who knows an account id can compute its hash. Your logs (sealed or not)
@@ -289,25 +289,23 @@ chain. Set **Battle log seal ▸ Off** if you do not want seals.
 
 ## tcgkb account
 
-Optional. [tcgkb.app](https://tcgkb.app) is a separate site by the same author, for decks and,
-later, leaderboards built from sealed logs. If you have an account there, **tcgkb account ▸ Connect
-to tcgkb...** links this computer to it:
+Optional. [tcgkb.app](https://tcgkb.app) is a separate site by the same author, with a ranking,
+the meta and your stats built from sealed logs. Signing in is the only step:
 
-1. Your browser opens tcgkb.app and the app shows a short code. Sign in there as usual (Google or
-   password), check that the code matches and approve. The app never sees your password.
-2. **My PTCGL accounts...** lists the PTCGL accounts that played on this computer (found in your
-   sealed logs) and the ones your tcgkb account already owns. **Claim** the ones that are yours: you
-   can own several, and each keeps its own stats. You can connect before your first match: a
-   claim needs a saved match, so after you play with an account that is not yours on tcgkb yet,
-   the app offers to claim it ("Claim <name> on tcgkb?", once per account).
-3. A claim sends tcgkb that account's 3 newest battle logs, sealed, as proof. They contain your
-   opponents' display names, as the Export text does. A claim is "not verified" until an opponent
-   who also uses tcgkb uploads the same match; then it is "verified".
-4. **Upload my matches automatically** (off until you turn it on) sends each tracked match of
-   your claimed accounts the same way, with your decklist (each distinct deck is sent once), so
-   tcgkb can keep your decks and statistics.
+1. Right after installing, the app asks "Sign in to tcgkb.app to upload your matches?" (later:
+   **tcgkb account ▸ Sign in to tcgkb...**). Your browser opens tcgkb.app and the app shows a short
+   code. Sign in there as usual (Google or password), check that the code matches and approve. The
+   app never sees your password.
+2. That's it. **Upload my matches automatically** is on: each tracked match in your logs folder
+   (the ones already there and every new one) goes to tcgkb, sealed, with your decklist (each
+   distinct deck is sent once). The logs contain your opponents' display names, as the Export text
+   does.
+3. Every PTCGL account that played on this computer is added to your tcgkb account with its first
+   match: you can have several, and the ranking shows them as one row. An account is "not verified"
+   until an opponent who also uses tcgkb uploads the same match; then it is "verified". An account
+   that is already verified for someone else is not added, and its matches are not sent again.
 
-Nothing is sent until you connect and claim. **Disconnect** ends the connection (you can also
+Nothing is sent until you sign in. Turn **Upload my matches automatically** off to stop uploads; **Disconnect** ends the connection (you can also
 remove the computer from your tcgkb profile). The connection is kept encrypted for your Windows
 user in `%LOCALAPPDATA%\PtcglAutoBattleLog\tcgkb-connection.dat`. The details are in
 [docs/TCGKB-API.md](docs/TCGKB-API.md).
