@@ -306,7 +306,7 @@ namespace PtcglAutoBattleLog.Tray
             // Fields may be null when the constructor failed halfway.
             if (_tray != null) _tray.Visible = false;   // gone from the notification area at once, not at the next mouse-over
             _menu?.Close();
-            Run("close window", () => _window?.Close());
+            Run("close window", () => _window?.Dispose());
             Run("stop listeners", () => { _exitListener?.Dispose(); _showListener?.Dispose(); });
             Run("stop updates", () => _updates?.Dispose());
             Run("stop tcgkb", () => { _uploadTimer?.Dispose(); _tcgkb?.Dispose(); });

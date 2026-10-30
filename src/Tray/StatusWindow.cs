@@ -152,6 +152,29 @@ namespace PtcglAutoBattleLog.Tray
             TopMost = false;
         }
 
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                // WS_EX_COMPOSITED: the window and its many child controls paint in one buffered pass,
+                // so it never shows blank and fills in block by block.
+                var p = base.CreateParams;
+                p.ExStyle |= 0x02000000;
+                return p;
+            }
+        }
+
+        /// <summary>Closing only hides the window, so opening it again is instant; the tray disposes it on exit.</summary>
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if (!e.Cancel && e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+        }
+
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);

@@ -231,6 +231,7 @@ namespace PtcglAutoBattleLog.Tray
             if (_exiting) return;
             if (_window == null || _window.IsDisposed)
             {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
                 RefreshMenu();
                 _window = new StatusWindow(
                     new StatusWindow.Items
@@ -260,6 +261,7 @@ namespace PtcglAutoBattleLog.Tray
                     url => Shell.Open(url));
                 _window.FormClosed += (s, e) => _window = null;   // a closed modeless form disposes itself
                 _window.Activated += (s, e) => RefreshTcgkbStanding(false);
+                _window.Shown += (s, e) => Post(() => Log.Info("Status window opened in " + watch.ElapsedMilliseconds + " ms."));   // after its first paint
             }
             _window.Raise();
         }
