@@ -230,7 +230,7 @@ running" and is reported as such, never as a crash.
 Top level, kept short: status lines (version and mode; daemon summary; last saved log; data folder
 when the portable fallback is in use; "Choose the game folder..." while the game is not found; a red
 "Review the updated disclaimer..." while consent to the current `Disclaimer.Version` is pending) ·
-**Open logs folder** (also the double-click action) · Open last log · Update vX available ▸ (Install
+**Open logs folder** · Open last log · Update vX available ▸ (Install
 now, What's new, Skip this version; only while an update waits) · tcgkb account ▸ ("Not connected" /
 "Connected as <name>", Sign in to tcgkb..., Upload my matches automatically, Upload matches now, Disconnect; see "tcgkb account") ·
 Pokematch ▸ ("Not set up" / a status line, Set API token... / Change API token..., Upload new battle
@@ -249,7 +249,7 @@ settings... · Settings ▸ · Updates ▸ · Help ▸ · Exit.
   `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from game....
 
 **Status and settings window** (`StatusWindow`): the menu laid out as a window, with the player's
-matches and their place on the tcgkb ladder, opened from "Status and settings..." and by the show
+matches and their place on the tcgkb ladder, opened by a click on the tray icon, from "Status and settings..." and by the show
 event (the app started again while it runs, or started without `--background` when nothing else is
 shown). Each control that mirrors a menu item copies its text, `Available`, `Enabled` and `Checked`,
 and a click is that item's `PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become

@@ -9,6 +9,24 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-10-30
+
+### Changed
+
+- **A click on the tray icon opens the status and settings window** (it used to be a double-click
+  that opened the logs folder, which is still a button on the window's home page).
+
+### Added
+
+- **Delete local battle logs...** (Settings, in the menu and the window): moves every battle log in
+  the logs folder to the Recycle Bin, after asking. Matches already on tcgkb or Pokematch stay there.
+
+### Fixed
+
+- **The status and settings window opens fast again.** It no longer waits for tcgkb before it
+  shows: the accounts and ladder are asked for in the background. The Matches page builds its list
+  only when you open it, and the lists are no longer rebuilt every minute.
+
 ## [1.6.0] - 2026-10-30
 
 Install, sign in, play: signing in to tcgkb is the only step.
