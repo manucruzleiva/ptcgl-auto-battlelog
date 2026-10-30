@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
 using PtcglAutoBattleLog.Tray.Logic;
@@ -13,32 +12,29 @@ namespace PtcglAutoBattleLog.Tray
         /// <summary>Uploads that failed for a passing reason (offline, tcgkb busy) are retried this often.</summary>
         private static readonly TimeSpan UploadRetryInterval = TimeSpan.FromMinutes(30);
 
-        /// <summary>Only a match this recent is offered for claiming: the offer follows a match, not an old log.</summary>
-        private static readonly TimeSpan ClaimOfferWindow = TimeSpan.FromHours(1);
-
         private TcgkbService _tcgkb;
-        /// <summary>When the accounts window last closed: the matches before it were already there to claim.</summary>
-        private DateTime _accountsSeenUtc = DateTime.MinValue;
         private LogUploader _uploader;
         private Timer _uploadTimer;
         private string _lastUploadLabel;
         private bool _tcgkbConsentLogged;
-        private ToolStripMenuItem _tcgkbItem, _tcgkbInfoItem, _tcgkbConnectItem, _tcgkbAccountsItem, _tcgkbAutoUploadItem,
+        private TcgkbAccounts _tcgkbMe;   // the accounts and ladder the window shows; null until tcgkb answered
+        private DateTime _tcgkbMeUtc;
+        private bool _tcgkbMeBusy;
+        private ToolStripMenuItem _tcgkbItem, _tcgkbInfoItem, _tcgkbConnectItem, _tcgkbAutoUploadItem,
                                   _tcgkbUploadNowItem, _tcgkbLastUploadItem, _tcgkbDisconnectItem;
 
         private ToolStripMenuItem BuildTcgkbMenu()
         {
             _tcgkbItem = new ToolStripMenuItem("tcgkb account");
             _tcgkbInfoItem = Info("Not connected");
-            _tcgkbConnectItem = Item("Connect to tcgkb...", ConnectTcgkb);
-            _tcgkbAccountsItem = Item("My PTCGL accounts...", ShowTcgkbAccounts);
+            _tcgkbConnectItem = Item("Sign in to tcgkb...", ConnectTcgkb);
             _tcgkbAutoUploadItem = Toggle("Upload my matches automatically", ToggleAutoUpload);
             _tcgkbUploadNowItem = Item("Upload matches now", () => UploadMatches(true));
             _tcgkbLastUploadItem = Info("");
             _tcgkbDisconnectItem = Item("Disconnect", DisconnectTcgkb);
             _tcgkbItem.DropDownItems.AddRange(new ToolStripItem[]
             {
-                _tcgkbInfoItem, _tcgkbConnectItem, _tcgkbAccountsItem, new ToolStripSeparator(),
+                _tcgkbInfoItem, _tcgkbConnectItem, new ToolStripSeparator(),
                 _tcgkbAutoUploadItem, _tcgkbUploadNowItem, _tcgkbLastUploadItem, new ToolStripSeparator(), _tcgkbDisconnectItem,
             });
             return _tcgkbItem;
@@ -49,8 +45,8 @@ namespace PtcglAutoBattleLog.Tray
             var user = Tcgkb.Connection.UserName;
             _tcgkbInfoItem.Text = MenuText(user == null ? "Not connected" : Clip("Connected as " + user, 60));
             _tcgkbConnectItem.Visible = user == null;
-            _tcgkbAccountsItem.Visible = _tcgkbDisconnectItem.Visible = _tcgkbAutoUploadItem.Visible = user != null;
-            var auto = _session.Read(s => s.TcgkbAutoUpload) == true;
+            _tcgkbDisconnectItem.Visible = _tcgkbAutoUploadItem.Visible = user != null;
+            var auto = AutoUpload;
             _tcgkbAutoUploadItem.Checked = auto;
             _tcgkbUploadNowItem.Visible = user != null && auto;
             var waiting = !HasConsent();
@@ -58,58 +54,80 @@ namespace PtcglAutoBattleLog.Tray
             _tcgkbLastUploadItem.Visible = user != null && auto && (waiting || _lastUploadLabel != null);
         }
 
+        /// <summary>
+        /// Asks tcgkb for the accounts and the ladder the window shows: when it opens or comes to the
+        /// front (at most once a minute) and after matches were uploaded (force).
+        /// </summary>
+        private async void RefreshTcgkbStanding(bool force)
+        {
+            if (_exiting || _tcgkbMeBusy) return;
+            if (!Tcgkb.Connection.IsConnected) { _tcgkbMe = null; return; }
+            if (!force && DateTime.UtcNow - _tcgkbMeUtc < TimeSpan.FromMinutes(1)) return;
+            _tcgkbMeBusy = true;
+            try
+            {
+                _tcgkbMe = await Tcgkb.Connection.GetAccountsAsync(CancellationToken.None);
+                _tcgkbMeUtc = DateTime.UtcNow;
+            }
+            catch (TcgkbAuthException) { _tcgkbMe = null; }
+            catch (Exception e) { Log.Info("tcgkb accounts not read: " + e.Message); }
+            finally { _tcgkbMeBusy = false; }
+            RefreshWindow();
+        }
+
         /// <summary>Made on first use: a tray that is never connected sends nothing to tcgkb.</summary>
         private TcgkbService Tcgkb => _tcgkb ?? (_tcgkb = new TcgkbService(_session));
 
+        /// <summary>Uploads are on unless the player turned them off (null: never chosen, which means on).</summary>
+        private bool AutoUpload => _session.Read(s => s.TcgkbAutoUpload) != false;
+
+        /// <summary>
+        /// Sign-in is the only step: every PTCGL account in this computer's sealed logs is taken as the
+        /// player's (tcgkb claims it with the first upload) and uploads are on by default.
+        /// </summary>
         private void ConnectTcgkb()
         {
             using (Modal())
             {
-                if (!Dialogs.Confirm("Connect " + AppInfo.ProductName + " to your tcgkb.app account?\n\n" +
+                if (!Dialogs.Confirm("Sign in to tcgkb.app to upload your matches?\n\n" +
                                      "Your browser opens tcgkb.app, where you sign in and approve this computer. The app never sees your password.\n\n" +
-                                     "Once connected, you can claim the PTCGL accounts you play with: the app sends tcgkb the account's hash and " +
-                                     "its newest battle logs (which contain your opponents' names) as proof. Nothing is sent without you choosing it, " +
-                                     "and Disconnect ends the connection.", MessageBoxIcon.Question)) return;
+                                     "From then on, after each match the app sends tcgkb the sealed battle log and your decklist; the matches already in " +
+                                     "your logs folder go too. Every PTCGL account that plays on this computer is added to your tcgkb account. The logs " +
+                                     "contain both players' names, your deck and every play of the match. You can turn uploads off or disconnect any time " +
+                                     "in the tcgkb account menu.", MessageBoxIcon.Question)) return;
                 var user = TcgkbConnectDialog.Run(Tcgkb.Connection);
                 if (user == null) return;
-                Balloon("Connected to tcgkb", "Signed in as " + user + ". Now claim your PTCGL accounts.", ToolTipIcon.Info, ShowTcgkbAccounts);
+                Log.Info("Signed in to tcgkb; automatic match upload " + (AutoUpload ? "on." : "off."));
             }
-            ShowTcgkbAccounts();
+            _tcgkbMe = null;
+            RefreshTcgkbStanding(true);
+            UploadMatches(true);
         }
 
-        private void ShowTcgkbAccounts()
+        /// <summary>
+        /// Not signed in: right after a first install the sign-in opens by itself; a player who installed
+        /// before sign-in was the only step (or never finished it) is offered it once, with a balloon.
+        /// </summary>
+        private void OfferSignIn(bool firstRun)
         {
-            if (!Tcgkb.Connection.IsConnected) { ConnectTcgkb(); return; }
-            using (Modal()) TcgkbAccountsDialog.Show(Tcgkb.Connection, _session.LogsFolder(_session.Game));
-            _accountsSeenUtc = DateTime.UtcNow;
-            if (_session.Read(s => s.TcgkbAutoUpload) == null) AskAutoUpload();
-            else UploadMatches(true);
+            if (Tcgkb.Connection.IsConnected) return;
+            if (firstRun) { Post(ConnectTcgkb); return; }
+            if (_session.Read(s => s.TcgkbSignInOffered)) return;
+            _session.Update(s => s.TcgkbSignInOffered = true);
+            Balloon("Sign in to tcgkb", "Sign in once and your matches go to tcgkb.app by themselves: stats, meta and leaderboard. Click to sign in.",
+                    ToolTipIcon.Info, ConnectTcgkb);
         }
 
         // ---- Match uploads (docs/TCGKB-API.md, "Match uploads") --------------------------------
 
         private LogUploader Uploader => _uploader ?? (_uploader = new LogUploader(Tcgkb.Connection, _session.Paths.Root));
 
-        /// <summary>Asked once, after the accounts window: uploads are off until the player says yes.</summary>
-        private void AskAutoUpload()
-        {
-            bool yes;
-            using (Modal())
-                yes = Dialogs.Confirm("Upload your matches to tcgkb automatically?\n\n" +
-                                      "After each match, the app sends tcgkb.app the sealed battle log and your decklist, if the player is one of the PTCGL accounts " +
-                                      "you claimed. The matches already in your logs folder are sent too. tcgkb uses them for your stats, the meta " +
-                                      "and the leaderboard, and keeps your decks there. The logs contain both players' names, your deck and every play of the match.\n\n" +
-                                      "You can turn this off any time in the tcgkb account menu.", MessageBoxIcon.Question);
-            _session.Update(s => s.TcgkbAutoUpload = yes);
-            Log.Info("Automatic match upload to tcgkb " + (yes ? "turned on." : "declined."));
-            if (yes) UploadMatches(true);
-        }
-
         private void ToggleAutoUpload()
         {
-            if (_session.Read(s => s.TcgkbAutoUpload) != true) { AskAutoUpload(); return; }
-            _session.Update(s => s.TcgkbAutoUpload = false);
-            Log.Info("Automatic match upload to tcgkb turned off.");
+            var on = !AutoUpload;
+            _session.Update(s => s.TcgkbAutoUpload = on);
+            Log.Info("Automatic match upload to tcgkb turned " + (on ? "on." : "off."));
+            if (on) UploadMatches(true);
         }
 
         /// <summary>
@@ -130,7 +148,7 @@ namespace PtcglAutoBattleLog.Tray
         /// </summary>
         private async void UploadMatches(bool announce)
         {
-            if (_exiting || _session.Read(s => s.TcgkbAutoUpload) != true || !Tcgkb.Connection.IsConnected) return;
+            if (_exiting || !AutoUpload || !Tcgkb.Connection.IsConnected) return;
             // The uploads carry the decklist, which the current disclaimer covers: nothing goes before it is accepted.
             if (!HasConsent())
             {
@@ -147,7 +165,7 @@ namespace PtcglAutoBattleLog.Tray
             catch (TcgkbAuthException)
             {
                 Log.Info("tcgkb no longer accepts this connection; match uploads stop until the player connects again.");
-                Balloon("Connect to tcgkb again", "tcgkb no longer accepts this computer's connection, so your matches are not uploaded. Click to connect.",
+                Balloon("Sign in to tcgkb again", "tcgkb no longer accepts this computer's connection, so your matches are not uploaded. Click to sign in.",
                         ToolTipIcon.Warning, ConnectTcgkb);
                 return;
             }
@@ -178,28 +196,11 @@ namespace PtcglAutoBattleLog.Tray
                 else if (run.StoppedBecause != null && run.Left > 0)
                     Balloon("Matches not uploaded yet", run.StoppedBecause + " The app tries again later.", ToolTipIcon.Warning, null);
                 else
-                    Balloon("tcgkb is up to date", "Every match of your claimed accounts is on tcgkb.", ToolTipIcon.Info, null);
+                    Balloon("tcgkb is up to date", "Every match is on tcgkb.", ToolTipIcon.Info, null);
             }
-            OfferClaim(run.Unclaimed);
             // The per-run limit: carry on right away rather than in 30 minutes.
             if (run.HitLimit) Post(() => UploadMatches(false));
-        }
-
-        /// <summary>
-        /// A new match of a PTCGL account that is not the player's on tcgkb: offer claiming it, once per account.
-        /// This is how a player who connected before playing claims after the first match.
-        /// </summary>
-        private void OfferClaim(SealSummary unclaimed)
-        {
-            if (unclaimed == null || unclaimed.SealedUtc < _accountsSeenUtc || DateTime.UtcNow - unclaimed.SealedUtc > ClaimOfferWindow) return;
-            var hash = unclaimed.PlayerAccountHash;
-            if (_session.Read(s => s.TcgkbClaimOffered?.Contains(hash) == true)) return;
-            _session.Update(s => (s.TcgkbClaimOffered = s.TcgkbClaimOffered ?? new List<string>()).Add(hash));
-            var name = string.IsNullOrEmpty(unclaimed.PlayerName) ? "your PTCGL account" : unclaimed.PlayerName;
-            Log.Info("Offering to claim a PTCGL account on tcgkb.");
-            Balloon("Claim " + name + " on tcgkb?",
-                    "Your matches go to tcgkb once you claim the PTCGL account you play with. Click to claim it.",
-                    ToolTipIcon.Info, ShowTcgkbAccounts);
+            else if (run.Uploaded > 0 && _window != null && !_window.IsDisposed && _window.Visible) RefreshTcgkbStanding(true);
         }
 
         /// <summary>The disclaimer was accepted: matches that were waiting for it go now (after the caller's own run, if any).</summary>
@@ -207,16 +208,18 @@ namespace PtcglAutoBattleLog.Tray
         {
             _tcgkbConsentLogged = false;
             Post(() => UploadMatches(false));
+            OfferSignIn(false);
         }
 
         private async void DisconnectTcgkb()
         {
             bool confirmed;
-            using (Modal()) confirmed = Dialogs.Confirm("Disconnect from tcgkb? Your claimed PTCGL accounts stay yours on tcgkb.", MessageBoxIcon.Question);
+            using (Modal()) confirmed = Dialogs.Confirm("Disconnect from tcgkb? Your PTCGL accounts and matches stay on tcgkb.", MessageBoxIcon.Question);
             if (!confirmed) return;
             try
             {
                 var revoked = await Tcgkb.Connection.DisconnectAsync(CancellationToken.None);
+                _tcgkbMe = null;
                 Log.Info("Disconnected from tcgkb" + (revoked ? "." : " (tcgkb not reached; the connection was forgotten here)."));
                 Balloon("Disconnected from tcgkb",
                         revoked ? "This computer is no longer connected." : "Forgotten on this computer. tcgkb could not be reached: remove this computer in your tcgkb profile.",

@@ -44,7 +44,7 @@ static partial class Program
 
     static void SealSummaryTests()
     {
-        Console.WriteLine("33. SealSummary + PtcglAccountScanner: the PTCGL accounts in the plugin's sealed logs");
+        Console.WriteLine("33. SealSummary + PtcglAccountScanner: what the plugin's sealed logs say");
         var folder = Path.Combine(TempDir(), "PTCGL Battle Logs");
         var identity = new SigningIdentity(Path.Combine(TempDir(), "identity"), new TestRsa());
         identity.Load(null);
@@ -103,29 +103,14 @@ static partial class Program
         Check(SealSummary.Unescape("a\\u00e9\\\\\\\"\\n") == "aé\\\"\n" && SealSummary.Unescape("bad\\x") == null && SealSummary.Unescape("cut\\u12") == null,
               "JSON string unescape");
 
-        var accounts = PtcglAccountScanner.Scan(folder);
-        Check(accounts.Count == 2 && accounts[0].AccountHash == ashHash && accounts[1].Name == "Misty",
-              "two accounts, most matches first: " + string.Join(", ", accounts.Select(a => a.Name + " " + a.Matches)));
-        var ash = accounts[0];
-        Check(ash.Matches == 4 && ash.Name == "Ash2", "renamed account: one entry, newest name, every match counted (" + ash.Matches + ")");
-        Check(ash.Evidence.Count == PtcglAccountScanner.MaxEvidence && ash.Evidence.All(e => e.MatchId != null && e.Result != "EXPORTED"),
-              "at most 3 evidence logs, tracked matches only");
-        Check(ash.Evidence.Select(e => e.SealedUtc).SequenceEqual(ash.Evidence.Select(e => e.SealedUtc).OrderByDescending(d => d)), "evidence newest first");
-        Check(PtcglAccountScanner.Scan(Path.Combine(folder, "nope")).Count == 0 && PtcglAccountScanner.Scan(null).Count == 0, "missing folder: no accounts");
-
-        var claim = TcgkbConnection.BuildClaim(ash);
-        Check(claim.AccountHash == ashHash && claim.Evidence.Count == 3, "claim: the account and its evidence");
-        var withSidecar = claim.Evidence.FirstOrDefault(e => e.Seal != null);
-        Check(withSidecar != null && Convert.FromBase64String(withSidecar.Seal).SequenceEqual(File.ReadAllBytes(LogStore.SidecarPathFor(sidecar))) &&
-              Convert.FromBase64String(withSidecar.Log).SequenceEqual(File.ReadAllBytes(sidecar)),
-              "claim evidence = the files' exact bytes, .seal included");
-        foreach (var e in ash.Evidence) File.Delete(e.LogFile);
-        Check(Throws<IOException>(() => TcgkbConnection.BuildClaim(ash)), "evidence gone since the scan: IOException");
+        Check(PtcglAccountScanner.IsEvidence(SealSummary.TryRead(footer)) &&
+              !PtcglAccountScanner.IsEvidence(SealSummary.TryRead(Directory.GetFiles(folder, "*.txt").Single(f => SealSummary.TryRead(f)?.Result == "EXPORTED"))),
+              "a tracked match can be sent, an Export click cannot");
     }
 
     static async Task TcgkbApiTests()
     {
-        Console.WriteLine("34. TcgkbApi: device flow and claims against a fake tcgkb");
+        Console.WriteLine("34. TcgkbApi: device flow and accounts against a fake tcgkb");
         var server = new FakeTcgkb();
         var api = new TcgkbApi(server.Send);
         var ct = CancellationToken.None;
@@ -196,27 +181,24 @@ static partial class Program
         req = server.Requests.Last();
         Check(req.Method == "GET" && req.Path == "/api/ptcgl/accounts" && req.Bearer == "a1", "accounts: GET with the bearer");
         Check(me.User.Name == "Manu" && me.Accounts.Count == 1 && me.Accounts[0].Status == TcgkbAccount.Verified, "accounts read, a malformed hash dropped");
+        Check(me.Ladder == null && LadderStatus.From(me) == null, "a tcgkb without the ladder: nothing said about it");
+        server.Handle = r => FakeTcgkb.Reply(200, MeJson.TrimEnd('}') + ",\"ladder\":{\"games\":3,\"minGames\":5,\"rank\":null,\"players\":12}}");
+        var ladder = LadderStatus.From(await api.GetAccountsAsync("a1", ct));
+        Check(ladder != null && !ladder.Ranked && ladder.HasAccount && ladder.Title == "Ladder: 3 of 5 matches" && ladder.Count == "2 more to go" &&
+              ladder.Why.Contains("Not ranked yet") && Math.Abs(ladder.Progress - 0.6) < 1e-9, "under the minimum: 3 of 5, why not ranked");
+        server.Handle = r => FakeTcgkb.Reply(200, MeJson.TrimEnd('}') + ",\"ladder\":{\"games\":9,\"minGames\":5,\"rank\":4,\"players\":12}}");
+        ladder = LadderStatus.From(await api.GetAccountsAsync("a1", ct));
+        Check(ladder.Ranked && ladder.Count == "#4 of 12" && ladder.Progress == 1, "ranked: the rank");
+        ladder = LadderStatus.From(new TcgkbAccounts { Accounts = new List<TcgkbAccount>(), Ladder = new TcgkbLadder { MinGames = 5 } });
+        Check(!ladder.HasAccount && ladder.Why.StartsWith("Play a match"), "no account yet: play a match");
+        ladder = LadderStatus.From(new TcgkbAccounts { Accounts = new List<TcgkbAccount> { new TcgkbAccount { Status = TcgkbAccount.Disputed } }, Ladder = new TcgkbLadder { MinGames = 5 } });
+        Check(!ladder.HasAccount && ladder.Why.Contains("claims your PTCGL account too"), "only a disputed account: why it counts for no one");
         server.Handle = r => FakeTcgkb.Reply(401, "");
         Check(await Catch(() => api.GetAccountsAsync("a1", ct)) is TcgkbAuthException, "401 on an API call: TcgkbAuthException");
 
-        var claim = new ClaimRequest { AccountHash = HashAsh, Evidence = new List<ClaimEvidence> { new ClaimEvidence { FileName = "a.txt", Log = "QQ==" } } };
-        server.Handle = r => FakeTcgkb.Reply(200, "{\"account\":{\"accountHash\":\"" + HashAsh + "\",\"name\":\"Ash\",\"status\":\"claimed\"}}");
-        var claimed = await api.ClaimAsync("a1", claim, ct);
-        req = server.Requests.Last();
-        var sent = Json.Read<ClaimRequest>(req.Body);
-        Check(claimed.Status == TcgkbAccount.Claimed && req.Path == "/api/ptcgl/claims" && req.ContentType == "application/json" &&
-              sent.AccountHash == HashAsh && sent.Evidence.Single().Log == "QQ==" && sent.Evidence.Single().Seal == null, "claim: JSON with the evidence");
         server.Handle = r => FakeTcgkb.Reply(409, "{\"error\":\"claimed_by_other\"}");
-        var taken = await Catch(() => api.ClaimAsync("a1", claim, ct)) as TcgkbException;
+        var taken = await Catch(() => api.UploadLogAsync("a1", new ClaimEvidence { FileName = "a.txt", Log = "QQ==" }, ct)) as TcgkbException;
         Check(taken?.Code == "claimed_by_other" && taken.Message.Contains("another tcgkb user"), "claimed by someone else: worded for the player");
-        server.Handle = r => FakeTcgkb.Reply(422, "{\"error\":\"invalid_evidence\",\"message\":\"bad signature in a.txt\"}");
-        Check((await Catch(() => api.ClaimAsync("a1", claim, ct)))?.Message == "tcgkb could not check these battle logs. bad signature in a.txt", "server message appended");
-        Check(await Catch(() => api.ClaimAsync("a1", new ClaimRequest { AccountHash = "x", Evidence = claim.Evidence }, ct)) is ArgumentException &&
-              await Catch(() => api.ClaimAsync("a1", new ClaimRequest { AccountHash = HashAsh, Evidence = new List<ClaimEvidence>() }, ct)) is ArgumentException,
-              "bad claims never sent");
-        server.Handle = r => FakeTcgkb.Reply(404, "");
-        Check((await Catch(() => api.ReleaseAsync("a1", HashAsh, ct))) == null && server.Requests.Last().Method == "DELETE" &&
-              server.Requests.Last().Path == "/api/ptcgl/accounts/" + HashAsh, "release: DELETE, 404 is fine");
     }
 
     static async Task TcgkbConnectionTests()
@@ -297,7 +279,7 @@ static partial class Program
 
     static async Task LogUploaderTests()
     {
-        Console.WriteLine("36. LogUploader: each match of a claimed account sent once");
+        Console.WriteLine("36. LogUploader: each match sent once, whatever PTCGL account played it");
         var folder = Path.Combine(TempDir(), "PTCGL Battle Logs");
         var identity = new SigningIdentity(Path.Combine(TempDir(), "identity"), new TestRsa());
         identity.Load(null);
@@ -324,7 +306,7 @@ static partial class Program
         var deckSha = SealSummary.TryRead(withDeck).DeckSha256;
         var deckFile = LogStore.DeckPathFor(folder, deckSha);
         Save("Ash", "ash-id", manual: true);   // an Export click: never sent
-        Save("Misty", "misty-id");             // not one of the player's accounts on tcgkb
+        var misty = Save("Misty", "misty-id"); // another PTCGL account on this computer: the player's too
 
         var store = new TcgkbTokenStore(TempDir(), Xor, Xor);
         store.Save(new TcgkbTokens { AccessToken = "a1", AccessExpiresUtc = DateTime.UtcNow.AddHours(1), RefreshToken = "r1", UserName = "Manu" });
@@ -350,16 +332,15 @@ static partial class Program
 
         var run = await uploader.SyncAsync(folder, ct);
         var req = server.Requests.Last();
-        Check(run.Uploaded == 3 && run.Left == 0 && !run.HitLimit && run.StoppedBecause == null, "the 3 tracked matches of the claimed account sent");
+        Check(run.Uploaded == 4 && run.Left == 0 && !run.HitLimit && run.StoppedBecause == null, "the 4 tracked matches sent, no account list asked first");
         Check(received.All(e => e.FileName.EndsWith(".txt") && e.Seal == null) && req.Method == "POST" && req.Bearer == "a1" && req.ContentType == "application/json",
               "POST /api/ptcgl/logs with the bearer, footer seals in the .txt");
-        Check(received.Select(e => Encoding.UTF8.GetString(Convert.FromBase64String(e.Log))).All(l => l.Contains("Ash played")) &&
-              !received.Any(e => Encoding.UTF8.GetString(Convert.FromBase64String(e.Log)).Contains("Misty")), "only Ash's logs, exactly as on disk");
+        Check(received.Count(e => Encoding.UTF8.GetString(Convert.FromBase64String(e.Log)).Contains("Ash played")) == 3 &&
+              received.Any(e => e.FileName == Path.GetFileName(misty)) && server.Requests.All(r => r.Path == "/api/ptcgl/logs"),
+              "Ash's and Misty's logs, exactly as on disk");
         var order = received.Select(e => e.FileName).ToList();
         Check(order.SequenceEqual(order.OrderByDescending(f => f, StringComparer.Ordinal)), "newest first");
         Check(run.Newest?.PlayerDeck == "Mega Chandelure ex" && run.Newest.OpponentDeck == "Alakazam", "tcgkb's decks read back");
-        Check(run.Unclaimed?.PlayerName == "Misty" && LogUploader.NewestUnclaimed(folder, new HashSet<string> { ashHash, LogSealer.AccountHash("misty-id") }) == null,
-              "the newest match of an account that is not the player's is named, to offer claiming it");
         var sentDeck = received.Single(e => e.FileName == Path.GetFileName(withDeck));
         Check(sentDeck.Deck != null && Convert.FromBase64String(sentDeck.Deck).SequenceEqual(File.ReadAllBytes(deckFile)),
               "the newest log with the deck carries the deck file, exactly as on disk");
@@ -381,11 +362,11 @@ static partial class Program
         }, "Setup", null);
         Check(SealSummary.TryRead(claimLog).ReadDeck() != null && TcgkbConnection.BuildEvidence(SealSummary.TryRead(claimLog)).Deck == null,
               "claims never carry the deck");
-        Check(uploader.LoadState().Uploaded.Count == 3 && File.Exists(uploader.StatePath), "what was sent is remembered");
+        Check(uploader.LoadState().Uploaded.Count == 4 && File.Exists(uploader.StatePath), "what was sent is remembered");
 
         var calls = server.Requests.Count;
         run = await uploader.SyncAsync(folder, ct);
-        Check(run.Uploaded == 0 && server.Requests.Count - calls == 1, "a second run sends nothing (only the accounts list)");
+        Check(run.Uploaded == 0 && server.Requests.Count == calls, "a second run sends nothing");
 
         Save("Ash", "ash-id");
         uploadAnswer = r => FakeTcgkb.Reply(503, "");
@@ -402,27 +383,33 @@ static partial class Program
         uploadAnswer = upload;
         calls = server.Requests.Count;
         run = await uploader.SyncAsync(folder, ct);
-        Check(run.Uploaded == 0 && run.Rejected == 0 && server.Requests.Count - calls == 1, "never sent again");
+        Check(run.Uploaded == 0 && run.Rejected == 0 && server.Requests.Count == calls, "never sent again");
 
         Save("Ash", "ash-id");
         uploadAnswer = r => FakeTcgkb.Reply(403, "{\"error\":\"not_claimed\"}");
         run = await uploader.SyncAsync(folder, ct);
-        Check(run.Uploaded == 0 && run.StoppedBecause == null && !uploader.LoadState().Uploaded.Contains(LogUploader.Key(SealSummary.TryRead(LogUploader.Pending(folder, new HashSet<string> { ashHash }, new HashSet<string>())[0].LogFile))),
-              "not claimed (any more): skipped, not remembered");
+        Check(run.Uploaded == 0 && run.StoppedBecause == null && !uploader.LoadState().Uploaded.Contains(LogUploader.Key(SealSummary.TryRead(LogUploader.Pending(folder, new HashSet<string>())[0].LogFile))),
+              "not_claimed (a tcgkb from before automatic claims): skipped, not remembered");
+        uploadAnswer = r => FakeTcgkb.Reply(409, "{\"error\":\"claimed_by_other\"}");
+        var rejected = uploader.LoadState().Rejected.Count;
+        run = await uploader.SyncAsync(folder, ct);
+        Check(run.Rejected == 1 && uploader.LoadState().Rejected.Count == rejected + 1, "an account that is another tcgkb user's: refused once, never sent again");
 
         uploadAnswer = upload;
         for (int i = 0; i < LogUploader.MaxPerRun + 5; i++) Save("Ash", "ash-id");
         run = await uploader.SyncAsync(folder, ct);
-        Check(run.Uploaded == LogUploader.MaxPerRun && run.HitLimit && run.Left == 6, "at most " + LogUploader.MaxPerRun + " per run, the rest next (" + run.Left + " left)");
+        Check(run.Uploaded == LogUploader.MaxPerRun && run.HitLimit && run.Left == 5, "at most " + LogUploader.MaxPerRun + " per run, the rest next (" + run.Left + " left)");
         run = await uploader.SyncAsync(folder, ct);
-        Check(run.Uploaded == 6 && !run.HitLimit && run.Left == 0, "the next run sends the rest");
+        Check(run.Uploaded == 5 && !run.HitLimit && run.Left == 0, "the next run sends the rest");
 
+        Save("Ash", "ash-id");
+        Save("Ash", "ash-id");
         server.Handle = r => FakeTcgkb.Reply(401, "");
         Check(await Catch(() => uploader.SyncAsync(folder, ct)) is TcgkbAuthException, "connection gone: TcgkbAuthException");
 
         File.WriteAllText(uploader.StatePath, "not json");
         Check(uploader.LoadState().Uploaded.Count == 0, "an unreadable state file: empty, logs offered again");
-        Check(LogUploader.Pending(folder, new HashSet<string>(), new HashSet<string>()).Count == 0 &&
-              LogUploader.Pending(Path.Combine(folder, "nope"), new HashSet<string> { ashHash }, new HashSet<string>()).Count == 0, "no accounts or no folder: nothing pending");
+        Check(LogUploader.Pending(Path.Combine(folder, "nope"), new HashSet<string>()).Count == 0 && LogUploader.Pending(null, new HashSet<string>()).Count == 0,
+              "no folder: nothing pending");
     }
 }

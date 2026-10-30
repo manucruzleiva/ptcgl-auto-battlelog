@@ -422,8 +422,8 @@ This section is guidance for the server side, or any online leaderboard, that ac
    weight, and upgrade it if the other side's seal arrives later. Never treat a single seal as proof.
 8. **Privacy and consent.**
    * Upload only after the player has explicitly opted in, in the tray app, with a clear
-     explanation. The plugin sends nothing; the tray's tcgkb claim, its opt-in match uploads and
-     the opt-in Pokematch uploads are the only uploads, and `DISCLAIMER.md` says so (version 4, which added the decklist). Any new upload feature must change that text and ask
+     explanation. The plugin sends nothing; the tray's tcgkb match uploads (after the player signs in) and
+     the opt-in Pokematch uploads are the only uploads, and `DISCLAIMER.md` says so (version 5, uploads on by default once signed in). Any new upload feature must change that text and ask
      again (`Disclaimer.Version`).
    * A log contains the opponent's display name and their plays. Publish only what the
      leaderboard needs, and show opponents' names only for players who also opted in.

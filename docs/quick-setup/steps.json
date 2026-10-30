@@ -116,15 +116,15 @@
         "zh": "5 分钟快速上手"
       },
       "subtitle": {
-        "en": "Install PAB, connect it to your account and your PTCGL matches upload to the ranking on their own.",
-        "es": "Instala PAB, conéctalo a tu cuenta y tus partidas de PTCGL se suben solas al ranking.",
-        "pt": "Instale o PAB, conecte-o à sua conta e suas partidas do PTCGL vão para o ranking sozinhas.",
-        "fr": "Installez PAB, connectez-le à votre compte et vos parties PTCGL arrivent toutes seules dans le classement.",
-        "de": "Installiere PAB, verbinde es mit deinem Konto und deine PTCGL-Partien landen von selbst in der Rangliste.",
-        "it": "Installa PAB, collegalo al tuo account e le tue partite di PTCGL arrivano in classifica da sole.",
-        "ja": "PAB をインストールしてアカウントと接続すれば、PTCGL の対戦が自動でランキングに反映されます。",
-        "ko": "PAB를 설치하고 계정에 연결하면 PTCGL 대전이 자동으로 랭킹에 업로드됩니다.",
-        "zh": "安装 PAB 并连接你的账号，你的 PTCGL 对战就会自动上传到排名。"
+        "en": "Install PAB, sign in once and your PTCGL matches upload to the ranking on their own.",
+        "es": "Instala PAB, inicia sesión una vez y tus partidas de PTCGL se suben solas al ranking.",
+        "pt": "Instale o PAB, entre uma vez e suas partidas do PTCGL vão sozinhas para o ranking.",
+        "fr": "Installez PAB, connectez-vous une fois et vos parties PTCGL s'envoient toutes seules au classement.",
+        "de": "Installiere PAB, melde dich einmal an und deine PTCGL-Partien landen von selbst in der Rangliste.",
+        "it": "Installa PAB, accedi una volta e le tue partite di PTCGL finiscono da sole in classifica.",
+        "ja": "PAB をインストールして一度ログインするだけで、PTCGL の対戦が自動でランキングにアップロードされます。",
+        "ko": "PAB를 설치하고 한 번만 로그인하면 PTCGL 대전이 자동으로 랭킹에 올라갑니다.",
+        "zh": "安装 PAB 并登录一次，你的 PTCGL 对战就会自动上传到排名。"
       },
       "steps": [
         "tcgkb-account",
@@ -132,9 +132,7 @@
         "install",
         "tcgkb-connect",
         "tcgkb-approve",
-        "tcgkb-auto-upload",
         "play",
-        "tcgkb-claim",
         "tcgkb-done"
       ]
     },
@@ -452,63 +450,75 @@
     },
     "tcgkb-connect": {
       "phase": {
-        "en": "Connect",
-        "es": "Conectar",
-        "pt": "Conectar",
+        "en": "Sign in",
+        "es": "Iniciar sesión",
+        "pt": "Entrar",
         "fr": "Connexion",
-        "de": "Verbinden",
-        "it": "Collega",
-        "ja": "接続",
-        "ko": "연결",
-        "zh": "连接"
+        "de": "Anmelden",
+        "it": "Accesso",
+        "ja": "ログイン",
+        "ko": "로그인",
+        "zh": "登录"
       },
       "short": {
-        "en": "Connect to TCGKB",
-        "es": "Conecta con TCGKB",
-        "pt": "Conecte ao TCGKB",
+        "en": "Sign in to TCGKB",
+        "es": "Inicia sesión en TCGKB",
+        "pt": "Entre no TCGKB",
         "fr": "Connectez-vous à TCGKB",
-        "de": "Mit TCGKB verbinden",
-        "it": "Collega a TCGKB",
-        "ja": "TCGKB と接続",
-        "ko": "TCGKB에 연결",
-        "zh": "连接 TCGKB"
+        "de": "Bei TCGKB anmelden",
+        "it": "Accedi a TCGKB",
+        "ja": "TCGKB にログイン",
+        "ko": "TCGKB에 로그인",
+        "zh": "登录 TCGKB"
       },
       "title": {
-        "en": "Connect PAB to your account",
-        "es": "Conecta PAB con tu cuenta",
-        "pt": "Conecte o PAB à sua conta",
-        "fr": "Connectez PAB à votre compte",
-        "de": "Verbinde PAB mit deinem Konto",
-        "it": "Collega PAB al tuo account",
-        "ja": "PAB をアカウントと接続",
-        "ko": "PAB를 계정에 연결하기",
-        "zh": "将 PAB 连接到你的账号"
+        "en": "Sign in to TCGKB from PAB",
+        "es": "Inicia sesión en TCGKB desde PAB",
+        "pt": "Entre no TCGKB pelo PAB",
+        "fr": "Connectez-vous à TCGKB depuis PAB",
+        "de": "Melde dich in PAB bei TCGKB an",
+        "it": "Accedi a TCGKB da PAB",
+        "ja": "PAB から TCGKB にログイン",
+        "ko": "PAB에서 TCGKB에 로그인하기",
+        "zh": "在 PAB 中登录 TCGKB"
       },
       "body": {
-        "en": "Right-click the PAB icon, open “tcgkb account” and choose “Connect to tcgkb...”. Your browser opens.",
-        "es": "Haz clic derecho en el ícono de PAB, entra a “tcgkb account” y elige “Connect to tcgkb...”. Se abre tu navegador.",
-        "pt": "Clique com o botão direito no ícone do PAB, abra “tcgkb account” e escolha “Connect to tcgkb...”. Seu navegador vai abrir.",
-        "fr": "Faites un clic droit sur l'icône de PAB, ouvrez “tcgkb account” et choisissez “Connect to tcgkb...”. Votre navigateur s'ouvre.",
-        "de": "Rechtsklicke auf das PAB-Symbol, öffne “tcgkb account” und wähle “Connect to tcgkb...”. Dein Browser öffnet sich.",
-        "it": "Clic destro sull'icona di PAB, apri “tcgkb account” e scegli “Connect to tcgkb...”. Si apre il tuo browser.",
-        "ja": "PAB のアイコンを右クリックし、“tcgkb account” から “Connect to tcgkb...” を選びます。ブラウザが開きます。",
-        "ko": "PAB 아이콘을 마우스 오른쪽 버튼으로 클릭하고 “tcgkb account”에서 “Connect to tcgkb...”를 선택하세요. 브라우저가 열립니다.",
-        "zh": "右键点击 PAB 图标，打开 “tcgkb account” 并选择 “Connect to tcgkb...”。浏览器会打开。"
+        "en": "Right after installing, PAB asks “Sign in to tcgkb.app to upload your matches?”: click “Yes” and your browser opens. That is the only setup: automatic uploads are already on, and every PTCGL account you play with on this PC is added to your account.",
+        "es": "Justo después de instalar, PAB pregunta “Sign in to tcgkb.app to upload your matches?”: toca “Yes” y se abre tu navegador. Es lo único que hay que configurar: la subida automática ya viene activada y cada cuenta de PTCGL con la que juegues en este PC se suma a tu cuenta.",
+        "pt": "Logo depois de instalar, o PAB pergunta “Sign in to tcgkb.app to upload your matches?”: clique em “Yes” e seu navegador abre. É a única configuração: o envio automático já vem ativado e cada conta do PTCGL com que você jogar neste PC é adicionada à sua conta.",
+        "fr": "Juste après l'installation, PAB demande “Sign in to tcgkb.app to upload your matches?” : cliquez sur “Yes” et votre navigateur s'ouvre. C'est le seul réglage : l'envoi automatique est déjà activé et chaque compte PTCGL avec lequel vous jouez sur ce PC est ajouté à votre compte.",
+        "de": "Direkt nach der Installation fragt PAB “Sign in to tcgkb.app to upload your matches?”: klicke auf “Yes”, und dein Browser öffnet sich. Mehr ist nicht einzurichten: Der automatische Upload ist schon an, und jedes PTCGL-Konto, mit dem du auf diesem PC spielst, wird deinem Konto hinzugefügt.",
+        "it": "Subito dopo l'installazione, PAB chiede “Sign in to tcgkb.app to upload your matches?”: clicca su “Yes” e si apre il browser. È l'unica impostazione: il caricamento automatico è già attivo e ogni account PTCGL con cui giochi su questo PC viene aggiunto al tuo account.",
+        "ja": "インストール直後に PAB が “Sign in to tcgkb.app to upload your matches?” と聞くので、“Yes” をクリックするとブラウザが開きます。設定はこれだけです。自動アップロードは最初からオンで、この PC でプレイする PTCGL アカウントはすべてあなたのアカウントに追加されます。",
+        "ko": "설치 직후 PAB가 “Sign in to tcgkb.app to upload your matches?”라고 묻습니다. “Yes”를 누르면 브라우저가 열립니다. 설정은 이것뿐입니다. 자동 업로드는 이미 켜져 있고, 이 PC에서 플레이하는 모든 PTCGL 계정이 내 계정에 추가됩니다.",
+        "zh": "安装完成后，PAB 会询问 “Sign in to tcgkb.app to upload your matches?”：点击 “Yes”，浏览器就会打开。这是唯一需要设置的步骤：自动上传默认开启，你在这台电脑上使用的每个 PTCGL 账号都会加入你的账号。"
+      },
+      "tip": {
+        "en": "Closed it? Right-click the PAB icon, open “tcgkb account” and choose “Sign in to tcgkb...”.",
+        "es": "¿Lo cerraste? Haz clic derecho en el ícono de PAB, entra a “tcgkb account” y elige “Sign in to tcgkb...”.",
+        "pt": "Fechou? Clique com o botão direito no ícone do PAB, abra “tcgkb account” e escolha “Sign in to tcgkb...”.",
+        "fr": "Vous l'avez fermé ? Faites un clic droit sur l'icône de PAB, ouvrez “tcgkb account” et choisissez “Sign in to tcgkb...”.",
+        "de": "Geschlossen? Rechtsklicke auf das PAB-Symbol, öffne “tcgkb account” und wähle “Sign in to tcgkb...”.",
+        "it": "L'hai chiuso? Clic destro sull'icona di PAB, apri “tcgkb account” e scegli “Sign in to tcgkb...”.",
+        "ja": "閉じてしまった場合は、PAB のアイコンを右クリックし、“tcgkb account” から “Sign in to tcgkb...” を選びます。",
+        "ko": "창을 닫았다면 PAB 아이콘을 오른쪽 클릭하고 “tcgkb account”에서 “Sign in to tcgkb...”를 선택하세요.",
+        "zh": "关掉了？右键点击 PAB 图标，打开 “tcgkb account” 并选择 “Sign in to tcgkb...”。"
       },
       "alt": {
-        "en": "PAB tray menu with Connect to tcgkb highlighted",
-        "es": "Menú del ícono de PAB con Connect to tcgkb resaltado",
-        "pt": "Menu do ícone do PAB com Connect to tcgkb destacado",
-        "fr": "Menu de l'icône PAB avec Connect to tcgkb en surbrillance",
-        "de": "PAB-Menü mit hervorgehobenem Connect to tcgkb",
-        "it": "Menu dell'icona di PAB con Connect to tcgkb evidenziato",
-        "ja": "Connect to tcgkb が強調された PAB のトレイメニュー",
-        "ko": "Connect to tcgkb가 강조된 PAB 트레이 메뉴",
-        "zh": "高亮 Connect to tcgkb 的 PAB 托盘菜单"
+        "en": "PAB asks to sign in to tcgkb.app, with Yes highlighted",
+        "es": "PAB pregunta si quieres iniciar sesión en tcgkb.app, con Yes resaltado",
+        "pt": "O PAB pergunta se você quer entrar no tcgkb.app, com Yes destacado",
+        "fr": "PAB propose de se connecter à tcgkb.app, avec Yes en évidence",
+        "de": "PAB fragt nach der Anmeldung bei tcgkb.app, Yes hervorgehoben",
+        "it": "PAB chiede di accedere a tcgkb.app, con Yes evidenziato",
+        "ja": "tcgkb.app へのログインを確認する PAB の画面（Yes を強調）",
+        "ko": "tcgkb.app 로그인을 묻는 PAB 창, Yes 강조",
+        "zh": "PAB 询问是否登录 tcgkb.app，突出显示 Yes"
       },
       "appText": [
+        "Sign in to tcgkb.app to upload your matches?",
         "tcgkb account",
-        "Connect to tcgkb..."
+        "Sign in to tcgkb..."
       ]
     },
     "tcgkb-approve": {
@@ -568,117 +578,6 @@
         "zh": "PAB 代码与显示相同代码的 tcgkb.app 页面"
       },
       "appText": []
-    },
-    "tcgkb-claim": {
-      "phase": {
-        "en": "After your first match",
-        "es": "Tras tu primera partida",
-        "pt": "Depois da primeira partida",
-        "fr": "Après votre première partie",
-        "de": "Nach deiner ersten Partie",
-        "it": "Dopo la prima partita",
-        "ja": "最初の対戦のあと",
-        "ko": "첫 대전 후",
-        "zh": "第一局对战后"
-      },
-      "short": {
-        "en": "Claim your account",
-        "es": "Reclama tu cuenta",
-        "pt": "Reivindique sua conta",
-        "fr": "Revendiquez votre compte",
-        "de": "Konto beanspruchen",
-        "it": "Rivendica il tuo account",
-        "ja": "アカウントを登録",
-        "ko": "계정 등록",
-        "zh": "认领账号"
-      },
-      "title": {
-        "en": "Claim your PTCGL account",
-        "es": "Reclama tu cuenta de PTCGL",
-        "pt": "Reivindique sua conta do PTCGL",
-        "fr": "Revendiquez votre compte PTCGL",
-        "de": "Beanspruche dein PTCGL-Konto",
-        "it": "Rivendica il tuo account PTCGL",
-        "ja": "PTCGL アカウントを登録",
-        "ko": "PTCGL 계정 등록하기",
-        "zh": "认领你的 PTCGL 账号"
-      },
-      "body": {
-        "en": "After your first match, PAB asks “Claim <your name> on tcgkb?”. Click the notification, pick your PTCGL name and click “Claim” (you can also open “My PTCGL accounts...” in the tcgkb account menu). If you play on several accounts, claim them all: the ranking shows them as one row.",
-        "es": "Después de tu primera partida, PAB pregunta “Claim <tu nombre> on tcgkb?”. Haz clic en el aviso, elige tu nombre de PTCGL y toca “Claim” (también puedes abrir “My PTCGL accounts...” en el menú tcgkb account). Si juegas con varias cuentas, reclámalas todas: en el ranking salen juntas en una sola fila.",
-        "pt": "Depois da primeira partida, o PAB pergunta “Claim <seu nome> on tcgkb?”. Clique no aviso, escolha seu nome no PTCGL e clique em “Claim” (você também pode abrir “My PTCGL accounts...” no menu tcgkb account). Se você joga com várias contas, reivindique todas: no ranking elas aparecem juntas em uma linha.",
-        "fr": "Après votre première partie, PAB demande “Claim <votre nom> on tcgkb?”. Cliquez sur la notification, choisissez votre nom PTCGL et cliquez sur “Claim” (vous pouvez aussi ouvrir “My PTCGL accounts...” dans le menu tcgkb account). Si vous jouez avec plusieurs comptes, revendiquez-les tous : le classement les regroupe sur une seule ligne.",
-        "de": "Nach deiner ersten Partie fragt PAB “Claim <dein Name> on tcgkb?”. Klicke auf die Benachrichtigung, wähle deinen PTCGL-Namen und klicke auf “Claim” (oder öffne “My PTCGL accounts...” im Menü tcgkb account). Wenn du mit mehreren Konten spielst, beanspruche alle: Die Rangliste zeigt sie in einer Zeile.",
-        "it": "Dopo la prima partita, PAB chiede “Claim <il tuo nome> on tcgkb?”. Clicca sulla notifica, scegli il tuo nome PTCGL e clicca su “Claim” (puoi anche aprire “My PTCGL accounts...” nel menu tcgkb account). Se giochi con più account, rivendicali tutti: in classifica compaiono insieme in una sola riga.",
-        "ja": "最初の対戦のあと、PAB が “Claim <あなたの名前> on tcgkb?” と聞いてきます。通知をクリックし、自分の PTCGL 名を選んで “Claim” をクリックします（tcgkb account メニューの “My PTCGL accounts...” からも開けます）。複数のアカウントで遊んでいる場合はすべて登録してください。ランキングでは1行にまとめて表示されます。",
-        "ko": "첫 대전이 끝나면 PAB가 “Claim <내 이름> on tcgkb?”라고 묻습니다. 알림을 클릭하고 PTCGL 이름을 선택한 뒤 “Claim”을 누르세요(tcgkb account 메뉴의 “My PTCGL accounts...”에서도 열 수 있습니다). 여러 계정으로 플레이한다면 모두 등록하세요. 랭킹에는 한 줄로 표시됩니다.",
-        "zh": "第一局对战结束后，PAB 会询问 “Claim <你的名字> on tcgkb?”。点击通知，选择你的 PTCGL 名称并点击 “Claim”（也可以在 tcgkb account 菜单中打开 “My PTCGL accounts...”）。如果你使用多个账号，请全部认领：排名中会合并为一行显示。"
-      },
-      "alt": {
-        "en": "List of PTCGL accounts with the Claim button",
-        "es": "Lista de cuentas de PTCGL con el botón Claim",
-        "pt": "Lista de contas do PTCGL com o botão Claim",
-        "fr": "Liste des comptes PTCGL avec le bouton Claim",
-        "de": "Liste der PTCGL-Konten mit dem Button Claim",
-        "it": "Elenco degli account PTCGL con il pulsante Claim",
-        "ja": "Claim ボタンのある PTCGL アカウント一覧",
-        "ko": "Claim 버튼이 있는 PTCGL 계정 목록",
-        "zh": "带有 Claim 按钮的 PTCGL 账号列表"
-      },
-      "appText": [
-        "on tcgkb?",
-        "My PTCGL accounts...",
-        "Claim"
-      ]
-    },
-    "tcgkb-auto-upload": {
-      "short": {
-        "en": "Automatic uploads",
-        "es": "Subida automática",
-        "pt": "Envio automático",
-        "fr": "Envoi automatique",
-        "de": "Automatischer Upload",
-        "it": "Caricamento automatico",
-        "ja": "自動アップロード",
-        "ko": "자동 업로드",
-        "zh": "自动上传"
-      },
-      "title": {
-        "en": "Turn on automatic uploads",
-        "es": "Activa la subida automática",
-        "pt": "Ative o envio automático",
-        "fr": "Activez l'envoi automatique",
-        "de": "Aktiviere den automatischen Upload",
-        "it": "Attiva il caricamento automatico",
-        "ja": "自動アップロードをオン",
-        "ko": "자동 업로드 켜기",
-        "zh": "开启自动上传"
-      },
-      "body": {
-        "en": "Right after you approve, PAB asks “Upload your matches to tcgkb automatically?”: click “Yes”. If the accounts window says to play a match first, that is fine: close it, you claim your account after your first match.",
-        "es": "Justo después de aprobar, PAB pregunta “Upload your matches to tcgkb automatically?”: toca “Yes”. Si la ventana de cuentas dice que primero juegues una partida, está bien: ciérrala, reclamas tu cuenta después de tu primera partida.",
-        "pt": "Logo depois de aprovar, o PAB pergunta “Upload your matches to tcgkb automatically?”: clique em “Yes”. Se a janela de contas disser para jogar uma partida antes, tudo bem: feche-a, você reivindica sua conta depois da primeira partida.",
-        "fr": "Juste après l'approbation, PAB demande “Upload your matches to tcgkb automatically?” : cliquez sur “Yes”. Si la fenêtre des comptes vous dit de jouer d'abord une partie, c'est normal : fermez-la, vous revendiquerez votre compte après votre première partie.",
-        "de": "Direkt nach dem Bestätigen fragt PAB “Upload your matches to tcgkb automatically?”: klicke auf “Yes”. Wenn das Kontenfenster sagt, du sollst zuerst eine Partie spielen, ist das in Ordnung: schließe es, dein Konto beanspruchst du nach deiner ersten Partie.",
-        "it": "Subito dopo l'approvazione, PAB chiede “Upload your matches to tcgkb automatically?”: clicca su “Yes”. Se la finestra degli account dice di giocare prima una partita, va bene: chiudila, rivendichi il tuo account dopo la prima partita.",
-        "ja": "承認するとすぐに PAB が “Upload your matches to tcgkb automatically?” と聞いてきます。“Yes” をクリックします。アカウントのウィンドウに「先に対戦してください」と出ても大丈夫です。閉じてください。アカウントの登録は最初の対戦のあとに行います。",
-        "ko": "승인하면 바로 PAB가 “Upload your matches to tcgkb automatically?”라고 묻습니다. “Yes”를 누르세요. 계정 창에 먼저 대전을 하라고 나와도 괜찮습니다. 창을 닫으세요. 계정 등록은 첫 대전 후에 합니다.",
-        "zh": "批准后，PAB 会立即询问 “Upload your matches to tcgkb automatically?”：点击 “Yes”。如果账号窗口提示先打一局，没关系：关闭它，第一局对战后再认领账号。"
-      },
-      "alt": {
-        "en": "PAB asking Upload your matches to tcgkb automatically? with the Yes button",
-        "es": "PAB pregunta Upload your matches to tcgkb automatically? con el botón Yes",
-        "pt": "PAB perguntando Upload your matches to tcgkb automatically? com o botão Yes",
-        "fr": "PAB demande Upload your matches to tcgkb automatically? avec le bouton Yes",
-        "de": "PAB fragt Upload your matches to tcgkb automatically? mit dem Button Yes",
-        "it": "PAB chiede Upload your matches to tcgkb automatically? con il pulsante Yes",
-        "ja": "Upload your matches to tcgkb automatically? と Yes ボタンが表示された PAB",
-        "ko": "Upload your matches to tcgkb automatically?와 Yes 버튼이 있는 PAB 창",
-        "zh": "PAB 询问 Upload your matches to tcgkb automatically? 并显示 Yes 按钮"
-      },
-      "appText": [
-        "Upload your matches to tcgkb automatically?"
-      ]
     },
     "tcgkb-done": {
       "phase": {

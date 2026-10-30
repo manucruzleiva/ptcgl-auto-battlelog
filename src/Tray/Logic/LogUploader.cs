@@ -32,16 +32,15 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public string StoppedBecause;
         /// <summary>tcgkb's answer to the newest log sent in this run, or null.</summary>
         public UploadResponse Newest;
-        /// <summary>The newest tracked match of a PTCGL account that is not the player's on tcgkb, or null: an account to offer claiming.</summary>
-        public SealSummary Unclaimed;
     }
 
     /// <summary>
-    /// Sends tcgkb every tracked match of the player's claimed PTCGL accounts (docs/TCGKB-API.md,
-    /// "Match uploads"): the sealed logs in the logs folder that tcgkb has not accepted yet, newest
-    /// first, at most MaxPerRun per run. What was sent is remembered in tcgkb-uploads.json; a log
-    /// whose upload failed for a passing reason (no network, tcgkb busy) is sent on a later run.
-    /// Only accounts tcgkb lists as the player's are sent: a log of anyone else stays on this computer.
+    /// Sends tcgkb every tracked match in the logs folder (docs/TCGKB-API.md, "Match uploads"): the
+    /// sealed logs that tcgkb has not accepted yet, newest first, at most MaxPerRun per run. Each
+    /// seal's player is the PTCGL account signed in on this computer (never the opponent), and tcgkb
+    /// adds that account to the user on its first upload. What was sent is remembered in
+    /// tcgkb-uploads.json; a log whose upload failed for a passing reason (no network, tcgkb busy) is
+    /// sent on a later run.
     /// </summary>
     public sealed class LogUploader
     {
@@ -79,17 +78,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 var state = LoadState();
                 var done = new HashSet<string>(state.Uploaded.Concat(state.Rejected), StringComparer.Ordinal);
 
-                TcgkbAccounts me;
-                try { me = await _connection.GetAccountsAsync(ct).ConfigureAwait(false); }
-                catch (TcgkbAuthException) { throw; }
-                catch (TcgkbException e)
-                {
-                    run.StoppedBecause = e.Message;
-                    return run;
-                }
-                var mine = new HashSet<string>(me.Accounts.Select(a => a.AccountHash), StringComparer.Ordinal);
-                run.Unclaimed = NewestUnclaimed(logsFolder, mine);
-                var pending = Pending(logsFolder, mine, done);
+                var pending = Pending(logsFolder, done);
 
                 int i = 0;
                 for (; i < pending.Count; i++)
@@ -121,12 +110,13 @@ namespace PtcglAutoBattleLog.Tray.Logic
                         }
                     }
                     catch (TcgkbAuthException) { throw; }
-                    catch (TcgkbException e) when (e.Code == "invalid_log")
+                    // Refused for good: a broken log, or a PTCGL account that is another tcgkb user's.
+                    catch (TcgkbException e) when (e.Code == "invalid_log" || e.Code == "claimed_by_other")
                     {
                         run.Rejected++;
                         state.Rejected.Add(Key(s));
                     }
-                    catch (TcgkbException e) when (e.Code == "not_claimed") { }   // released since the list: not sent, kept for later
+                    catch (TcgkbException e) when (e.Code == "not_claimed") { }   // a tcgkb from before automatic claims: kept for later
                     catch (TcgkbException e)
                     {
                         run.StoppedBecause = e.Message;
@@ -140,11 +130,10 @@ namespace PtcglAutoBattleLog.Tray.Logic
             finally { _running.Release(); }
         }
 
-        /// <summary>The folder's sealed logs of a tracked match of one of these accounts, not in done, newest first. Never throws.</summary>
-        public static List<SealSummary> Pending(string logsFolder, ISet<string> accounts, ISet<string> done)
+        /// <summary>The folder's sealed logs of a tracked match, not in done, newest first. Never throws.</summary>
+        public static List<SealSummary> Pending(string logsFolder, ISet<string> done)
         {
             var found = new List<SealSummary>();
-            if (accounts.Count == 0) return found;
             try
             {
                 if (string.IsNullOrEmpty(logsFolder) || !Directory.Exists(logsFolder)) return found;
@@ -152,32 +141,12 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 {
                     if (!LogFileName.TryParse(file, out _, out _)) continue;
                     var s = SealSummary.TryRead(file);
-                    if (s?.PlayerAccountHash == null || !accounts.Contains(s.PlayerAccountHash)) continue;
-                    if (!PtcglAccountScanner.IsEvidence(s) || done.Contains(Key(s))) continue;
+                    if (s?.PlayerAccountHash == null || !PtcglAccountScanner.IsEvidence(s) || done.Contains(Key(s))) continue;
                     found.Add(s);
                 }
             }
             catch (Exception) { }
             return found.OrderByDescending(s => s.SealedUtc).ThenByDescending(s => s.LogFile, StringComparer.Ordinal).ToList();
-        }
-
-        /// <summary>The folder's newest sealed log of a tracked match of an account not in accounts, or null. Never throws.</summary>
-        public static SealSummary NewestUnclaimed(string logsFolder, ISet<string> accounts)
-        {
-            SealSummary newest = null;
-            try
-            {
-                if (string.IsNullOrEmpty(logsFolder) || !Directory.Exists(logsFolder)) return null;
-                foreach (var file in Directory.EnumerateFiles(logsFolder, "*.txt"))
-                {
-                    if (!LogFileName.TryParse(file, out _, out _)) continue;
-                    var s = SealSummary.TryRead(file);
-                    if (s?.PlayerAccountHash == null || accounts.Contains(s.PlayerAccountHash) || !PtcglAccountScanner.IsEvidence(s)) continue;
-                    if (newest == null || s.SealedUtc > newest.SealedUtc) newest = s;
-                }
-            }
-            catch (Exception) { }
-            return newest;
         }
 
         /// <summary>The saved state, or an empty one when the file is missing or unreadable (logs are then offered again: harmless).</summary>

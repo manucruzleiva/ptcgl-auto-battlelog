@@ -232,7 +232,7 @@ when the portable fallback is in use; "Choose the game folder..." while the game
 "Review the updated disclaimer..." while consent to the current `Disclaimer.Version` is pending) ·
 **Open logs folder** (also the double-click action) · Open last log · Update vX available ▸ (Install
 now, What's new, Skip this version; only while an update waits) · tcgkb account ▸ ("Not connected" /
-"Connected as <name>", Connect to tcgkb..., My PTCGL accounts..., Disconnect; see "tcgkb account") ·
+"Connected as <name>", Sign in to tcgkb..., Upload my matches automatically, Upload matches now, Disconnect; see "tcgkb account") ·
 Pokematch ▸ ("Not set up" / a status line, Set API token... / Change API token..., Upload new battle
 logs automatically, Upload past battle logs..., Remove API token; see "Pokematch") · Status and
 settings... · Settings ▸ · Updates ▸ · Help ▸ · Exit.
@@ -248,23 +248,33 @@ settings... · Settings ▸ · Updates ▸ · Help ▸ · Exit.
   Accept button, while consent is pending) · Licenses (the embedded `THIRD-PARTY-NOTICES.md`,
   `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from game....
 
-**Status and settings window** (`StatusWindow`): the menu laid out as a window, opened from
-"Status and settings..." and by the show event (the app started again while it runs, or started
-without `--background` when nothing else is shown). It has no state or actions of its own: each control
-mirrors one menu item (text, `Available`, `Enabled`, `Checked`) and a click is that item's
-`PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become labels, `ToggleTag`
-switches (still check boxes to keyboards and screen readers), a submenu whose options carry a string
-tag (seal mode, update channel) radio buttons, the rest buttons. Header (white): the app icon, product
-name and version, the status line with a dot in the tray icon's colour (`StatusIcons.DotColor`, grey
-when the tray shows none), then the other status lines (the red disclaimer item a filled red button), including one only the window
-shows: the mod version the game has loaded or last loaded (`pluginVersion` from `plugin-status.json`,
-`PluginStatus.ModVersionLine`) and whether it is the app's.
-Body: a navigation column (General (Settings ▸), Updates (the waiting update and Updates ▸), Accounts
-(tcgkb account ▸, Pokematch ▸), Help (Help ▸)) and the page, whose items sit in white rounded cards on
-a light grey surface: a separator starts a new card, a submenu gets a card titled with its name.
-Footer: Open logs folder (the accent button: the menu's bold item), Open last log, Close. In high
-contrast mode it keeps the system colours and buttons. While it is open every daemon report refreshes the items and
-the window.
+**Status and settings window** (`StatusWindow`): the menu laid out as a window, with the player's
+matches and their place on the tcgkb ladder, opened from "Status and settings..." and by the show
+event (the app started again while it runs, or started without `--background` when nothing else is
+shown). Each control that mirrors a menu item copies its text, `Available`, `Enabled` and `Checked`,
+and a click is that item's `PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become
+labels, `ToggleTag` switches (still check boxes to keyboards and screen readers), a submenu whose
+options carry a string tag (seal mode, update channel) radio buttons, the rest buttons. What is not a
+menu item comes from `StatusWindow.Data`, which the tray builds on every refresh: the battle logs in
+the logs folder (file names, `LogFileName`; listed again only when the folder's time changes) and
+tcgkb's `GET /api/ptcgl/accounts` (accounts, `ladder`), asked when the window opens or comes to the
+front (at most once a minute) and after matches were uploaded.
+Look: dark with tcgkb's yellow as the accent, the title bar dark too (DWM, Windows 10 1809 and later).
+A navigation column with icons (Segoe Fluent Icons / Segoe MDL2 Assets) and the version, then the page:
+* **Home**: the status with a dot in the tray icon's colour (`StatusIcons.DotColor`, grey when the
+  tray shows none), the other status lines (including the mod version the game has loaded,
+  `PluginStatus.ModVersionLine`) and the buttons (the red disclaimer item filled red, Open logs folder
+  in the accent); a tcgkb card (signed in: the accounts with their verified state, the ladder progress
+  from `LadderStatus`, the upload switch; otherwise Sign in); the last seven days; the last five matches.
+* **Matches**: every log, newest first (at most 100), filtered by result; clicking one opens it.
+* **tcgkb**: signed out, Sign in; signed in, the three steps to a row on the ladder (signed in, a
+  PTCGL account, `minGames` matches) with why the player is not ranked yet, the accounts with what
+  "verified" means, then the tcgkb account ▸ items.
+* **Settings** (Settings ▸ and Pokematch ▸), **Updates** (the waiting update and Updates ▸), **Help**
+  (Help ▸): items in rounded cards, a separator starts a new card, a submenu gets a card titled with its name.
+
+In high contrast mode it keeps the system colours and buttons. Esc closes it. While it is open every
+daemon report refreshes the items and the window.
 
 ### Daemon loop
 
@@ -365,40 +375,35 @@ the window.
 
 ## tcgkb account
 
-Optional and off until the player connects: a tray that was never connected sends nothing to
-tcgkb. The wire contract is [docs/TCGKB-API.md](TCGKB-API.md).
+Optional and off until the player signs in: a tray that was never connected sends nothing to
+tcgkb. Signing in is the only step; there is no claim step in the tray. The wire contract is
+[docs/TCGKB-API.md](TCGKB-API.md).
 
-* **Connect to tcgkb...** asks first (what is sent, and when), then runs the OAuth device flow
+* **Sign in to tcgkb...** asks first (what is sent, and when), then runs the OAuth device flow
   (`TcgkbConnection.ConnectAsync`): a code from `POST /api/device/code`, the browser opened on the
   `https://tcgkb.app/` page tcgkb names (any other address is refused), the code shown in a dialog,
   `POST /api/device/token` polled at tcgkb's interval until approved, declined, expired or
   cancelled. The app never sees the tcgkb password, and Google sign-in works too. The connection
   is saved only once `GET /api/ptcgl/accounts` has returned the user's name; otherwise the refresh
-  token is revoked.
+  token is revoked. A first run (fresh install) opens it by itself; a player who is not signed in
+  is offered it once by balloon (`Settings.TcgkbSignInOffered`), so installs from before sign-in
+  was the only step are not left half set up.
 * `tcgkb-connection.dat` (in `AppPaths.Root`): `TcgkbTokens` as JSON, encrypted with DPAPI
   (`CurrentUser`, with app-specific entropy), written atomically. A file that does not decrypt or
   parse is deleted (= not connected). The access token is refreshed a minute before it expires and
   once more after a 401; a refused refresh (`invalid_grant`) deletes the file.
-* **My PTCGL accounts...** lists the accounts `PtcglAccountScanner` finds in the logs folder (the
-  plugin's `.txt` names only; their seal's `player.accountHash`, grouped, newest name, match count)
-  next to the user's accounts on tcgkb, with **Claim** and **Release**. A claim asks first, then
-  sends the account's newest 3 tracked matches (`matchId` set, result not `EXPORTED`, each file at
-  most 1 MiB) exactly as on disk, `.seal` included. tcgkb verifies the seals; the tray does not.
-* **Upload my matches automatically** (`Settings.TcgkbAutoUpload`, asked once after the first
-  accounts dialog, off by default): `LogUploader.SyncAsync` lists the user's accounts on tcgkb,
-  then sends `POST /api/ptcgl/logs` for each tracked match of those accounts not yet in
-  `tcgkb-uploads.json` (`AppPaths.Root`; keys `matchId|accountHash|keyId`, accepted and rejected,
-  and the `deckSha256` of decks tcgkb linked: each distinct deck file is sent once, as `deck`),
-  newest first, at most 50 per run (another run follows at once when more are left). It runs at
-  start, after each saved log and every 30 minutes; `not_claimed` leaves the log for later,
-  `invalid_log` records it as rejected, any other error ends the run until the next one. One run
-  at a time. **Upload matches now** runs it on demand; **Last upload** shows the newest result.
-* **Claim offer after a match.** Each run also names the newest tracked match of an account that is
-  not the user's on tcgkb (`UploadRun.Unclaimed`). When that match is under an hour old and newer
-  than the last accounts dialog, a balloon offers to claim it ("Claim <name> on tcgkb?", click =
-  **My PTCGL accounts...**), once per account (`Settings.TcgkbClaimOffered`). So a player can
-  connect and turn uploads on before the first match, and claim right after it: a claim needs a
-  sealed match as proof.
+* **Upload my matches automatically** (`Settings.TcgkbAutoUpload`; null, never chosen, means on):
+  `LogUploader.SyncAsync` sends `POST /api/ptcgl/logs` for each tracked match in the logs folder
+  (`matchId` set, result not `EXPORTED`, a `player.accountHash`, each file at most 1 MiB) not yet
+  in `tcgkb-uploads.json` (`AppPaths.Root`; keys `matchId|accountHash|keyId`, accepted and
+  rejected, and the `deckSha256` of decks tcgkb linked: each distinct deck file is sent once, as
+  `deck`), newest first, at most 50 per run (another run follows at once when more are left). A
+  seal's `player` is always the account signed in on this computer, never the opponent; tcgkb adds
+  it to the user with its first upload. It runs at start, after each saved log and every 30
+  minutes; `not_claimed` (a tcgkb from before automatic claims) leaves the log for later,
+  `invalid_log` and `claimed_by_other` record it as rejected, any other error ends the run until
+  the next one. One run at a time. **Upload matches now** runs it on demand; **Last upload** shows
+  the newest result.
 * **Disconnect** forgets the connection here, then revokes it on tcgkb (best effort: offline, the
   balloon says to remove the computer in the tcgkb profile).
 * HTTP: its own `HttpClient`, `https://tcgkb.app` only, no redirects, no cookies, 30 s per request,
@@ -464,7 +469,7 @@ build/BuildInfo.targets         generated BuildInfo constants
 build/portable.txt              the portable zip's marker file text (@VERSION@, @PROJECT_URL@ filled in by the build)
 tools/make-manifest.py          writes update.json + SHA256SUMS.txt for a release
 tools/verify_log.py             checks sealed logs (python3, stdlib only; see docs/LOG-SEAL.md)
-docs/TCGKB-API.md               the tcgkb connection and PTCGL account claims, client and server contract
+docs/TCGKB-API.md               the tcgkb connection and match uploads, client and server contract
 docs/POKEMATCH-API.md           what the tray sends to Pokematch's /api/v1/tcg-matches
 licenses/LGPL-2.1.txt           Unity Doorstop's license text (embedded in the exe, packaged in the zip)
 global.json                     the exact .NET SDK (rollForward: disable): reproducible builds
@@ -676,8 +681,6 @@ public sealed class TcgkbApi   // docs/TCGKB-API.md; HTTP injected, like UpdateC
     public Task<TcgkbTokenResponse> RefreshAsync(string refreshToken, CancellationToken ct);  // invalid_grant → TcgkbAuthException
     public Task RevokeAsync(string refreshToken, CancellationToken ct);
     public Task<TcgkbAccounts> GetAccountsAsync(string accessToken, CancellationToken ct);
-    public Task<TcgkbAccount> ClaimAsync(string accessToken, ClaimRequest claim, CancellationToken ct);
-    public Task ReleaseAsync(string accessToken, string accountHash, CancellationToken ct);
     public static bool IsOwnPage(string url);   // the only pages the tray opens for tcgkb
 }
 
@@ -686,12 +689,11 @@ public sealed class TcgkbConnection   // TcgkbApi + TcgkbTokenStore (protect/unp
     public Task<string> ConnectAsync(string deviceName, Action<DeviceAuthorization> show, Func<TimeSpan, CancellationToken, Task> delay, CancellationToken ct);
     public Task<bool> DisconnectAsync(CancellationToken ct);
     public Task<T> CallAsync<T>(Func<string, CancellationToken, Task<T>> call, CancellationToken ct);   // refresh + one retry on 401
-    public static ClaimRequest BuildClaim(DetectedAccount account);
 }
 
 public static class PtcglAccountScanner
 {
-    public static List<DetectedAccount> Scan(string logsFolder);   // by player.accountHash, most matches first; never throws
+    public static bool IsEvidence(SealSummary s);   // a tracked match whose files are small enough to send
 }
 
 public sealed class SealSummary

@@ -24,20 +24,18 @@ and each log's seal names the deck it was played with.
 What it does not do: it does not take part in the battle. It does not show you any information,
 does not automate any game action, and does not change cards, decks, matches or results. It sends
 nothing to The Pokémon Company. Its only network traffic is the tray app checking this project's
-GitHub releases for updates and, only if you choose them, requests to tcgkb.app (when you connect a
+GitHub releases for updates and, only if you choose them, requests to tcgkb.app (when you sign in to a
 tcgkb account) and to Pokematch (when you set a Pokematch API token).
 
-tcgkb.app is a separate site by the same author, not part of this app, and connecting to it is
-optional and off by default. Connecting signs this computer in to your tcgkb account; the app never
-sees your tcgkb password. When you claim a PTCGL account there, the app sends tcgkb.app that
-account's 3 newest battle logs with their seals, as proof that the account is yours. Those logs
-contain both players' display names, your deck name, the match id, the plays of the match and the
-hashed account ids. If you also turn on
-"Upload my matches automatically", the app sends tcgkb.app every tracked match of the accounts you
-claimed, the same way and with your decklist, so tcgkb can show your statistics, your decks and
-the global meta. Nothing is sent
-before you connect and claim, uploads are off until you turn them on, and you can turn them off or
-disconnect at any time.
+tcgkb.app is a separate site by the same author, not part of this app, and signing in to it is
+optional and off by default. Signing in links this computer to your tcgkb account; the app never
+sees your tcgkb password. From then on, unless you turn "Upload my matches automatically" off, the
+app sends tcgkb.app every tracked match in your logs folder (the ones already there and each new
+one) with its seal and your decklist, so tcgkb can show your statistics, your decks, the ranking and
+the global meta. Every PTCGL account that played those matches on this computer is added to your
+tcgkb account. The logs contain both players' display names, your deck name, the match id, the
+plays of the match and the hashed account ids. Nothing is sent before you sign in, and you can turn
+uploads off or disconnect at any time.
 
 Pokematch (pokematch-vslogger.onrender.com) is a separate site, not part of this app, and uploading
 to it is optional and off by default. If you set a Pokematch API token and turn uploads on, the app

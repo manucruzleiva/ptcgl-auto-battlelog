@@ -97,6 +97,19 @@ namespace PtcglAutoBattleLog.Tray.Logic
     {
         [DataMember(Name = "user")] public TcgkbUser User;
         [DataMember(Name = "accounts")] public List<TcgkbAccount> Accounts;
+        /// <summary>Where the user stands on the ranking; null from a tcgkb older than this field.</summary>
+        [DataMember(Name = "ladder")] public TcgkbLadder Ladder;
+    }
+
+    /// <summary>The ranking as tcgkb.app/leaderboard first shows it (Elo, all time): matches, the minimum to be ranked, the rank.</summary>
+    [DataContract]
+    public sealed class TcgkbLadder
+    {
+        [DataMember(Name = "games")] public int Games;
+        [DataMember(Name = "minGames")] public int MinGames;
+        /// <summary>Null while under MinGames.</summary>
+        [DataMember(Name = "rank")] public int? Rank;
+        [DataMember(Name = "players")] public int Players;
     }
 
     [DataContract]
@@ -112,19 +125,6 @@ namespace PtcglAutoBattleLog.Tray.Logic
         /// when there is none, it does not match, or tcgkb already has it (it then links it by deckSha256).
         /// </summary>
         [DataMember(Name = "deck", Order = 4, EmitDefaultValue = false)] public string Deck;
-    }
-
-    [DataContract]
-    public sealed class ClaimRequest
-    {
-        [DataMember(Name = "accountHash", Order = 1)] public string AccountHash;
-        [DataMember(Name = "evidence", Order = 2)] public List<ClaimEvidence> Evidence;
-    }
-
-    [DataContract]
-    public sealed class ClaimResponse
-    {
-        [DataMember(Name = "account")] public TcgkbAccount Account;
     }
 
     /// <summary>tcgkb's answer to one uploaded battle log: whether it was new, and the decks it read from it.</summary>
@@ -253,24 +253,8 @@ namespace PtcglAutoBattleLog.Tray.Logic
             return a;
         }
 
-        /// <summary>Claims a PTCGL account with sealed logs that name it as the player. tcgkb checks each seal.</summary>
-        public async Task<TcgkbAccount> ClaimAsync(string accessToken, ClaimRequest claim, CancellationToken ct)
-        {
-            if (claim == null || !IsAccountHash(claim.AccountHash)) throw new ArgumentException("Invalid account hash.", nameof(claim));
-            if (claim.Evidence == null || claim.Evidence.Count == 0 || claim.Evidence.Count > PtcglAccountScanner.MaxEvidence)
-                throw new ArgumentException("A claim needs 1 to " + PtcglAccountScanner.MaxEvidence + " logs.", nameof(claim));
-            var r = await SendAsync(new TcgkbRequest
-            {
-                Method = "POST", Path = "/api/ptcgl/claims", Bearer = accessToken,
-                ContentType = "application/json", Body = Json.Write(claim),
-            }, ct).ConfigureAwait(false);
-            var account = Ok<ClaimResponse>(r).Account;
-            if (account == null || account.AccountHash != claim.AccountHash) throw BadResponse("another account");
-            return account;
-        }
-
         /// <summary>
-        /// Uploads one sealed battle log of a claimed account (scope logs:upload). tcgkb checks the seal;
+        /// Uploads one sealed battle log (scope logs:upload). tcgkb checks the seal;
         /// a log it already has is accepted again, so a retry is harmless.
         /// </summary>
         public async Task<UploadResponse> UploadLogAsync(string accessToken, ClaimEvidence log, CancellationToken ct)
@@ -282,14 +266,6 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 ContentType = "application/json", Body = Json.Write(log),
             }, ct).ConfigureAwait(false);
             return Ok<UploadResponse>(r);
-        }
-
-        /// <summary>Gives a claimed account up. One that is not the player's (any more) is not an error.</summary>
-        public async Task ReleaseAsync(string accessToken, string accountHash, CancellationToken ct)
-        {
-            if (!IsAccountHash(accountHash)) throw new ArgumentException("Invalid account hash.", nameof(accountHash));
-            var r = await SendAsync(new TcgkbRequest { Method = "DELETE", Path = "/api/ptcgl/accounts/" + accountHash, Bearer = accessToken }, ct).ConfigureAwait(false);
-            if (r.Status != 200 && r.Status != 204 && r.Status != 404) throw Failure(r);
         }
 
         // ---- Helpers ----------------------------------------------------------------------------

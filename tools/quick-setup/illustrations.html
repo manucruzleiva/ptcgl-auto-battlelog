@@ -199,26 +199,6 @@ const kbHeader = (right = '') => `
 
 const GOOGLE = `<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
 
-/** The app's "My PTCGL accounts" window. */
-const accountsWindow = (t, style) => win('PTCGL Auto Battle Log - My PTCGL accounts', 560, `
-  <div style="display:flex;flex-direction:column;gap:10px;padding:14px 14px 16px">
-    <div>Signed in to tcgkb as ManuCL. Claim the PTCGL accounts you play with; each one keeps its own stats.</div>
-    <table class="field" style="width:100%">
-      <thead style="background:#fff;text-align:left;color:#444">
-        <tr><th style="padding:5px 8px;font-weight:400;border-bottom:1px solid #E5E5E5">PTCGL account</th><th style="padding:5px 8px;font-weight:400;border-bottom:1px solid #E5E5E5">Matches on this PC</th><th style="padding:5px 8px;font-weight:400;border-bottom:1px solid #E5E5E5">On tcgkb</th></tr>
-      </thead>
-      <tbody>
-        <tr style="background:#CCE8FF"><td style="padding:5px 8px">ManuCL</td><td style="padding:5px 8px">1</td><td style="padding:5px 8px">Not claimed</td></tr>
-        <tr><td style="padding:5px 8px">&nbsp;</td><td></td><td></td></tr>
-      </tbody>
-    </table>
-    <div style="display:flex;justify-content:flex-end;gap:8px">
-      <span class="wbtn">Release</span>
-      <span class="wbtn def hl">Claim${tag(t.claim2, 'right:0;top:100%;margin-top:14px')}</span>
-      <span class="wbtn">Close</span>
-    </div>
-  </div>`, style);
-
 /** Every picture, by the step ids of docs/quick-setup/steps.json. t: that language's illustration-text.json entry. */
 const PICTURES = {
   'tcgkb-account': (t) => desktop(browser('tcgkb.app', '/login', 'Sign in · TCGKB', 'left:60px;right:60px;top:22px;height:450px', `
@@ -279,9 +259,18 @@ const PICTURES = {
     </div>
     ${toast('VICTORY vs Kairo_TCG — battle log saved', 'Saved in Documents\\PTCGL Battle Logs. Click to open it.', { hl: true, tagText: t.onb8 })}`, { game: true }),
 
-  'tcgkb-connect': (t) => desktop(`
-    ${tag(t.onb9, 'right:560px;bottom:58px')}
-    ${trayMenus([{ text: 'Not connected', grey: true }, { text: 'Connect to tcgkb...', sel: true, hl: true, tag: t.onb10 }], 200, 98, 'tcgkb')}`, { trayHl: true }),
+  'tcgkb-connect': (t) => desktop(`<div style="position:absolute;left:50%;top:90px;transform:translateX(-50%)">${win('PTCGL Auto Battle Log', 540, `
+    <div style="display:flex;gap:14px;padding:20px 22px 18px;background:#fff">
+      <span style="flex:none">${ICONS.info}</span>
+      <div style="line-height:1.55">
+        <div style="margin-bottom:10px">Sign in to tcgkb.app to upload your matches?</div>
+        <div>Your browser opens tcgkb.app, where you sign in and approve this computer. The app never sees your password.</div>
+        <div style="margin-top:10px">From then on, after each match the app sends tcgkb the sealed battle log and your decklist; the matches already in your logs folder go too. Every PTCGL account that plays on this computer is added to your tcgkb account.</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-radius:0 0 8px 8px">
+      <span class="wbtn def hl">Yes${tag(t.pm3, 'right:100%;top:-2px;margin-right:16px')}</span><span class="wbtn">No</span>
+    </div>`)}</div>`),
 
   'tcgkb-approve': (t) => desktop(`
     ${tag(t.onb11, 'left:50%;top:14px;transform:translateX(-50%)')}
@@ -298,23 +287,6 @@ const PICTURES = {
         <div class="hl mono field" style="padding:8px 0;text-align:center;font-size:24px;font-weight:600;letter-spacing:.06em">WDJB-MJHT</div>
         <div style="display:flex;justify-content:flex-end;gap:6px"><span class="wbtn">Open tcgkb.app</span><span class="wbtn">Cancel</span></div>
       </div>`)}</div>`),
-
-  'tcgkb-auto-upload': (t) => desktop(`<div style="position:absolute;left:50%;top:90px;transform:translateX(-50%)">${win('PTCGL Auto Battle Log', 540, `
-    <div style="display:flex;gap:14px;padding:20px 22px 18px;background:#fff">
-      <span style="flex:none">${ICONS.info}</span>
-      <div style="line-height:1.55">
-        <div style="margin-bottom:10px">Upload your matches to tcgkb automatically?</div>
-        <div>After each match, the app sends tcgkb.app the sealed battle log and your decklist, if the player is one of the PTCGL accounts you claimed. The matches already in your logs folder are sent too.</div>
-        <div style="margin-top:10px">You can turn this off any time in the tcgkb account menu.</div>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-radius:0 0 8px 8px">
-      <span class="wbtn def hl">Yes${tag(t.pm3, 'right:100%;top:-2px;margin-right:16px')}</span><span class="wbtn">No</span>
-    </div>`)}</div>`),
-
-  'tcgkb-claim': (t) => desktop(`
-    <div style="position:absolute;left:24px;top:24px">${accountsWindow(t, '')}</div>
-    ${toast('Claim ManuCL on tcgkb?', 'Your matches go to tcgkb once you claim the PTCGL account you play with. Click to claim it.', { hl: true, tagText: t.claim1 })}`),
 
   'tcgkb-done': (t) => {
     const decks = (slugs) => slugs.map((s) => `<img src="${sprite(s)}" style="width:34px;height:34px;object-fit:contain" alt="">`).join('');

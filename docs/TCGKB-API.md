@@ -1,12 +1,13 @@
 # tcgkb API (client side)
 
-The tray app can connect to a [tcgkb.app](https://tcgkb.app) account and claim the PTCGL
-accounts its player uses. This is the contract between the tray (`src/Tray/Logic/TcgkbApi.cs`) and
+The tray app can sign in to a [tcgkb.app](https://tcgkb.app) account and upload the player's
+matches; the PTCGL accounts that played them become the user's on their first upload. This is the contract between the tray (`src/Tray/Logic/TcgkbApi.cs`) and
 tcgkb. tcgkb implements the server side; the tray's tests run against a fake of it
 (`tests/TrayTests/TcgkbTests.cs`).
 
-Nothing here is used until the player chooses **tcgkb account ▸ Connect to tcgkb...** in the tray
-menu. A tray that was never connected makes no request to tcgkb.
+Nothing here is used until the player signs in (offered right after installing, or **tcgkb
+account ▸ Sign in to tcgkb...** in the tray menu). A tray that was never connected makes no request
+to tcgkb.
 
 ## Model
 
@@ -16,7 +17,9 @@ menu. A tray that was never connected makes no request to tcgkb.
 * A PTCGL account is identified by the seal's `accountHash` (docs/LOG-SEAL.md §3), never by its
   display name: names can repeat and change, the account id does not. tcgkb keeps the names it has
   seen, newest first.
-* A claim is proved with sealed logs in which that account is the `player`. Seals are made on the
+* A claim is proved with sealed logs in which that account is the `player`. The tray makes no
+  explicit claim: a match upload of an account the user does not have yet claims it with that log
+  (see "Match uploads"). `POST /api/ptcgl/claims` stays for older trays. Seals are made on the
   player's own computer (LOG-SEAL.md, "Threat model"), and an opponent sees your account id during
   a match, so a claim alone is not proof. Status:
 
@@ -79,8 +82,15 @@ deletes its saved connection. A reused refresh token should revoke the whole gra
 `GET /api/ptcgl/accounts` → `200`
 ```json
 {"user":{"name":"Manu"},
- "accounts":[{"accountHash":"<64 hex>","name":"Ash","status":"verified"}]}
+ "accounts":[{"accountHash":"<64 hex>","name":"Ash","status":"verified"}],
+ "ladder":{"games":3,"minGames":5,"rank":null,"players":37}}
 ```
+* `ladder`: the ranking as tcgkb.app/leaderboard first shows it (Elo, all time, every game mode),
+  updated every few minutes. `games`: the user's matches over the accounts they own (a disputed
+  account has no owner, so its matches count for no one); `rank` is null until `games` reaches
+  `minGames` (the user is then listed at the bottom as "Not ranked yet"); `players`: players ranked.
+  `verified` does not change the rank: it only marks the row and settles a dispute. The status
+  window explains this (`LadderStatus`); a tcgkb without `ladder` gets no explanation.
 
 `POST /api/ptcgl/claims`, `application/json`:
 ```json
@@ -110,11 +120,14 @@ user gives the account up; its matches stay, unowned.
 ```json
 {"fileName":"2026-10-19 21.34.05 - VICTORY vs Gary.txt","log":"<base64>","seal":null,"deck":"<base64>"}
 ```
-* One tracked match of an account the user has claimed, as in a claim's `evidence`: the `.txt` and
-  the `.seal` sidecar exactly as on disk, each at most 1 MiB. tcgkb runs the same checks as for a
-  claim, except that `player.accountHash` must be one of the user's accounts (claimed or verified).
-* The tray sends it only after the player turned on **Upload my matches automatically**; it sends
-  each log once (`tcgkb-uploads.json`), newest first, at most 50 per run.
+* One tracked match, as in a claim's `evidence`: the `.txt` and the `.seal` sidecar exactly as on
+  disk, each at most 1 MiB. tcgkb runs the same checks as for a claim. When `player.accountHash`
+  is not one of the user's accounts yet, tcgkb claims it for the user with this log as evidence (as
+  `POST /api/ptcgl/claims` would): the seal's `player` is the PTCGL account signed in on the
+  computer that sealed it, never the opponent, so every account in a user's logs is theirs.
+* The tray sends every tracked match in the logs folder once signed in, unless the player turned
+  **Upload my matches automatically** off; it sends each log once (`tcgkb-uploads.json`), newest
+  first, at most 50 per run.
 * `deck` (optional): the player's deck file that the seal (v2) names in `deckSha256`
   (`decks\<deckSha256>.deck` in the logs folder, docs/LOG-SEAL.md §2a), exactly as on disk, at most
   64 KiB. The tray sends each distinct deck **once**: it leaves `deck` out when there is none (no
@@ -137,8 +150,10 @@ user gives the account up; its matches stay, unowned.
   archetype names), or null. `deckRef` is the deck version linked to the match, or null; the tray
   remembers the `deckSha256` of a log answered with a `deckRef`, and forgets it (sending the deck
   again next time) when an answer has none.
-* `403 {"error":"not_claimed"}`: the account is not the user's (released, or never claimed).
-  `422 {"error":"invalid_log","message":"…"}`: the log failed a check, or `deck` does not match the
+* `409 {"error":"claimed_by_other"}`: the account is verified for another user, or ends up
+  disputed (the log is stored all the same; the tray does not send it again). A tcgkb from before
+  automatic claims answered `403 {"error":"not_claimed"}` instead; the tray keeps such a log for a
+  later run. `422 {"error":"invalid_log","message":"…"}`: the log failed a check, or `deck` does not match the
   seal's `deckSha256` (or came with a seal that names none); sending it again would fail again.
   `429 {"error":"rate_limited"}` (also when the user stores too many decks).
 
