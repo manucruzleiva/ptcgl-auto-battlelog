@@ -17,6 +17,9 @@ namespace PtcglAutoBattleLog.Tray
         private Timer _uploadTimer;
         private string _lastUploadLabel;
         private bool _tcgkbConsentLogged;
+        private TcgkbAccounts _tcgkbMe;   // the accounts and ladder the window shows; null until tcgkb answered
+        private DateTime _tcgkbMeUtc;
+        private bool _tcgkbMeBusy;
         private ToolStripMenuItem _tcgkbItem, _tcgkbInfoItem, _tcgkbConnectItem, _tcgkbAutoUploadItem,
                                   _tcgkbUploadNowItem, _tcgkbLastUploadItem, _tcgkbDisconnectItem;
 
@@ -51,6 +54,27 @@ namespace PtcglAutoBattleLog.Tray
             _tcgkbLastUploadItem.Visible = user != null && auto && (waiting || _lastUploadLabel != null);
         }
 
+        /// <summary>
+        /// Asks tcgkb for the accounts and the ladder the window shows: when it opens or comes to the
+        /// front (at most once a minute) and after matches were uploaded (force).
+        /// </summary>
+        private async void RefreshTcgkbStanding(bool force)
+        {
+            if (_exiting || _tcgkbMeBusy) return;
+            if (!Tcgkb.Connection.IsConnected) { _tcgkbMe = null; return; }
+            if (!force && DateTime.UtcNow - _tcgkbMeUtc < TimeSpan.FromMinutes(1)) return;
+            _tcgkbMeBusy = true;
+            try
+            {
+                _tcgkbMe = await Tcgkb.Connection.GetAccountsAsync(CancellationToken.None);
+                _tcgkbMeUtc = DateTime.UtcNow;
+            }
+            catch (TcgkbAuthException) { _tcgkbMe = null; }
+            catch (Exception e) { Log.Info("tcgkb accounts not read: " + e.Message); }
+            finally { _tcgkbMeBusy = false; }
+            RefreshWindow();
+        }
+
         /// <summary>Made on first use: a tray that is never connected sends nothing to tcgkb.</summary>
         private TcgkbService Tcgkb => _tcgkb ?? (_tcgkb = new TcgkbService(_session));
 
@@ -75,6 +99,8 @@ namespace PtcglAutoBattleLog.Tray
                 if (user == null) return;
                 Log.Info("Signed in to tcgkb; automatic match upload " + (AutoUpload ? "on." : "off."));
             }
+            _tcgkbMe = null;
+            RefreshTcgkbStanding(true);
             UploadMatches(true);
         }
 
@@ -174,6 +200,7 @@ namespace PtcglAutoBattleLog.Tray
             }
             // The per-run limit: carry on right away rather than in 30 minutes.
             if (run.HitLimit) Post(() => UploadMatches(false));
+            else if (run.Uploaded > 0 && _window != null && !_window.IsDisposed && _window.Visible) RefreshTcgkbStanding(true);
         }
 
         /// <summary>The disclaimer was accepted: matches that were waiting for it go now (after the caller's own run, if any).</summary>
@@ -192,6 +219,7 @@ namespace PtcglAutoBattleLog.Tray
             try
             {
                 var revoked = await Tcgkb.Connection.DisconnectAsync(CancellationToken.None);
+                _tcgkbMe = null;
                 Log.Info("Disconnected from tcgkb" + (revoked ? "." : " (tcgkb not reached; the connection was forgotten here)."));
                 Balloon("Disconnected from tcgkb",
                         revoked ? "This computer is no longer connected." : "Forgotten on this computer. tcgkb could not be reached: remove this computer in your tcgkb profile.",

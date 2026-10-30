@@ -24,6 +24,8 @@ namespace PtcglAutoBattleLog.Tray
         private ToolStripMenuItem _sealItem, _bepInExLogItem, _gameFolderItem, _channelItem;
         private ToolStripMenuItem _openLogsItem, _settingsMenu, _updatesMenu, _helpMenu;
         private StatusWindow _window;
+        private StatusWindow.Match[] _matches = new StatusWindow.Match[0];
+        private string _matchesKey;
         private ToolStripMenuItem _consentItem;
 
         /// <summary>A menu item that needs the player: the updated disclaimer. Windows' own error red.</summary>
@@ -220,7 +222,7 @@ namespace PtcglAutoBattleLog.Tray
 
         // ---- Window ----------------------------------------------------------------------------
 
-        /// <summary>The status and settings window: the same items as the menu, laid out in tabs.</summary>
+        /// <summary>The status and settings window: the same items as the menu, laid out in pages, with the matches and the tcgkb ladder.</summary>
         private void ShowWindow()
         {
             if (_exiting) return;
@@ -228,27 +230,62 @@ namespace PtcglAutoBattleLog.Tray
             {
                 RefreshMenu();
                 _window = new StatusWindow(
-                    AppInfo.ProductName,
-                    "Version " + AppInfo.Version + (_session.Portable ? " · portable" : ""),
-                    _statusItem,
-                    () => _last?.Decision?.Health ?? TrayHealth.Idle,
-                    new ToolStripItem[] { _modVersionItem, _consentItem, _lastSavedItem, _dataInfoItem, _findGameItem },
-                    new[]
+                    new StatusWindow.Items
                     {
-                        ("General", _settingsMenu.DropDownItems.Cast<ToolStripItem>().ToArray()),
-                        ("Updates", new ToolStripItem[] { _updateItem }.Concat(_updatesMenu.DropDownItems.Cast<ToolStripItem>()).ToArray()),
-                        ("Accounts", new ToolStripItem[] { _tcgkbItem, _pokematchItem }),
-                        ("Help", _helpMenu.DropDownItems.Cast<ToolStripItem>().ToArray()),
+                        Version = "Version " + AppInfo.Version + (_session.Portable ? " · portable" : ""),
+                        Status = _statusItem,
+                        Update = _updateItem,
+                        StatusLines = new ToolStripItem[] { _modVersionItem, _lastSavedItem, _dataInfoItem },
+                        Actions = new[] { _consentItem, _findGameItem, _openLogsItem, _openLastItem },
+                        Tcgkb = _tcgkbItem,
+                        TcgkbConnect = _tcgkbConnectItem,
+                        TcgkbAutoUpload = _tcgkbAutoUploadItem,
+                        TcgkbLastUpload = _tcgkbLastUploadItem,
+                        Settings = _settingsMenu.DropDownItems.Cast<ToolStripItem>().Concat(new ToolStripItem[] { new ToolStripSeparator(), _pokematchItem }).ToArray(),
+                        Updates = new ToolStripItem[] { _updateItem }.Concat(_updatesMenu.DropDownItems.Cast<ToolStripItem>()).ToArray(),
+                        Help = _helpMenu.DropDownItems.Cast<ToolStripItem>().ToArray(),
                     },
-                    new[] { _openLogsItem, _openLastItem },
+                    () => _last?.Decision?.Health ?? TrayHealth.Idle,
+                    WindowData,
                     item =>
                     {
                         item.PerformClick();
                         Post(RefreshWindow);   // after the action, which may have changed what the window shows
-                    });
+                    },
+                    path => Shell.OpenText(path),
+                    url => Shell.Open(url));
                 _window.FormClosed += (s, e) => _window = null;   // a closed modeless form disposes itself
+                _window.Activated += (s, e) => RefreshTcgkbStanding(false);
             }
             _window.Raise();
+        }
+
+        private StatusWindow.Data WindowData()
+        {
+            var user = Tcgkb.Connection.UserName;
+            return new StatusWindow.Data { UserName = user, Me = user == null ? null : _tcgkbMe, Matches = LocalMatches() };
+        }
+
+        /// <summary>The battle logs in the logs folder, newest first; read again only when the folder changed.</summary>
+        private IReadOnlyList<StatusWindow.Match> LocalMatches()
+        {
+            try
+            {
+                var folder = _session.LogsFolder(_session.Game);
+                var dir = new DirectoryInfo(folder);
+                if (!dir.Exists) return _matches = new StatusWindow.Match[0];
+                var key = folder + "|" + dir.LastWriteTimeUtc.Ticks;   // a file added, renamed or deleted changes the folder's time
+                if (key == _matchesKey) return _matches;
+                _matches = dir.EnumerateFiles("*.txt")
+                    .Select(f => LogFileName.TryParse(f.Name, out var result, out var opponent, out var time)
+                        ? new StatusWindow.Match { Result = result, Opponent = opponent, LocalTime = time, Path = f.FullName } : null)
+                    .Where(m => m != null)
+                    .OrderByDescending(m => m.LocalTime)
+                    .ToArray();
+                _matchesKey = key;
+            }
+            catch (Exception e) { Log.Error("Could not list the battle logs", e); }
+            return _matches;
         }
 
         /// <summary>Refreshes an open window (and the menu items it mirrors). Cheap enough for every daemon report.</summary>

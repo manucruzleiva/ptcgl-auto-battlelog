@@ -97,6 +97,19 @@ namespace PtcglAutoBattleLog.Tray.Logic
     {
         [DataMember(Name = "user")] public TcgkbUser User;
         [DataMember(Name = "accounts")] public List<TcgkbAccount> Accounts;
+        /// <summary>Where the user stands on the ranking; null from a tcgkb older than this field.</summary>
+        [DataMember(Name = "ladder")] public TcgkbLadder Ladder;
+    }
+
+    /// <summary>The ranking as tcgkb.app/leaderboard first shows it (Elo, all time): matches, the minimum to be ranked, the rank.</summary>
+    [DataContract]
+    public sealed class TcgkbLadder
+    {
+        [DataMember(Name = "games")] public int Games;
+        [DataMember(Name = "minGames")] public int MinGames;
+        /// <summary>Null while under MinGames.</summary>
+        [DataMember(Name = "rank")] public int? Rank;
+        [DataMember(Name = "players")] public int Players;
     }
 
     [DataContract]

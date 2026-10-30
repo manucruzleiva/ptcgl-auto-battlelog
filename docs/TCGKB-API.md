@@ -82,8 +82,15 @@ deletes its saved connection. A reused refresh token should revoke the whole gra
 `GET /api/ptcgl/accounts` → `200`
 ```json
 {"user":{"name":"Manu"},
- "accounts":[{"accountHash":"<64 hex>","name":"Ash","status":"verified"}]}
+ "accounts":[{"accountHash":"<64 hex>","name":"Ash","status":"verified"}],
+ "ladder":{"games":3,"minGames":5,"rank":null,"players":37}}
 ```
+* `ladder`: the ranking as tcgkb.app/leaderboard first shows it (Elo, all time, every game mode),
+  updated every few minutes. `games`: the user's matches over the accounts they own (a disputed
+  account has no owner, so its matches count for no one); `rank` is null until `games` reaches
+  `minGames` (the user is then listed at the bottom as "Not ranked yet"); `players`: players ranked.
+  `verified` does not change the rank: it only marks the row and settles a dispute. The status
+  window explains this (`LadderStatus`); a tcgkb without `ladder` gets no explanation.
 
 `POST /api/ptcgl/claims`, `application/json`:
 ```json

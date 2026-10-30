@@ -25,6 +25,12 @@ Install, sign in, play: signing in to tcgkb is the only step.
 - **Disclaimer version 5**: it now says uploads are on once you sign in, and that the PTCGL
   accounts on this computer are added to your tcgkb account. Everyone is asked to accept it again.
 - **Quick-setup guide**: the tcgkb guide drops the claim and upload steps.
+- **A new status and settings window.** Dark, with tcgkb's yellow. **Home** shows what the app is
+  doing, your tcgkb account, the last seven days and your last matches; **Matches** lists every
+  battle log (click one to open it). The **tcgkb** page shows your place on the ladder: the steps to
+  get a row and, until you have 5 matches, why you show up as "Not ranked yet". It also explains what
+  a **verified** account is (an opponent who uses tcgkb uploaded the same match): it adds the check
+  next to your name, it does not decide whether you are ranked.
 
 ### Removed
 

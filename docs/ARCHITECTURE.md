@@ -248,23 +248,33 @@ settings... · Settings ▸ · Updates ▸ · Help ▸ · Exit.
   Accept button, while consent is pending) · Licenses (the embedded `THIRD-PARTY-NOTICES.md`,
   `LICENSE` and `licenses/LGPL-2.1.txt`) · Uninstall... / Remove mod from game....
 
-**Status and settings window** (`StatusWindow`): the menu laid out as a window, opened from
-"Status and settings..." and by the show event (the app started again while it runs, or started
-without `--background` when nothing else is shown). It has no state or actions of its own: each control
-mirrors one menu item (text, `Available`, `Enabled`, `Checked`) and a click is that item's
-`PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become labels, `ToggleTag`
-switches (still check boxes to keyboards and screen readers), a submenu whose options carry a string
-tag (seal mode, update channel) radio buttons, the rest buttons. Header (white): the app icon, product
-name and version, the status line with a dot in the tray icon's colour (`StatusIcons.DotColor`, grey
-when the tray shows none), then the other status lines (the red disclaimer item a filled red button), including one only the window
-shows: the mod version the game has loaded or last loaded (`pluginVersion` from `plugin-status.json`,
-`PluginStatus.ModVersionLine`) and whether it is the app's.
-Body: a navigation column (General (Settings ▸), Updates (the waiting update and Updates ▸), Accounts
-(tcgkb account ▸, Pokematch ▸), Help (Help ▸)) and the page, whose items sit in white rounded cards on
-a light grey surface: a separator starts a new card, a submenu gets a card titled with its name.
-Footer: Open logs folder (the accent button: the menu's bold item), Open last log, Close. In high
-contrast mode it keeps the system colours and buttons. While it is open every daemon report refreshes the items and
-the window.
+**Status and settings window** (`StatusWindow`): the menu laid out as a window, with the player's
+matches and their place on the tcgkb ladder, opened from "Status and settings..." and by the show
+event (the app started again while it runs, or started without `--background` when nothing else is
+shown). Each control that mirrors a menu item copies its text, `Available`, `Enabled` and `Checked`,
+and a click is that item's `PerformClick`, so the two cannot disagree. Items tagged `InfoTag` become
+labels, `ToggleTag` switches (still check boxes to keyboards and screen readers), a submenu whose
+options carry a string tag (seal mode, update channel) radio buttons, the rest buttons. What is not a
+menu item comes from `StatusWindow.Data`, which the tray builds on every refresh: the battle logs in
+the logs folder (file names, `LogFileName`; listed again only when the folder's time changes) and
+tcgkb's `GET /api/ptcgl/accounts` (accounts, `ladder`), asked when the window opens or comes to the
+front (at most once a minute) and after matches were uploaded.
+Look: dark with tcgkb's yellow as the accent, the title bar dark too (DWM, Windows 10 1809 and later).
+A navigation column with icons (Segoe Fluent Icons / Segoe MDL2 Assets) and the version, then the page:
+* **Home**: the status with a dot in the tray icon's colour (`StatusIcons.DotColor`, grey when the
+  tray shows none), the other status lines (including the mod version the game has loaded,
+  `PluginStatus.ModVersionLine`) and the buttons (the red disclaimer item filled red, Open logs folder
+  in the accent); a tcgkb card (signed in: the accounts with their verified state, the ladder progress
+  from `LadderStatus`, the upload switch; otherwise Sign in); the last seven days; the last five matches.
+* **Matches**: every log, newest first (at most 100), filtered by result; clicking one opens it.
+* **tcgkb**: signed out, Sign in; signed in, the three steps to a row on the ladder (signed in, a
+  PTCGL account, `minGames` matches) with why the player is not ranked yet, the accounts with what
+  "verified" means, then the tcgkb account ▸ items.
+* **Settings** (Settings ▸ and Pokematch ▸), **Updates** (the waiting update and Updates ▸), **Help**
+  (Help ▸): items in rounded cards, a separator starts a new card, a submenu gets a card titled with its name.
+
+In high contrast mode it keeps the system colours and buttons. Esc closes it. While it is open every
+daemon report refreshes the items and the window.
 
 ### Daemon loop
 

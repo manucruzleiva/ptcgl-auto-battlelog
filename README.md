@@ -186,9 +186,9 @@ Right-click the icon in the notification area (it may be hidden behind the `^` a
 Double-click it to open your logs folder.
 
 Only what you use often is at the top; everything else is grouped in **Settings ▸**, **Updates ▸**
-and **Help ▸**. **Status and settings...** opens a window with the same status and options in tabs
-(General, Updates, Accounts, Help); starting the app again from the Start menu while it runs opens
-it too.
+and **Help ▸**. **Status and settings...** opens a window with the same status and options, your last matches and
+your place on the tcgkb ladder (Home, Matches, tcgkb, Settings, Updates, Help); starting the app
+again from the Start menu while it runs opens it too.
 
 | Item | What it does |
 |---|---|
@@ -198,7 +198,7 @@ it too.
 | Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
 | tcgkb account ▸ | Optional. Sign in to tcgkb, turn automatic uploads off or on, disconnect. See [tcgkb account](#tcgkb-account). |
 | Pokematch ▸ | Optional. Set your Pokematch API token, upload new battle logs automatically, upload past ones, remove the token. See [Pokematch](#pokematch). |
-| Status and settings... | The same status lines and options as the menu, in a window with tabs. |
+| Status and settings... | The same status lines and options as the menu in a window, with your matches and, once signed in to tcgkb, your accounts and why you are or are not on the ladder yet. |
 | Settings ▸ Notify when a log is saved | Turns the "battle log saved" notifications on or off. |
 | Settings ▸ Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
 | Settings ▸ Change logs folder... | Shows the current logs folder. New logs go there (from the next game start if the game is running). Folders whose path contains `'` or `"`, and network paths (`\\server\...`), are not supported by BepInEx's settings file. Folders inside the game's `BepInEx` folder or the app's own folders are refused, because uninstalling removes those. |

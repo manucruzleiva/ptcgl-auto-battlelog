@@ -181,6 +181,18 @@ static partial class Program
         req = server.Requests.Last();
         Check(req.Method == "GET" && req.Path == "/api/ptcgl/accounts" && req.Bearer == "a1", "accounts: GET with the bearer");
         Check(me.User.Name == "Manu" && me.Accounts.Count == 1 && me.Accounts[0].Status == TcgkbAccount.Verified, "accounts read, a malformed hash dropped");
+        Check(me.Ladder == null && LadderStatus.From(me) == null, "a tcgkb without the ladder: nothing said about it");
+        server.Handle = r => FakeTcgkb.Reply(200, MeJson.TrimEnd('}') + ",\"ladder\":{\"games\":3,\"minGames\":5,\"rank\":null,\"players\":12}}");
+        var ladder = LadderStatus.From(await api.GetAccountsAsync("a1", ct));
+        Check(ladder != null && !ladder.Ranked && ladder.HasAccount && ladder.Title == "Ladder: 3 of 5 matches" && ladder.Count == "2 more to go" &&
+              ladder.Why.Contains("Not ranked yet") && Math.Abs(ladder.Progress - 0.6) < 1e-9, "under the minimum: 3 of 5, why not ranked");
+        server.Handle = r => FakeTcgkb.Reply(200, MeJson.TrimEnd('}') + ",\"ladder\":{\"games\":9,\"minGames\":5,\"rank\":4,\"players\":12}}");
+        ladder = LadderStatus.From(await api.GetAccountsAsync("a1", ct));
+        Check(ladder.Ranked && ladder.Count == "#4 of 12" && ladder.Progress == 1, "ranked: the rank");
+        ladder = LadderStatus.From(new TcgkbAccounts { Accounts = new List<TcgkbAccount>(), Ladder = new TcgkbLadder { MinGames = 5 } });
+        Check(!ladder.HasAccount && ladder.Why.StartsWith("Play a match"), "no account yet: play a match");
+        ladder = LadderStatus.From(new TcgkbAccounts { Accounts = new List<TcgkbAccount> { new TcgkbAccount { Status = TcgkbAccount.Disputed } }, Ladder = new TcgkbLadder { MinGames = 5 } });
+        Check(!ladder.HasAccount && ladder.Why.Contains("claims your PTCGL account too"), "only a disputed account: why it counts for no one");
         server.Handle = r => FakeTcgkb.Reply(401, "");
         Check(await Catch(() => api.GetAccountsAsync("a1", ct)) is TcgkbAuthException, "401 on an API call: TcgkbAuthException");
 
