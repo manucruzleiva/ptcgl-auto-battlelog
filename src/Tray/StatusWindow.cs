@@ -507,9 +507,12 @@ namespace PtcglAutoBattleLog.Tray
             string key = null;
             void Apply()
             {
+                // Built only while shown (a hidden page catches up when it shows), rebuilt only when the
+                // logs change: each row reads its time when it paints.
+                if (!list.Visible) return;
                 var matches = source().ToList();
-                var k = string.Join("|", matches.Select(m => m.Path)) + "@" + DateTime.Now.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture);
-                if (k == key) return;
+                var k = string.Join("|", matches.Select(m => m.Path));
+                if (k == key) { foreach (Control c in list.Controls) c.Invalidate(); return; }
                 key = k;
                 list.SuspendLayout();
                 foreach (Control c in list.Controls.Cast<Control>().ToList()) if (c != none) c.Dispose();
@@ -517,13 +520,13 @@ namespace PtcglAutoBattleLog.Tray
                 if (matches.Count == 0) list.Controls.Add(none);
                 foreach (var m in matches)
                 {
-                    var row = new MatchRow { Result = m.Result, Opponent = m.Opponent, When = When(m.LocalTime), Height = 34, Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = Padding.Empty };
+                    var row = new MatchRow { Result = m.Result, Opponent = m.Opponent, LocalTime = m.LocalTime, Height = 34, Anchor = AnchorStyles.Left | AnchorStyles.Right, Margin = Padding.Empty };
                     row.Click += (s, e) => _openLog(m.Path);
                     list.Controls.Add(row);
                 }
                 list.ResumeLayout(true);
             }
-            Apply();
+            list.VisibleChanged += (s, e) => Apply();
             _syncs.Add(Apply);
             return list;
         }
@@ -1120,7 +1123,9 @@ namespace PtcglAutoBattleLog.Tray
         private sealed class MatchRow : Button
         {
             private bool _hover;
-            public string Result, Opponent, When;
+            public string Result, Opponent;
+            public DateTime LocalTime;
+            private string When => StatusWindow.When(LocalTime);
 
             public MatchRow()
             {

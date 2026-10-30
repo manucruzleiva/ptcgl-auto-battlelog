@@ -9,6 +9,14 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-10-30
+
+### Fixed
+
+- **The status and settings window opens fast again.** It no longer waits for tcgkb before it
+  shows: the accounts and ladder are asked for in the background. The Matches page builds its list
+  only when you open it, and the lists are no longer rebuilt every minute.
+
 ## [1.6.0] - 2026-10-30
 
 Install, sign in, play: signing in to tcgkb is the only step.

@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using PtcglAutoBattleLog.Tray.Logic;
 using Timer = System.Windows.Forms.Timer;
@@ -66,7 +67,9 @@ namespace PtcglAutoBattleLog.Tray
             _tcgkbMeBusy = true;
             try
             {
-                _tcgkbMe = await Tcgkb.Connection.GetAccountsAsync(CancellationToken.None);
+                // On a worker: the first request can block for seconds (proxy detection, DNS) before it awaits.
+                var connection = Tcgkb.Connection;
+                _tcgkbMe = await Task.Run(() => connection.GetAccountsAsync(CancellationToken.None));
                 _tcgkbMeUtc = DateTime.UtcNow;
             }
             catch (TcgkbAuthException) { _tcgkbMe = null; }
