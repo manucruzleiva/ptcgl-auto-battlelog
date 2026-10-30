@@ -313,6 +313,41 @@ namespace PtcglAutoBattleLog.Tray
                 using (Process.Start(new ProcessStartInfo("notepad.exe", "\"" + path + "\"") { UseShellExecute = true })) { }
             }
         }
+
+        /// <summary>
+        /// Moves files to the Recycle Bin in one shell operation (Explorer's progress window for many),
+        /// without its own confirmation: the caller asked. False when Windows reports an error or the player cancelled.
+        /// </summary>
+        public static bool Recycle(IEnumerable<string> paths, IntPtr owner)
+        {
+            var op = new SHFILEOPSTRUCT
+            {
+                hwnd = owner,
+                wFunc = FO_DELETE,
+                pFrom = string.Join("\0", paths) + "\0\0",   // double-null-terminated list
+                fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_NOERRORUI,
+            };
+            return SHFileOperation(ref op) == 0 && !op.fAnyOperationsAborted;
+        }
+
+        private const uint FO_DELETE = 3;
+        private const ushort FOF_NOCONFIRMATION = 0x10, FOF_ALLOWUNDO = 0x40, FOF_NOERRORUI = 0x400;
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct SHFILEOPSTRUCT
+        {
+            public IntPtr hwnd;
+            public uint wFunc;
+            public string pFrom;
+            public string pTo;
+            public ushort fFlags;
+            [MarshalAs(UnmanagedType.Bool)] public bool fAnyOperationsAborted;
+            public IntPtr hNameMappings;
+            public string lpszProgressTitle;
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        private static extern int SHFileOperation(ref SHFILEOPSTRUCT op);
     }
 
     internal static class PathUtil

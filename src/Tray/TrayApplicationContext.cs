@@ -53,7 +53,7 @@ namespace PtcglAutoBattleLog.Tray
                     Text = Clip(AppInfo.ProductName, MaxTrayText),
                     ContextMenuStrip = _menu,
                 };
-                _tray.MouseDoubleClick += (s, e) => { if (e.Button == MouseButtons.Left) OpenLogsFolder(); };
+                _tray.MouseClick += (s, e) => { if (e.Button == MouseButtons.Left) ShowWindow(); };
                 // The latest balloon's action. Not cleared when a balloon closes: Windows may report the
                 // previous one closing after the next one is up, and a toast can be clicked later from the
                 // notification center.

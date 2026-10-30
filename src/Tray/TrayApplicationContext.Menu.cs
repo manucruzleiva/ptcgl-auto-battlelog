@@ -19,7 +19,7 @@ namespace PtcglAutoBattleLog.Tray
         private Font _boldFont;
 
         private ToolStripMenuItem _statusItem, _modVersionItem, _lastSavedItem, _logsInfoItem, _dataInfoItem, _findGameItem;
-        private ToolStripMenuItem _openLastItem, _changeFolderItem, _defaultFolderItem;
+        private ToolStripMenuItem _openLastItem, _changeFolderItem, _defaultFolderItem, _wipeItem;
         private ToolStripMenuItem _notifyItem, _autoUpdateItem, _updateItem, _startupItem, _repairItem;
         private ToolStripMenuItem _sealItem, _bepInExLogItem, _gameFolderItem, _channelItem;
         private ToolStripMenuItem _openLogsItem, _settingsMenu, _updatesMenu, _helpMenu;
@@ -52,10 +52,10 @@ namespace PtcglAutoBattleLog.Tray
             _consentItem.Visible = false;
 
             var openLogs = _openLogsItem = Item("Open logs folder", OpenLogsFolder);
-            openLogs.Font = _boldFont;   // the double-click action
             _openLastItem = Item("Open last log", OpenLastLog);
             _changeFolderItem = Item("Change logs folder...", ChangeLogsFolder);
             _defaultFolderItem = Item("Use the default logs folder", ResetLogsFolder);
+            _wipeItem = Item("Delete local battle logs...", WipeLogs);
 
             _notifyItem = Toggle("Notify when a log is saved", ToggleNotify);
             _autoUpdateItem = Toggle("Install updates automatically", ToggleAutoUpdate);
@@ -90,13 +90,15 @@ namespace PtcglAutoBattleLog.Tray
                 Item("Copy diagnostic info", CopyDiagnostics),
             });
 
+            var status = Item("Status and settings...", ShowWindow);
+            status.Font = _boldFont;   // what a click on the tray icon opens
             var uninstall = Item(_session.Portable ? "Remove mod from game..." : "Uninstall...", Uninstall);
 
             // Only what is used often stays at the top: the rest is grouped in three submenus.
             var settings = _settingsMenu = Submenu("Settings", true,
                 _notifyItem, _startupItem,
                 new ToolStripSeparator(),
-                _logsInfoItem, _changeFolderItem, _defaultFolderItem,
+                _logsInfoItem, _changeFolderItem, _defaultFolderItem, _wipeItem,
                 new ToolStripSeparator(),
                 _sealItem);
             var updates = _updatesMenu = Submenu("Updates", true, _autoUpdateItem, _channelItem, new ToolStripSeparator(), checkNow);
@@ -117,7 +119,7 @@ namespace PtcglAutoBattleLog.Tray
                 new ToolStripSeparator(),
                 BuildTcgkbMenu(), BuildPokematchMenu(),
                 new ToolStripSeparator(),
-                Item("Status and settings...", ShowWindow), settings, updates, help,
+                status, settings, updates, help,
                 new ToolStripSeparator(),
                 Item("Exit", () => ExitThread()),
             });
@@ -193,6 +195,7 @@ namespace PtcglAutoBattleLog.Tray
             _openLastItem.Enabled = FindLastLog() != null;
             _changeFolderItem.Enabled = game != null;
             _defaultFolderItem.Visible = _session.HasCustomLogsFolder(game);
+            _wipeItem.Enabled = _openLastItem.Enabled;
 
             _notifyItem.Checked = _session.Read(s => s.NotifyOnSave);
             _autoUpdateItem.Checked = _session.Read(s => s.AutoUpdate);
@@ -237,6 +240,7 @@ namespace PtcglAutoBattleLog.Tray
                         Update = _updateItem,
                         StatusLines = new ToolStripItem[] { _modVersionItem, _lastSavedItem, _dataInfoItem },
                         Actions = new[] { _consentItem, _findGameItem, _openLogsItem, _openLastItem },
+                        Primary = _openLogsItem,
                         Tcgkb = _tcgkbItem,
                         TcgkbConnect = _tcgkbConnectItem,
                         TcgkbAutoUpload = _tcgkbAutoUploadItem,
@@ -369,6 +373,33 @@ namespace PtcglAutoBattleLog.Tray
             }
             Log.Info("Logs folder set to " + picked);
             AfterLogsFolderChanged(game, picked);
+        }
+
+        /// <summary>
+        /// Moves every battle log in the logs folder (and its .seal sidecar) to the Recycle Bin, after
+        /// asking. Other files there, and the decks, stay.
+        /// </summary>
+        private void WipeLogs()
+        {
+            var folder = _session.LogsFolder(_session.Game);
+            var logs = Directory.Exists(folder)
+                ? new DirectoryInfo(folder).EnumerateFiles("*.txt").Where(f => LogFileName.TryParse(f.Name, out _, out _)).Select(f => f.FullName).ToList()
+                : new List<string>();
+            if (logs.Count == 0) { Balloon(AppInfo.ProductName, "There are no battle logs to delete.", ToolTipIcon.Info, null); return; }
+            bool ok;
+            using (Modal())
+                ok = Dialogs.Confirm("Move the " + logs.Count + (logs.Count == 1 ? " battle log" : " battle logs") + " in " + PathUtil.Friendly(folder) + " to the Recycle Bin?\n\n" +
+                                     "Matches already on tcgkb or Pokematch stay there. A log that was not uploaded is only on this PC: " +
+                                     "once you empty the Recycle Bin it is gone.", MessageBoxIcon.Warning);
+            if (!ok) return;
+            var files = logs.Concat(logs.Select(l => Path.ChangeExtension(l, SealSummary.SidecarExtension)).Where(File.Exists)).ToList();
+            bool done = Shell.Recycle(files, _window != null && !_window.IsDisposed ? _window.Handle : IntPtr.Zero);
+            int left = logs.Count(File.Exists);
+            Log.Info("Deleted local battle logs: " + (logs.Count - left) + " moved to the Recycle Bin" + (left > 0 ? ", " + left + " left" : "") + ".");
+            _lastSavedFile = null;
+            if (done && left == 0) Balloon("Battle logs deleted", logs.Count + " moved to the Recycle Bin.", ToolTipIcon.Info, null);
+            else Balloon("Some battle logs were not deleted", left + " are still in the logs folder (in use, or the deletion was cancelled).", ToolTipIcon.Warning, () => OpenFolder(folder));
+            RefreshWindow();
         }
 
         /// <summary>Folders an uninstall deletes (or tells the player to delete): never a logs folder.</summary>

@@ -36,6 +36,8 @@ namespace PtcglAutoBattleLog.Tray
             public ToolStripItem[] StatusLines;
             /// <summary>The home page's buttons: disclaimer, game folder, open logs folder, open last log.</summary>
             public ToolStripMenuItem[] Actions;
+            /// <summary>The one of them in the accent colour.</summary>
+            public ToolStripMenuItem Primary;
             /// <summary>The tcgkb submenu, and the items of it the home page shows.</summary>
             public ToolStripMenuItem Tcgkb, TcgkbConnect, TcgkbAutoUpload, TcgkbLastUpload;
             public ToolStripItem[] Settings, Updates, Help;
@@ -350,7 +352,7 @@ namespace PtcglAutoBattleLog.Tray
             text.Controls.Add(status);
             AddItems(text.Controls, items.StatusLines, Palette.Secondary);
             var actions = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, WrapContents = true, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MaximumSize = new Size(TextWidth + 120, 0), Margin = new Padding(0, 8, 0, 0) };
-            foreach (var item in items.Actions) actions.Controls.Add(MirrorButton(item, new Padding(0, 0, 8, 4)));
+            foreach (var item in items.Actions) actions.Controls.Add(MirrorButton(item, new Padding(0, 0, 8, 4), item == items.Primary ? Look.Accent : (Look?)null));
             text.Controls.Add(actions);
             grid.Controls.Add(text, 1, 0);
             card.Controls.Add(grid);
@@ -743,7 +745,7 @@ namespace PtcglAutoBattleLog.Tray
             return toggle;
         }
 
-        /// <param name="look">The button's look; by default the item's: red (needs the player) is filled red, the menu's bold item (the double-click action) is the accent.</param>
+        /// <param name="look">The button's look; by default the item's: red (needs the player) is filled red, the menu's bold item is the accent.</param>
         private Button MirrorButton(ToolStripMenuItem m, Padding margin, Look? look = null)
         {
             var button = new Button { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(96, 32), Padding = new Padding(8, 0, 8, 0), Margin = margin };

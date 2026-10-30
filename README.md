@@ -183,7 +183,7 @@ which may be inside OneDrive). Use **Settings ▸ Change logs folder...** in the
 ## The tray menu
 
 Right-click the icon in the notification area (it may be hidden behind the `^` arrow).
-Double-click it to open your logs folder.
+Click it to open the status and settings window.
 
 Only what you use often is at the top; everything else is grouped in **Settings ▸**, **Updates ▸**
 and **Help ▸**. **Status and settings...** opens a window with the same status and options, your last matches and
@@ -203,6 +203,7 @@ again from the Start menu while it runs opens it too.
 | Settings ▸ Start with Windows | Starts the tray app when you sign in (recommended: it is what repairs the mod after game updates). |
 | Settings ▸ Change logs folder... | Shows the current logs folder. New logs go there (from the next game start if the game is running). Folders whose path contains `'` or `"`, and network paths (`\\server\...`), are not supported by BepInEx's settings file. Folders inside the game's `BepInEx` folder or the app's own folders are refused, because uninstalling removes those. |
 | Settings ▸ Use the default logs folder | Back to `Documents\PTCGL Battle Logs` (only shown when you changed it). |
+| Settings ▸ Delete local battle logs... | Moves every battle log in the logs folder (and its `.seal` file) to the Recycle Bin, after asking. Matches already on tcgkb or Pokematch stay there. |
 | Settings ▸ Battle log seal ▸ | Footer (default), Sidecar or Off. Takes effect the next time the game starts. |
 | Updates ▸ | Install updates automatically, Update channel ▸, Check for updates now. See [Automatic updates](#automatic-updates). |
 | Help ▸ Diagnostics ▸ | Open the app log, the BepInEx log, the game folder or the app data folder; choose the game folder; copy diagnostic info for a bug report. |
