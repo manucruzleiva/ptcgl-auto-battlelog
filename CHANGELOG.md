@@ -9,6 +9,14 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-10-30
+
+### Fixed
+
+- **The status window no longer opens blank and fills in block by block.** It now paints all at
+  once, and closing it only hides it, so opening it again is instant. The app log records how long
+  the first opening took.
+
 ## [1.6.1] - 2026-10-30
 
 ### Changed
