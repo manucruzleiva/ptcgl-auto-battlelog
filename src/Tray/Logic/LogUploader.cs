@@ -35,7 +35,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
     }
 
     /// <summary>
-    /// Sends tcgkb every tracked match in the logs folder (docs/TCGKB-API.md, "Match uploads"): the
+    /// Sends tcgkb every tracked match in the logs folder but Build & Battle ones (docs/TCGKB-API.md, "Match uploads"): the
     /// sealed logs that tcgkb has not accepted yet, newest first, at most MaxPerRun per run. Each
     /// seal's player is the PTCGL account signed in on this computer (never the opponent), and tcgkb
     /// adds that account to the user on its first upload. What was sent is remembered in
@@ -130,7 +130,13 @@ namespace PtcglAutoBattleLog.Tray.Logic
             finally { _running.Release(); }
         }
 
-        /// <summary>The folder's sealed logs of a tracked match, not in done, newest first. Never throws.</summary>
+        /// <summary>The client's name for Build & Battle, as a seal's queue or format.</summary>
+        public const string BuildAndBattle = "BuildAndBattle";
+
+        /// <summary>Build & Battle matches are never sent to tcgkb (it keeps no record of them); the local log stays.</summary>
+        public static bool IsBuildAndBattle(SealSummary s) => s.Queue == BuildAndBattle || s.Format == BuildAndBattle;
+
+        /// <summary>The folder's sealed logs of a tracked match, not Build & Battle, not in done, newest first. Never throws.</summary>
         public static List<SealSummary> Pending(string logsFolder, ISet<string> done)
         {
             var found = new List<SealSummary>();
@@ -141,7 +147,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
                 {
                     if (!LogFileName.TryParse(file, out _, out _)) continue;
                     var s = SealSummary.TryRead(file);
-                    if (s?.PlayerAccountHash == null || !PtcglAccountScanner.IsEvidence(s) || done.Contains(Key(s))) continue;
+                    if (s?.PlayerAccountHash == null || !PtcglAccountScanner.IsEvidence(s) || IsBuildAndBattle(s) || done.Contains(Key(s))) continue;
                     found.Add(s);
                 }
             }

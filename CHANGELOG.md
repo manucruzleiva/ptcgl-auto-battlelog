@@ -9,6 +9,11 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+### Changed
+
+- **Build & Battle matches are no longer uploaded to tcgkb.** Their log is still saved on your PC,
+  and Pokematch uploads are unchanged.
+
 ## [1.6.2] - 2026-10-30
 
 ### Fixed
