@@ -286,7 +286,7 @@ static partial class Program
         var logStore = new LogStore(folder) { Sealer = new LogSealer(identity, "1.2.0", "1.43.0") { Mode = () => SealMode.Footer } };
         var t = new DateTime(2026, 10, 20, 12, 0, 0, DateTimeKind.Utc);
         int n = 0;
-        string Save(string me, string myId, bool manual = false, DeckList deck = null)
+        string Save(string me, string myId, bool manual = false, DeckList deck = null, string queue = null, string format = null)
         {
             n++;
             var start = t.AddHours(n);
@@ -294,7 +294,7 @@ static partial class Program
             {
                 MatchId = manual ? null : "m-" + n, StartUtc = start, EndUtc = manual ? (DateTime?)null : start.AddMinutes(10), Won = true, Winner = 1,
                 MySeat = 1, MyName = me, MyAccountId = myId, OpponentName = "Gary", OpponentAccountId = "gary-id", ManualOnly = manual,
-                Capture = LogSealer.CaptureAuto, MyDeckList = deck,
+                Capture = LogSealer.CaptureAuto, MyDeckList = deck, Queue = queue, Format = format,
             }, "Setup\nTurn " + n + " - " + me + " played", null);
         }
         var ashHash = LogSealer.AccountHash("ash-id");
@@ -307,6 +307,8 @@ static partial class Program
         var deckFile = LogStore.DeckPathFor(folder, deckSha);
         Save("Ash", "ash-id", manual: true);   // an Export click: never sent
         var misty = Save("Misty", "misty-id"); // another PTCGL account on this computer: the player's too
+        var bnb = Save("Ash", "ash-id", queue: "BuildAndBattle", format: "BuildAndBattle");   // Build & Battle: kept on disk, never sent
+        var bnbFormat = Save("Ash", "ash-id", queue: "Friend", format: "BuildAndBattle");
 
         var store = new TcgkbTokenStore(TempDir(), Xor, Xor);
         store.Save(new TcgkbTokens { AccessToken = "a1", AccessExpiresUtc = DateTime.UtcNow.AddHours(1), RefreshToken = "r1", UserName = "Manu" });
@@ -333,6 +335,9 @@ static partial class Program
         var run = await uploader.SyncAsync(folder, ct);
         var req = server.Requests.Last();
         Check(run.Uploaded == 4 && run.Left == 0 && !run.HitLimit && run.StoppedBecause == null, "the 4 tracked matches sent, no account list asked first");
+        Check(File.Exists(bnb) && File.Exists(bnbFormat) && LogUploader.IsBuildAndBattle(SealSummary.TryRead(bnbFormat)) &&
+              !received.Any(e => e.FileName == Path.GetFileName(bnb) || e.FileName == Path.GetFileName(bnbFormat)),
+              "Build & Battle matches (queue or format) stay on disk and are never sent");
         Check(received.All(e => e.FileName.EndsWith(".txt") && e.Seal == null) && req.Method == "POST" && req.Bearer == "a1" && req.ContentType == "application/json",
               "POST /api/ptcgl/logs with the bearer, footer seals in the .txt");
         Check(received.Count(e => Encoding.UTF8.GetString(Convert.FromBase64String(e.Log)).Contains("Ash played")) == 3 &&

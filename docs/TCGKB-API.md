@@ -127,7 +127,8 @@ user gives the account up; its matches stay, unowned.
   computer that sealed it, never the opponent, so every account in a user's logs is theirs.
 * The tray sends every tracked match in the logs folder once signed in, unless the player turned
   **Upload my matches automatically** off; it sends each log once (`tcgkb-uploads.json`), newest
-  first, at most 50 per run.
+  first, at most 50 per run. Build & Battle matches (seal `queue` or `format` `BuildAndBattle`) are
+  never sent: tcgkb keeps no record of them. Their log stays on disk.
 * `deck` (optional): the player's deck file that the seal (v2) names in `deckSha256`
   (`decks\<deckSha256>.deck` in the logs folder, docs/LOG-SEAL.md §2a), exactly as on disk, at most
   64 KiB. The tray sends each distinct deck **once**: it leaves `deck` out when there is none (no
