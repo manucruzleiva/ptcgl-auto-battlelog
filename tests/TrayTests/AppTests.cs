@@ -58,6 +58,8 @@ static partial class Program
     {
         Console.WriteLine("17. Disclaimer");
         Check(Disclaimer.Version == 5, "version 5");
+        Check(!Disclaimer.IsAccepted(0), "never accepted -> asked");
+        Check(Disclaimer.IsAccepted(1) && Disclaimer.IsAccepted(4) && Disclaimer.IsAccepted(Disclaimer.Version + 1), "accepted once, any version -> never asked again");
         var md = File.ReadAllText(Path.Combine(RepoRoot(), "DISCLAIMER.md"));
         var plain = Disclaimer.ToPlainText(md);
         Check(md.Contains("Pokematch") && md.Contains("tcgkb.app"), "it names every place the app can send logs to");
@@ -318,7 +320,7 @@ static partial class Program
         Check(d.Notice == DaemonNotice.PluginError, "new game process: notice again");
         Check(Throws<ArgumentNullException>(() => m.Evaluate(null)), "null observation rejected");
 
-        // The disclaimer was updated and the player has not accepted it yet: nothing is written into the game.
+        // The player has not accepted the disclaimer yet: nothing is written into the game.
         m = new DaemonMonitor();
         DaemonObservation Pending(double sec, bool running, InstallPiece[] missing, bool pluginFile)
         {

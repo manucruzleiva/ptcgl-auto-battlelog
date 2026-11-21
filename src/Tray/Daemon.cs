@@ -104,8 +104,8 @@ namespace PtcglAutoBattleLog.Tray
                 NowUtc = now,
                 GameDir = report.GameDir,
                 GameRunning = report.GameRunning,
-                // After a disclaimer update the player has not accepted yet: the mod is not repaired or updated.
-                ConsentPending = _session.Read(s => s.DisclaimerAccepted) < Disclaimer.Version,
+                // Never accepted (settings without an acceptance): the mod is not repaired or updated.
+                ConsentPending = !Disclaimer.IsAccepted(_session.Read(s => s.DisclaimerAccepted)),
             };
             if (game != null)
             {

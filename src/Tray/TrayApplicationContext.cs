@@ -201,17 +201,17 @@ namespace PtcglAutoBattleLog.Tray
             }
             else if (!cli.Background) OnShowRequested();
 
-            // --background and --updated-from never show the disclaimer: after a version bump, ask with a balloon.
+            // --background and --updated-from never show the disclaimer: if it was never accepted, ask with a balloon.
             if (!HasConsent())
-                Balloon("The disclaimer was updated", "Please review it to keep using " + AppInfo.ProductName + ". Click to read it.",
+                Balloon("Please accept the disclaimer", "Accept it once to keep using " + AppInfo.ProductName + ". Click to read it.",
                         ToolTipIcon.Warning, AskConsent);
             else OfferSignIn(firstRun);
         }
 
-        private bool HasConsent() => _session.Read(s => s.DisclaimerAccepted) >= Disclaimer.Version;
+        private bool HasConsent() => Disclaimer.IsAccepted(_session.Read(s => s.DisclaimerAccepted));
 
         /// <summary>
-        /// The updated disclaimer, asked from the running tray. Until it is accepted nothing is written
+        /// The disclaimer, asked from the running tray. Until it is accepted nothing is written
         /// into the game (DaemonMonitor, GameSetup.TryRepair). Declining stops the app for good, not
         /// just until the next logon (the Run value goes), and offers to take the mod out of the game.
         /// </summary>
@@ -231,7 +231,7 @@ namespace PtcglAutoBattleLog.Tray
             catch (Exception e) { Log.Error("Could not turn off Start with Windows", e); }
             bool remove;
             using (Modal())
-                remove = Dialogs.Confirm("You did not accept the updated disclaimer, so " + AppInfo.ProductName + " closes now and no longer " +
+                remove = Dialogs.Confirm("You did not accept the disclaimer, so " + AppInfo.ProductName + " closes now and no longer " +
                                          "starts with Windows.\n\nThe mod is still in " + AppInfo.GameName + " and keeps saving battle logs. " +
                                          "Remove it from the game too?");
             if (remove)

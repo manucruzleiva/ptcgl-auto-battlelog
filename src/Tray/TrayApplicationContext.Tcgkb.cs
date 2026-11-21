@@ -51,7 +51,7 @@ namespace PtcglAutoBattleLog.Tray
             _tcgkbAutoUploadItem.Checked = auto;
             _tcgkbUploadNowItem.Visible = user != null && auto;
             var waiting = !HasConsent();
-            _tcgkbLastUploadItem.Text = MenuText(waiting ? "Waiting: accept the updated disclaimer" : Clip("Last upload: " + _lastUploadLabel, 90));
+            _tcgkbLastUploadItem.Text = MenuText(waiting ? "Waiting: accept the disclaimer" : Clip("Last upload: " + _lastUploadLabel, 90));
             _tcgkbLastUploadItem.Visible = user != null && auto && (waiting || _lastUploadLabel != null);
         }
 
@@ -158,7 +158,7 @@ namespace PtcglAutoBattleLog.Tray
                 if (announce) AskConsent();   // the player asked for an upload: ask now
                 if (!HasConsent())
                 {
-                    if (!_tcgkbConsentLogged) Log.Info("tcgkb uploads wait until the updated disclaimer is accepted.");
+                    if (!_tcgkbConsentLogged) Log.Info("tcgkb uploads wait until the disclaimer is accepted.");
                     _tcgkbConsentLogged = true;
                     return;
                 }

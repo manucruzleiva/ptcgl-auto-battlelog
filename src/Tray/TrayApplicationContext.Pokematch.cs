@@ -56,7 +56,7 @@ namespace PtcglAutoBattleLog.Tray
             string info;
             if (!token) info = "Not set up";
             else if (_pokematchTokenRejected) info = "Pokematch refused the token: set a new one";
-            else if (!HasConsent()) info = "Waiting: accept the updated disclaimer";
+            else if (!HasConsent()) info = "Waiting: accept the disclaimer";
             else if (_pokematchBusy) info = "Uploading...";
             else info = _pokematchLast ?? (auto ? "Uploads new battle logs" : "Automatic upload is off");
             _pokematchInfoItem.Text = MenuText(Clip(info, 80));
@@ -205,8 +205,8 @@ namespace PtcglAutoBattleLog.Tray
                 {
                     // Said once: otherwise automatic uploads would wait for the disclaimer without a word.
                     _pokematchConsentWarned = true;
-                    Log.Info("Pokematch upload waits until the updated disclaimer is accepted.");
-                    Balloon("Pokematch upload is waiting", "Accept the updated disclaimer to upload your battle logs to Pokematch. Click to read it.",
+                    Log.Info("Pokematch upload waits until the disclaimer is accepted.");
+                    Balloon("Pokematch upload is waiting", "Accept the disclaimer to upload your battle logs to Pokematch. Click to read it.",
                             ToolTipIcon.Warning, AskConsent);
                 }
                 SchedulePokematch(PokematchInterval);

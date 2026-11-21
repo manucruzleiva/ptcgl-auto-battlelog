@@ -11,6 +11,10 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ### Changed
 
+- **The disclaimer is accepted once and never asked again.** You accept it when installing (or on
+  the first run of the portable copy); later changes to its text no longer ask again or pause
+  uploads to tcgkb and Pokematch. Players still waiting on the "updated disclaimer" are let through.
+
 - **Build & Battle matches are no longer uploaded to tcgkb.** Their log is still saved on your PC,
   and Pokematch uploads are unchanged.
 

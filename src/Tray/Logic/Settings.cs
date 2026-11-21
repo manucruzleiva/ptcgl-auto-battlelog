@@ -19,7 +19,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         [DataMember(Name = "notifyOnSave", Order = 4)] public bool NotifyOnSave = true;
         [DataMember(Name = "lastUpdateCheckUtc", Order = 5)] public string LastUpdateCheckUtc;
         [DataMember(Name = "skippedVersion", Order = 6)] public string SkippedVersion;
-        /// <summary>The Disclaimer.Version the user accepted; 0 = never. Asked again when it is lower.</summary>
+        /// <summary>The Disclaimer.Version the user accepted; 0 = never (the only case that asks).</summary>
         [DataMember(Name = "disclaimerAccepted", Order = 7)] public int DisclaimerAccepted;
         /// <summary>Upload each match to tcgkb once signed in: null = never chosen (on), then the player's choice.</summary>
         [DataMember(Name = "tcgkbAutoUpload", Order = 8, EmitDefaultValue = false)] public bool? TcgkbAutoUpload;
