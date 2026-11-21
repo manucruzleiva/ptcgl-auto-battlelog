@@ -9,6 +9,8 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [1.6.3] - 2026-11-21
+
 ### Changed
 
 - **The disclaimer is accepted once and never asked again.** You accept it when installing (or on
