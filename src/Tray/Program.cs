@@ -44,7 +44,7 @@ namespace PtcglAutoBattleLog.Tray
             }
 
             // Lines wait in memory while this run may still ask for consent (and Cancel must leave no trace).
-            bool consentPending = session.Read(s => s.DisclaimerAccepted) < Disclaimer.Version && !cli.Uninstall && !cli.Background && !cli.Updated;
+            bool consentPending = !Disclaimer.IsAccepted(session.Read(s => s.DisclaimerAccepted)) && !cli.Uninstall && !cli.Background && !cli.Updated;
             if (!consentPending) Commit(session);
             Log.Info("Start: v" + AppInfo.Version + " " + (session.Portable ? "portable" : "installed") + " mode, exe " + session.ExePath +
                      (args.Length > 0 ? ", args: " + string.Join(" ", args) : ""));
@@ -106,7 +106,7 @@ namespace PtcglAutoBattleLog.Tray
                 using (var signals = TraySignals.Create())
                 {
                     bool firstRun = cli.FirstRun;
-                    if (!cli.Background && !cli.Updated && session.Read(s => s.DisclaimerAccepted) < Disclaimer.Version)
+                    if (!cli.Background && !cli.Updated && !Disclaimer.IsAccepted(session.Read(s => s.DisclaimerAccepted)))
                     {
                         if (!DisclaimerDialog.EnsureAccepted(session, DisclaimerDialog.Purpose.Continue)) return 1;
                         firstRun = true;
@@ -127,7 +127,7 @@ namespace PtcglAutoBattleLog.Tray
                     {
                         // Like the installed copy: no "Open File - Security Warning" at every start or logon
                         // for an exe the player extracted from the downloaded zip and chose to run.
-                        if (session.Read(s => s.DisclaimerAccepted) >= Disclaimer.Version) WindowsIntegration.Unblock(session.ExePath);
+                        if (Disclaimer.IsAccepted(session.Read(s => s.DisclaimerAccepted))) WindowsIntegration.Unblock(session.ExePath);
                         if (session.Game == null && !cli.Background && !cli.Updated)
                         {
                             // Portable has no installer: its first interactive run sets the game up.

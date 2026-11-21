@@ -193,7 +193,7 @@ again from the Start menu while it runs opens it too.
 | Item | What it does |
 |---|---|
 | Status lines | Version (and "portable"), what the app is doing, the last saved log. |
-| Review the updated disclaimer... | In red, under the status lines, only when the disclaimer changed since you accepted it. Uploads to tcgkb and Pokematch wait until you accept it. |
+| Review the disclaimer... | In red, under the status lines, only if the disclaimer was never accepted (you accept it once, when installing). Uploads to tcgkb and Pokematch wait until you accept it. |
 | Open logs folder · Open last log | |
 | Update vX available ▸ | Install now, What's new, Skip this version (only when an update is waiting). |
 | tcgkb account ▸ | Optional. Sign in to tcgkb, turn automatic uploads off or on, disconnect. See [tcgkb account](#tcgkb-account). |

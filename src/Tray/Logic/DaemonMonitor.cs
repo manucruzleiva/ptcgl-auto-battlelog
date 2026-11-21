@@ -40,7 +40,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public PluginStatus Status;
         /// <summary>
         /// The player has not accepted the current disclaimer yet (a tray started at logon or after an
-        /// update, after Disclaimer.Version went up): nothing is written into the game until they do.
+        /// update, with settings that never recorded an acceptance): nothing is written into the game until they do.
         /// </summary>
         public bool ConsentPending;
     }
@@ -67,7 +67,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
         public static readonly TimeSpan RepairRetry = TimeSpan.FromSeconds(30);
 
         /// <summary>The status while the player has not accepted the current disclaimer and nothing worse is going on.</summary>
-        public const string ConsentPendingSummary = "Action needed: accept the updated disclaimer";
+        public const string ConsentPendingSummary = "Action needed: accept the disclaimer";
         /// <summary>Added to the status while a newer plugin waits for the game to close.</summary>
         public const string RestartToUpdateSuffix = " · restart the game to finish the mod update";
 
@@ -133,7 +133,7 @@ namespace PtcglAutoBattleLog.Tray.Logic
 
             // Icon and status line.
             if (o.GameDir == null) Set(d, TrayHealth.Attention, "Pokémon TCG Live not found");
-            else if (missing && o.ConsentPending) Set(d, TrayHealth.Attention, "Accept the updated disclaimer to keep the mod updated");
+            else if (missing && o.ConsentPending) Set(d, TrayHealth.Attention, "Accept the disclaimer to keep the mod updated");
             else if (missing && LastRepairError != null) Set(d, TrayHealth.Error, "Could not repair the mod: " + LastRepairError);
             else if (missing && !o.GameRunning)
                 Set(d, TrayHealth.Attention, onlyOutdatedPlugin ? "Updating the mod..." : _setupPending ? "Installing the mod..." : "Repairing the mod...");

@@ -28,7 +28,7 @@ namespace PtcglAutoBattleLog.Tray
         private string _matchesKey;
         private ToolStripMenuItem _consentItem;
 
-        /// <summary>A menu item that needs the player: the updated disclaimer. Windows' own error red.</summary>
+        /// <summary>A menu item that needs the player: the disclaimer. Windows' own error red.</summary>
         private static readonly Color AttentionColor = Color.FromArgb(196, 43, 28);
 
         private ContextMenuStrip BuildMenu()
@@ -46,7 +46,7 @@ namespace PtcglAutoBattleLog.Tray
             _dataInfoItem.Visible = _session.Paths.UsesFallbackData;
             _findGameItem = Item("Choose the game folder...", ChooseGameFolder);
             // Shown only while the current disclaimer is not accepted: the balloon that offers it is easy to miss.
-            _consentItem = Item("Review the updated disclaimer...", AskConsent);
+            _consentItem = Item("Review the disclaimer...", AskConsent);
             _consentItem.Font = _boldFont;
             _consentItem.ForeColor = AttentionColor;
             _consentItem.Visible = false;

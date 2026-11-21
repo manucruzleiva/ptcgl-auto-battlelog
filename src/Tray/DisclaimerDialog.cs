@@ -145,12 +145,12 @@ namespace PtcglAutoBattleLog.Tray
         }
 
         /// <summary>
-        /// Asks for consent unless this version was accepted already; stores it on acceptance.
+        /// Asks for consent unless it was ever accepted (any version); stores it on acceptance.
         /// False = the player cancelled: the caller exits without changing anything.
         /// </summary>
         public static bool EnsureAccepted(Session session, Purpose purpose)
         {
-            if (session.Read(s => s.DisclaimerAccepted) >= Disclaimer.Version) return true;
+            if (Disclaimer.IsAccepted(session.Read(s => s.DisclaimerAccepted))) return true;
             if (!Ask(purpose))
             {
                 Log.Info("Disclaimer declined.");

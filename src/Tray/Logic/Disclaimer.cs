@@ -12,8 +12,14 @@ namespace PtcglAutoBattleLog.Tray.Logic
     /// </summary>
     public static class Disclaimer
     {
-        /// <summary>Bump when the text changes in substance: everyone is asked again (settings.disclaimerAccepted).</summary>
+        /// <summary>Stored in settings.disclaimerAccepted on acceptance. Bumping it no longer asks anyone again.</summary>
         public const int Version = 5;
+
+        /// <summary>
+        /// Accepted once (at install or the first portable run), accepted for good: a later text change
+        /// does not ask again, since every new prompt stalled uploads until the player found it.
+        /// </summary>
+        public static bool IsAccepted(int accepted) => accepted > 0;
 
         private const string NewLine = "\r\n";   // what a WinForms TextBox needs
 

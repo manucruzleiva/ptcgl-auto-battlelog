@@ -229,7 +229,7 @@ running" and is reported as such, never as a crash.
 
 Top level, kept short: status lines (version and mode; daemon summary; last saved log; data folder
 when the portable fallback is in use; "Choose the game folder..." while the game is not found; a red
-"Review the updated disclaimer..." while consent to the current `Disclaimer.Version` is pending) ·
+"Review the disclaimer..." while consent is pending, i.e. never given) ·
 **Open logs folder** · Open last log · Update vX available ▸ (Install
 now, What's new, Skip this version; only while an update waits) · tcgkb account ▸ ("Not connected" /
 "Connected as <name>", Sign in to tcgkb..., Upload my matches automatically, Upload matches now, Disconnect; see "tcgkb account") ·
@@ -287,11 +287,11 @@ daemon report refreshes the items and the window.
   the game to finish the mod update" and one notification per episode says so (`ModUpdateReady`,
   not while consent is pending): what the new plugin adds, such as the deck file, starts only
   after a restart (#39). A failed repair is retried after 30 s.
-  While consent to the current `Disclaimer.Version` is pending (a tray started with `--background`
-  or `--updated-from` after a bump), nothing is repaired or updated and no "restart" notice is shown;
-  the status reads "Accept the updated disclaimer to keep the mod updated" (see "Disclaimer and
+  While consent is pending (a tray started with `--background` or `--updated-from` whose settings
+  never recorded an acceptance), nothing is repaired or updated and no "restart" notice is shown;
+  the status reads "Accept the disclaimer to keep the mod updated" (see "Disclaimer and
   consent"). With nothing to repair, a pending consent still shows attention ("Action needed: accept
-  the updated disclaimer"), unless the game is missing or the plugin reports an error. tcgkb and
+  the disclaimer"), unless the game is missing or the plugin reports an error. tcgkb and
   Pokematch uploads wait for it too.
   First install: when a `--first-run` (or first portable) tray starts with pieces missing while the
   game runs (the installer could not finish), the welcome says to close the game once to finish
@@ -754,13 +754,14 @@ it as the resource `DISCLAIMER.md`.
 * Before the first install (installed mode) and before the first run (portable mode) the tray shows
   the disclaimer in a dialog with "I understand, install" / "I understand, continue" and "Cancel".
   Cancel exits without changing anything.
-* Acceptance is stored as `settings.disclaimerAccepted` = `Disclaimer.Version` (an int, currently 3).
-  The dialog is shown again only when `Disclaimer.Version` increases. `--background`,
-  `--updated-from` and `--uninstall` never show it; a tray started that way after a bump shows a
-  notification instead, whose click (or launching the app again, or "Repair now") opens the dialog.
+* Acceptance is stored as `settings.disclaimerAccepted` = `Disclaimer.Version` (an int, currently 5).
+  Any value above 0 counts (`Disclaimer.IsAccepted`): the player accepts once and is never asked
+  again, even when the text and `Disclaimer.Version` change (each re-prompt stalled uploads until
+  the player found it). `--background`, `--updated-from` and `--uninstall` never show it; a tray
+  started that way with settings that never recorded an acceptance shows a notification instead,
+  whose click (or launching the app again, or "Repair now") opens the dialog.
   Until the first consent nothing is written: `tray.log` lines are held in memory and the portable
-  `data\` folder is not created. After a bump, until the new version is accepted, nothing is
-  written into the game: the daemon neither repairs nor updates the plugin (the new exe's plugin
+  `data\` folder is not created. In that pending state nothing is written into the game: the daemon neither repairs nor updates the plugin (the new exe's plugin
   waits) and "Repair now" asks for consent first; the app itself keeps running and updating, and
   `tray.log` and `settings.json` keep being written in the folder the earlier consent allowed.
   Declining exits the tray, removes its `Run` value (so it does not come back at the next logon)

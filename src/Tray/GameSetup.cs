@@ -81,7 +81,7 @@ namespace PtcglAutoBattleLog.Tray
             error = null;
             var game = session.Game;
             if (game == null) return RepairOutcome.NoGame;
-            if (session.Read(s => s.DisclaimerAccepted) < Disclaimer.Version) return RepairOutcome.ConsentPending;
+            if (!Disclaimer.IsAccepted(session.Read(s => s.DisclaimerAccepted))) return RepairOutcome.ConsentPending;
             try
             {
                 if (game.Missing(session.Payload).Count == 0) return RepairOutcome.NothingToDo;
