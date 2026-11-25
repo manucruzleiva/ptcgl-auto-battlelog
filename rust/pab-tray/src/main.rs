@@ -21,6 +21,8 @@ mod sys;
 #[cfg(test)]
 mod tests;
 #[cfg(windows)]
+mod ui;
+#[cfg(windows)]
 mod uninstaller;
 mod updates;
 mod uploads;

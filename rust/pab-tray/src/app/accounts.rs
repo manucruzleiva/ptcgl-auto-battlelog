@@ -6,8 +6,9 @@ use crate::win::dialogs;
 use crate::win::notify_icon::BalloonIcon;
 use crate::win::popup::Item;
 use crate::win::shell;
-use crate::{log, PRODUCT_NAME};
+use crate::log;
 use chrono::{DateTime, Utc};
+use pab_core::tokens::PokematchToken;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -129,18 +130,83 @@ impl Tray {
         self.balloon(&n.title, &n.text, if n.warning { BalloonIcon::Warning } else { BalloonIcon::Info }, click);
     }
 
-    // shortcut: the tcgkb sign-in and the Pokematch token box are egui windows
-    // (phase 4); until then these say so. A tray signed in by 1.6.x keeps uploading meanwhile.
-    fn not_in_this_build(&self, what: &str) {
-        self.modal(|| dialogs::info(self.owner(), &format!("{what} is not in this test build of {PRODUCT_NAME} yet. It comes with the app window.")));
+    /// Sign-in is the only step: every PTCGL account in this computer's sealed logs is taken as the
+    /// player's (tcgkb claims it with the first upload) and uploads are on by default.
+    pub(super) fn sign_in_tcgkb(&self) {
+        if self.uploads.clients.tcgkb.is_connected() || crate::ui::busy() {
+            return;
+        }
+        let text = "Sign in to tcgkb.app to upload your matches?\n\n\
+            Your browser opens tcgkb.app, where you sign in and approve this computer. The app never sees your password.\n\n\
+            From then on, after each match the app sends tcgkb the sealed battle log and your decklist; the matches already in your logs folder go too. \
+            Every PTCGL account that plays on this computer is added to your tcgkb account. The logs contain both players' names, your deck and every play of the match. \
+            You can turn uploads off or disconnect any time in the tcgkb account menu.";
+        if !self.modal(|| dialogs::confirm(self.owner(), text, false)) {
+            return;
+        }
+        let clients = self.uploads.clients.clone();
+        self.window(move |p| {
+            if crate::ui::connect_tcgkb(clients).is_some() {
+                p.post(super::Event::Run(Box::new(|t: &Tray| {
+                    log::info(&format!("Signed in to tcgkb; automatic match upload {}.", if uploads::tcgkb_auto(&t.session) { "on" } else { "off" }));
+                    t.uploads.upload_tcgkb(true);
+                })));
+            }
+        });
     }
 
-    fn sign_in_tcgkb(&self) {
-        self.not_in_this_build("Signing in to tcgkb");
+    /// Not signed in: right after a first install the sign-in opens by itself; a player who
+    /// installed before sign-in was the only step (or never finished it) is offered it once.
+    pub(super) fn offer_sign_in(&self, first_run: bool) {
+        if self.uploads.clients.tcgkb.is_connected() {
+            return;
+        }
+        if first_run {
+            return self.sign_in_tcgkb();
+        }
+        if self.session.read(|s| s.tcgkb_sign_in_offered) {
+            return;
+        }
+        self.session.update(|s| s.tcgkb_sign_in_offered = true);
+        self.balloon(
+            "Sign in to tcgkb",
+            "Sign in once and your matches go to tcgkb.app by themselves: stats, meta and leaderboard. Click to sign in.",
+            BalloonIcon::Info,
+            Some(Rc::new(|t: &Tray| t.sign_in_tcgkb())),
+        );
     }
 
     fn set_pokematch_token(&self) {
-        self.not_in_this_build("Setting the Pokematch API token");
+        if !self.ensure_consent() {
+            return;
+        }
+        let clients = self.uploads.clients.clone();
+        self.window(move |p| {
+            let Some(token) = crate::ui::ask_pokematch_token() else { return };
+            match clients.pokematch_api.check_token(&token) {
+                Err(e) if e.auth => {
+                    return dialogs::warning(
+                        std::ptr::null_mut(),
+                        "Pokematch does not accept this token. Copy it again from Pokematch (Profile Settings > Account > API Tokens), or make a new one.",
+                    );
+                }
+                // Pokematch may be asleep or down: keep the token, the uploads find out later.
+                Err(e) => log::info(&format!("Could not check the Pokematch token now: {e}")),
+                Ok(()) => {}
+            }
+            if let Err(e) = clients.pokematch_tokens.save(&PokematchToken { token: Some(token), set_utc: Utc::now() }) {
+                return log::error("Could not save the Pokematch API token", e);
+            }
+            p.post(super::Event::Run(Box::new(|t: &Tray| {
+                t.uploads.pokematch_token_set();
+                log::info("Pokematch API token set.");
+                if t.session.read(|x| x.pokematch_auto_upload) {
+                    t.uploads.pokematch_in(Duration::from_secs(1));
+                } else {
+                    t.toggle_pokematch_auto(); // offers to turn automatic uploads on
+                }
+            })));
+        });
     }
 
     /// Nothing goes to Pokematch before the disclaimer that covers it is accepted.

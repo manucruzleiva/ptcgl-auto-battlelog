@@ -42,6 +42,8 @@ enum Action {
     Account(AccountAction),
     Uninstall,
     Consent,
+    ViewDisclaimer,
+    Licenses,
     Exit,
 }
 
@@ -162,12 +164,13 @@ impl Tray {
             b.enabled("Repair now", game.is_some(), Action::Repair),
             Item::Separator,
             b.item("Project page", Action::ProjectPage),
+            b.item("View disclaimer", Action::ViewDisclaimer),
+            b.item("Licenses", Action::Licenses),
             Item::Separator,
             b.item(if s.portable() { "Remove mod from game..." } else { "Uninstall..." }, Action::Uninstall),
         ];
 
-        // shortcut: the status window, "View disclaimer" and licenses come
-        // with the egui window (phase 4).
+        // shortcut: the status window comes with phase 4b.
         items.extend([
             Item::Separator,
             Item::Sub { text: "Settings".into(), items: settings },
@@ -298,6 +301,16 @@ impl Tray {
             }
             Action::Account(a) => self.run_account(a),
             Action::Consent => self.ask_consent(),
+            Action::ViewDisclaimer if !s.consent() => self.ask_consent(),
+            Action::ViewDisclaimer => {
+                self.window(|_| crate::ui::show_text("Disclaimer", &format!("The terms you accepted when you installed {PRODUCT_NAME}."), crate::embedded::disclaimer_text()));
+            }
+            Action::Licenses => {
+                self.window(|_| {
+                    let intro = format!("{PRODUCT_NAME} is free software under the MIT License. It carries BepInEx and the other components below, which keep their own licenses.");
+                    crate::ui::show_text("Licenses", &intro, crate::embedded::licenses_text())
+                });
+            }
             Action::Uninstall => self.uninstall(),
             Action::Exit => self.exit(),
         }
