@@ -73,18 +73,31 @@ fn app_icon() -> Option<egui::IconData> {
 
 /// Runs one window until it closes. `ui` draws it; it closes the window with `close(ui)`.
 fn show(title: &str, size: [f32; 2], mut draw: impl FnMut(&mut egui::Ui) + 'static) {
+    run(options(title, size), title, move |ui| {
+        egui::CentralPanel::default().show(ui, |ui| draw(ui));
+    });
+}
+
+/// The status window: resizable, titled with the product's name; `draw` gets the whole window.
+pub fn show_main(size: [f32; 2], min: [f32; 2], draw: impl FnMut(&mut egui::Ui) + 'static) {
+    let mut o = options("", size);
+    o.viewport = o.viewport.with_title(PRODUCT_NAME).with_resizable(true).with_min_inner_size(min);
+    run(o, PRODUCT_NAME, draw);
+}
+
+fn run(options: eframe::NativeOptions, title: &str, draw: impl FnMut(&mut egui::Ui) + 'static) {
     struct App<F>(F);
     impl<F: FnMut(&mut egui::Ui)> eframe::App for App<F> {
         fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-            egui::CentralPanel::default().show(ui, |ui| (self.0)(ui));
+            (self.0)(ui);
         }
     }
     let result = eframe::run_native(
         PRODUCT_NAME,
-        options(title, size),
+        options,
         Box::new(move |cc| {
             cc.egui_ctx.set_visuals(egui::Visuals::dark());
-            Ok(Box::new(App(move |ui: &mut egui::Ui| draw(ui))))
+            Ok(Box::new(App(draw)))
         }),
     );
     if let Err(e) = result {
@@ -92,7 +105,7 @@ fn show(title: &str, size: [f32; 2], mut draw: impl FnMut(&mut egui::Ui) + 'stat
     }
 }
 
-fn close(ui: &egui::Ui) {
+pub fn close(ui: &egui::Ui) {
     ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
 }
 

@@ -25,6 +25,7 @@ const MAX_TIP: usize = 63;
 
 mod accounts;
 mod menu;
+mod window;
 
 enum Event {
     Update(UpdateEvent),
@@ -70,6 +71,7 @@ struct Tray {
     poster: Poster,
     /// Open dialogs: an update must not restart the app under one.
     modal: Arc<AtomicUsize>,
+    win: window::WindowState,
 }
 
 fn health_index(h: TrayHealth) -> usize {
@@ -132,6 +134,7 @@ pub fn run(session: Arc<Session>, cli: &CommandLine, first_run: bool, signals: &
         uploads,
         poster: poster.clone(),
         modal,
+        win: Default::default(),
     });
     *tray.borrow_mut() = Some(t.clone());
 
@@ -184,8 +187,10 @@ impl Tray {
                 while let Ok(e) = self.rx.try_recv() {
                     self.on_event(e);
                 }
+                self.refresh_window();
             }
-            TrayMsg::LeftClick | TrayMsg::ContextMenu => self.show_menu(),
+            TrayMsg::LeftClick => self.show_window(),
+            TrayMsg::ContextMenu => self.show_menu(),
             TrayMsg::BalloonClick => {
                 // Cloned out: the click may show another balloon, which replaces it.
                 let click = self.balloon_click.borrow().clone();
@@ -205,8 +210,8 @@ impl Tray {
             Event::Run(f) => f(self),
             Event::Report(r) => self.on_report(*r),
             Event::Saved(path, result, opponent) => self.on_saved(path, result, opponent),
-            // shortcut: the status window comes in phase 4; until then "show" opens the menu.
-            Event::Show => self.show_menu(),
+            // The app was started again (Start menu, the exe) while running.
+            Event::Show => self.show_window(),
             Event::Exit => self.exit(),
         }
     }
@@ -259,16 +264,21 @@ impl Tray {
     }
 
     /// Opens a window on the window thread (crate::ui) and counts it as a dialog until `job` ends;
-    /// `job` gets a poster to hand its result back. False when a window is already open.
+    /// `job` gets a poster to hand its result back. False when another window is open; the status
+    /// window closes for it and opens again after.
     fn window(&self, job: impl FnOnce(&Poster) + Send + 'static) -> bool {
-        if crate::ui::busy() {
+        if !self.can_open_window() {
             return false;
         }
+        let reopen = crate::ui::busy() && self.make_way();
         let (modal, poster) = (self.modal.clone(), self.poster.clone());
         modal.fetch_add(1, Ordering::SeqCst);
         crate::ui::spawn(move || {
             job(&poster);
             modal.fetch_sub(1, Ordering::SeqCst);
+            if reopen {
+                poster.post(Event::Run(Box::new(|t: &Tray| t.show_window())));
+            }
         });
         true
     }

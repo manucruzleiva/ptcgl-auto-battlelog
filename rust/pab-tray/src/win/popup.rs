@@ -7,6 +7,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
     MF_CHECKED, MF_GRAYED, MF_POPUP, MF_SEPARATOR, MF_STRING, TPM_BOTTOMALIGN, TPM_RETURNCMD, TPM_RIGHTBUTTON, WM_NULL,
 };
 
+#[derive(Clone)]
 pub enum Item {
     Action { id: u32, text: String, checked: bool, enabled: bool, default: bool },
     Sub { text: String, items: Vec<Item> },
