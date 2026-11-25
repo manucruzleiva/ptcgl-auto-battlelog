@@ -370,7 +370,7 @@ impl Tray {
     /// The disclaimer, asked from the running tray. Until it is accepted nothing is written into
     /// the game. Declining stops the app for good (the Run value goes) and offers to take the mod
     /// out of the game.
-    fn ask_consent(&self) {
+    pub(super) fn ask_consent(&self) {
         if self.session.consent() || self.modal.load(Ordering::SeqCst) > 0 {
             return;
         }
@@ -393,7 +393,7 @@ impl Tray {
     }
 
     /// Runs this exe with --uninstall, as Apps & Features would: one code path for both.
-    fn uninstall(&self) {
+    pub(super) fn uninstall(&self) {
         let s = &self.session;
         let mut args = vec![pab_core::command_line::UNINSTALL];
         if s.portable() && s.portable_forced {
