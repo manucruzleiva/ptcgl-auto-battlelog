@@ -20,6 +20,8 @@ mod status_icons;
 mod sys;
 #[cfg(test)]
 mod tests;
+#[cfg(windows)]
+mod uninstaller;
 mod updates;
 mod uploads;
 #[cfg(windows)]
@@ -119,10 +121,8 @@ fn run() -> i32 {
     if !cli.unknown.is_empty() {
         log::info(&format!("Ignored arguments: {}", cli.unknown.join(" ")));
     }
-    // shortcut: --uninstall comes in the next phase-3c step.
     if cli.uninstall {
-        log::info("Uninstalling is not in the Rust tray yet.");
-        return 1;
+        return uninstaller::run(&session, cli.quiet);
     }
     if !session.portable() && !win::registry::same_path(&exe.to_string_lossy(), &session.paths().installed_exe.to_string_lossy()) {
         if cli.background {

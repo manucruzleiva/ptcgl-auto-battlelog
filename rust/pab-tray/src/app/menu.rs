@@ -40,6 +40,7 @@ enum Action {
     Repair,
     ProjectPage,
     Account(AccountAction),
+    Uninstall,
     Consent,
     Exit,
 }
@@ -161,10 +162,12 @@ impl Tray {
             b.enabled("Repair now", game.is_some(), Action::Repair),
             Item::Separator,
             b.item("Project page", Action::ProjectPage),
+            Item::Separator,
+            b.item(if s.portable() { "Remove mod from game..." } else { "Uninstall..." }, Action::Uninstall),
         ];
 
-        // shortcut: the status window, the disclaimer, licenses and uninstall come
-        // with the egui window (phase 4) and the installer (phase 3c).
+        // shortcut: the status window, "View disclaimer" and licenses come
+        // with the egui window (phase 4).
         items.extend([
             Item::Separator,
             Item::Sub { text: "Settings".into(), items: settings },
@@ -295,6 +298,7 @@ impl Tray {
             }
             Action::Account(a) => self.run_account(a),
             Action::Consent => self.ask_consent(),
+            Action::Uninstall => self.uninstall(),
             Action::Exit => self.exit(),
         }
     }
