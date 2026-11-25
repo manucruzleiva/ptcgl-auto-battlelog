@@ -127,6 +127,11 @@ static class Program
             new PluginStatusWriter(file, "1.1.0", folder, 4242).Update(beat, PluginStatusWriter.Ok, message, 3, last, last == null ? (DateTime?)null : beat.AddSeconds(-55));
         }
 
+        // DISCLAIMER.md and THIRD-PARTY-NOTICES.md as the C# dialogs show them.
+        var repo = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        foreach (var (md, name) in new[] { ("DISCLAIMER.md", "disclaimer-plain.txt"), ("THIRD-PARTY-NOTICES.md", "notices-plain.txt") })
+            File.WriteAllText(Path.Combine(outDir, name), Disclaimer.ToPlainText(File.ReadAllText(Path.Combine(repo, md))), FileOps.Utf8NoBom);
+
         try { Directory.Delete(work, true); } catch { }
         Console.WriteLine("goldens written to " + outDir);
         return 0;

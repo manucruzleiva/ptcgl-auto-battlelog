@@ -14,7 +14,7 @@ command-line arguments the 1.6.x updater passes, `update.json`, and the tcgkb an
 | Phase | What | State |
 |---|---|---|
 | 1 | `pab-core`: logic without UI, ported with the C# tests. Log names, seal reading, updates, settings, paths, token files + DPAPI, tcgkb and Pokematch clients | done |
-| 2 | Upload queues (2a, done); plugin install/repair, BepInEx cfg, plugin status (2b, done); watcher, daemon, self-update (2c) | in progress |
+| 2 | The rest of `src/Tray/Logic`: upload queues, plugin install/repair, BepInEx cfg, plugin status, daemon judgement, self-update swap, command line, disclaimer text, 1.0 leftovers, uninstall order, tray.log | done |
 | 3 | Tray, menu, notifications, disclaimer, installer/uninstaller, portable | |
 | 4 | Status window (egui) | |
 | 5 | `2.0.0-beta.1` on the beta channel, then stable | |
