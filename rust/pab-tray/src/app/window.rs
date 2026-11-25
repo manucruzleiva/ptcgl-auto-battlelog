@@ -768,10 +768,10 @@ fn chip(ui: &mut egui::Ui, text: &str, highlight: bool) {
 fn step(ui: &mut egui::Ui, done: bool, title: &str, detail: &str, progress: Option<f64>) {
     ui.add_space(4.0);
     ui.horizontal_top(|ui| {
-        ui.label(RichText::new(if done { "✔" } else { "○" }).size(16.0).color(if done { GOOD } else { SECONDARY }));
+        mark(ui, done);
         ui.vertical(|ui| {
             ui.label(title);
-            ui.label(RichText::new(detail).color(SECONDARY));
+            ui.add(egui::Label::new(RichText::new(detail).color(SECONDARY)).wrap());
             if let Some(p) = progress.filter(|_| !done) {
                 ui.add_space(4.0);
                 ui.scope(|ui| {
@@ -782,6 +782,20 @@ fn step(ui: &mut egui::Ui, done: bool, title: &str, detail: &str, progress: Opti
         });
     });
     ui.add_space(4.0);
+}
+
+/// A step's check (done) or empty ring, drawn: the default fonts have no check mark glyph.
+fn mark(ui: &mut egui::Ui, done: bool) {
+    let (rect, _) = ui.allocate_exact_size(egui::vec2(20.0, 20.0), Sense::hover());
+    let (c, p) = (rect.center(), ui.painter());
+    if done {
+        p.circle_filled(c, 9.0, GOOD);
+        let pts = [c + egui::vec2(-4.0, 0.0), c + egui::vec2(-1.0, 3.0), c + egui::vec2(4.5, -3.5)];
+        p.line_segment([pts[0], pts[1]], Stroke::new(2.0, ON_ACCENT));
+        p.line_segment([pts[1], pts[2]], Stroke::new(2.0, ON_ACCENT));
+    } else {
+        p.circle_stroke(c, 8.0, Stroke::new(1.5, SECONDARY));
+    }
 }
 
 fn account_row(ui: &mut egui::Ui, a: &Account) {
@@ -795,7 +809,7 @@ fn account_row(ui: &mut egui::Ui, a: &Account) {
                 Some(DISPUTED) => "Another tcgkb user claims it too: it counts for no one until one of you has a verified match",
                 _ => "Verified once an opponent on tcgkb uploads the same match",
             };
-            ui.label(RichText::new(detail).color(SECONDARY));
+            ui.add(egui::Label::new(RichText::new(detail).color(SECONDARY)).wrap());
         });
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| chip(ui, status_word(a), a.status.as_deref() == Some(VERIFIED)));
     });
