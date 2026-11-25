@@ -29,6 +29,8 @@ mod menu;
 enum Event {
     Update(UpdateEvent),
     Upload(Notice),
+    /// Work a window thread hands back to the UI thread.
+    Run(Box<dyn FnOnce(&Tray) + Send>),
     Report(Box<DaemonReport>),
     Saved(PathBuf, &'static str, Option<String>),
     Show,
@@ -65,6 +67,7 @@ struct Tray {
     exiting: std::cell::Cell<bool>,
     updates: Option<Updates>,
     uploads: Uploads,
+    poster: Poster,
     /// Open dialogs: an update must not restart the app under one.
     modal: Arc<AtomicUsize>,
 }
@@ -127,6 +130,7 @@ pub fn run(session: Arc<Session>, cli: &CommandLine, first_run: bool, signals: &
         exiting: std::cell::Cell::new(false),
         updates,
         uploads,
+        poster: poster.clone(),
         modal,
     });
     *tray.borrow_mut() = Some(t.clone());
@@ -198,6 +202,7 @@ impl Tray {
         match e {
             Event::Update(e) => self.on_update(e),
             Event::Upload(n) => self.on_upload_notice(n),
+            Event::Run(f) => f(self),
             Event::Report(r) => self.on_report(*r),
             Event::Saved(path, result, opponent) => self.on_saved(path, result, opponent),
             // shortcut: the status window comes in phase 4; until then "show" opens the menu.
@@ -251,6 +256,21 @@ impl Tray {
             UpdateEvent::AvailableChanged => {}
             UpdateEvent::Restart => self.exit(),
         }
+    }
+
+    /// Opens a window on the window thread (crate::ui) and counts it as a dialog until `job` ends;
+    /// `job` gets a poster to hand its result back. False when a window is already open.
+    fn window(&self, job: impl FnOnce(&Poster) + Send + 'static) -> bool {
+        if crate::ui::busy() {
+            return false;
+        }
+        let (modal, poster) = (self.modal.clone(), self.poster.clone());
+        modal.fetch_add(1, Ordering::SeqCst);
+        crate::ui::spawn(move || {
+            job(&poster);
+            modal.fetch_sub(1, Ordering::SeqCst);
+        });
+        true
     }
 
     /// Counts an open dialog while `f` runs: an update must not restart the app under it.
@@ -364,6 +384,8 @@ impl Tray {
                 BalloonIcon::Warning,
                 Some(Rc::new(|t: &Tray| t.ask_consent())),
             );
+        } else {
+            self.offer_sign_in(first_run);
         }
     }
 
@@ -377,6 +399,7 @@ impl Tray {
         if self.modal(|| crate::setup::ensure_accepted(&self.session, false)) {
             self.daemon.poke(); // repairs and updates the mod again
             self.uploads.consent_given();
+            self.offer_sign_in(false);
             return;
         }
         if let Err(e) = crate::win::registry::remove_start_with_windows(&self.session.paths().installed_exe) {

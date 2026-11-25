@@ -233,6 +233,11 @@ impl Uploads {
         }
     }
 
+    /// A new token was saved: Pokematch is tried again.
+    pub fn pokematch_token_set(&self) {
+        lock(&self.status).pokematch_token_rejected = false;
+    }
+
     /// The token was removed: nothing more goes to Pokematch.
     pub fn pokematch_token_removed(&self) {
         let mut s = lock(&self.status);

@@ -16,6 +16,8 @@ png = "0.18"
 notify = { version = "9", default-features = false }
 
 [target.'cfg(windows)'.dependencies]
+eframe = { version = "0.37", default-features = false, features = ["accesskit", "clipboard", "default_fonts", "glow"] }
+winit = { version = "0.30", default-features = false }
 mslnk = "0.1.8"
 ureq = { version = "3.5", default-features = false, features = ["native-tls", "gzip", "win-system-proxy"] }
 winreg = "0.56"
