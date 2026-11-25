@@ -147,7 +147,7 @@ fn register(session: &Session, paths: &AppPaths, logs: &Path) {
         "Start menu shortcut",
         start_menu_shortcut()
             .ok_or_else(|| "no Start menu folder".to_string())
-            .and_then(|lnk| shell::create_shortcut(&lnk, exe, Some(&paths.root), "Saves every Pokémon TCG Live battle log automatically.", Some(&format!("{},0", exe.display())))),
+            .and_then(|lnk| shell::create_shortcut(&lnk, exe, Some(&paths.root), "Saves every Pokémon TCG Live battle log automatically.", Some(exe))),
     );
     step(
         "desktop shortcut",

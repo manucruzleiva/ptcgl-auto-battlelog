@@ -71,11 +71,16 @@ mod tests {
         assert!(std::fs::metadata(&stream).is_err() && exe.is_file());
 
         let lnk = dir.path().join(r"Start\PTCGL Auto Battle Log.lnk");
-        shell::create_shortcut(&lnk, &exe, Some(dir.path()), "Saves every battle log.", Some(&format!("{},0", exe.display()))).unwrap();
+        shell::create_shortcut(&lnk, &exe, Some(dir.path()), "Saves every battle log.", Some(&exe)).unwrap();
         let logs = dir.path().join("PTCGL Battle Logs");
         std::fs::create_dir(&logs).unwrap();
         shell::create_shortcut(&dir.path().join("logs.lnk"), &logs, None, "Your battle logs.", None).unwrap();
-        assert!(std::fs::read(&lnk).unwrap().starts_with(&[0x4C, 0, 0, 0]));
+        let bytes = std::fs::read(&lnk).unwrap();
+        assert!(bytes.starts_with(&[0x4C, 0, 0, 0]));
+        // The icon location is the bare exe path: an "exe,0" there is a file Windows can't find.
+        let utf16 = |s: &str| s.encode_utf16().flat_map(u16::to_le_bytes).collect::<Vec<u8>>();
+        let has = |needle: &[u8]| bytes.windows(needle.len()).any(|w| w == needle);
+        assert!(has(&utf16(&exe.to_string_lossy())) && !has(&utf16(&format!("{},0", exe.display()))));
     }
 
     #[test]
