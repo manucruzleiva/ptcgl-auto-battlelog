@@ -23,3 +23,6 @@ __pycache__/
 # Private planning notes (kept out of the shared repo)
 GOAL.MD
 GOAL.md
+
+# Rust build output
+rust/target/

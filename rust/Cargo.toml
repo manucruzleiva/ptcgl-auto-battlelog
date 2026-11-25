@@ -1,0 +1,10 @@
+# The Rust rewrite of the tray app (PtcglAutoBattleLog.exe). The BepInEx plugin stays in C#:
+# BepInEx only loads .NET assemblies inside the game's Mono runtime.
+[workspace]
+resolver = "2"
+members = ["pab-core"]
+
+[workspace.package]
+version = "2.0.0-alpha.1"
+edition = "2021"
+license = "MIT"
