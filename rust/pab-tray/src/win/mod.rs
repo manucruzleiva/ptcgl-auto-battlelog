@@ -1,5 +1,7 @@
 //! Everything that talks to Windows itself. The logic behind it is in pab-core.
 pub mod instance;
+pub mod notify_icon;
+pub mod popup;
 pub mod process;
 pub mod registry;
 pub mod shell;
@@ -79,5 +81,34 @@ mod tests {
         assert!(registry::same_path(r"C:\A\B\x.EXE", r"c:\a\b\.\x.exe "));
         assert!(!registry::same_path(r"C:\A\x.exe", r"C:\A\y.exe"));
         assert!(!registry::same_path("", r"C:\A"));
+    }
+
+    #[test]
+    fn tray_window_icons_and_wakes() {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{DispatchMessageW, PeekMessageW, MSG, PM_REMOVE};
+        let size = notify_icon::small_icon_size();
+        for h in [pab_core::daemon_monitor::TrayHealth::Idle, pab_core::daemon_monitor::TrayHealth::Error] {
+            let px = crate::status_icons::draw(crate::embedded::APP_ICON, size, crate::status_icons::dot_color(h)).unwrap();
+            assert!(notify_icon::Icon::from_rgba(size, &px).is_some());
+        }
+        let seen = std::rc::Rc::new(std::cell::Cell::new(0));
+        let s = seen.clone();
+        let icon = notify_icon::NotifyIcon::create(move |m| {
+            if m == notify_icon::TrayMsg::Wake {
+                s.set(s.get() + 1);
+            }
+        })
+        .unwrap();
+        let waker = icon.waker();
+        std::thread::spawn(move || waker.wake()).join().unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while seen.get() == 0 && std::time::Instant::now() < deadline {
+            let mut msg: MSG = unsafe { std::mem::zeroed() };
+            while unsafe { PeekMessageW(&mut msg, std::ptr::null_mut(), 0, 0, PM_REMOVE) } != 0 {
+                unsafe { DispatchMessageW(&msg) };
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert_eq!(seen.get(), 1, "a wake from another thread reaches the window's thread");
     }
 }
