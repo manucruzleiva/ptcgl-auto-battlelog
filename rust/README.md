@@ -13,7 +13,7 @@ command-line arguments the 1.6.x updater passes, `update.json`, and the tcgkb an
 
 | Phase | What | State |
 |---|---|---|
-| 1 | `pab-core`: logic without UI, ported with the C# tests. Done: log names, seal reading, updates, settings, paths, token files + DPAPI. Next: tcgkb and Pokematch clients | in progress |
+| 1 | `pab-core`: logic without UI, ported with the C# tests. Log names, seal reading, updates, settings, paths, token files + DPAPI, tcgkb and Pokematch clients | done |
 | 2 | Daemon: watch logs, upload, repair/install the plugin, self-update | |
 | 3 | Tray, menu, notifications, disclaimer, installer/uninstaller, portable | |
 | 4 | Status window (egui) | |

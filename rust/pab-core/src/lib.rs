@@ -8,6 +8,7 @@ pub mod file_ops;
 pub mod hashing;
 pub mod log_file_name;
 pub mod paths;
+pub mod pokematch;
 pub mod seal_summary;
 pub mod settings;
 pub mod tcgkb;
