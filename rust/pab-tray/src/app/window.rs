@@ -836,7 +836,8 @@ mod tests {
     #[test]
     fn when_reads_like_the_csharp_window() {
         let now = at("2026-11-25 18:00");
-        assert_eq!(when(at("2026-11-25 17:59"), now), "Just now");
+        assert_eq!(when(now, now), "Just now");
+        assert_eq!(when(at("2026-11-25 17:59"), now), "1 min ago");
         assert_eq!(when(at("2026-11-25 17:30"), now), "30 min ago");
         assert_eq!(when(at("2026-11-25 15:00"), now), "3 h ago");
         assert_eq!(when(at("2026-11-24 23:00"), now), "Yesterday");
