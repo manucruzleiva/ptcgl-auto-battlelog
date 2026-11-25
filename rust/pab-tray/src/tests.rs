@@ -109,3 +109,46 @@ fn watcher_reports_each_new_log_once() {
     std::fs::write(folder.join(name), "rewritten").unwrap();
     assert!(rx.recv_timeout(Duration::from_secs(3)).is_err(), "once per file, and not for other names");
 }
+
+#[test]
+fn updates_offer_install_and_restart() {
+    use crate::updates::{Click, UpdateEvent, Updates};
+    let tmp = tempfile::tempdir().unwrap();
+    let s = Arc::new(session(tmp.path(), true));
+    s.prepare_data_folder();
+    let exe = s.paths().installed_exe;
+    std::fs::write(&exe, b"old exe").unwrap();
+    let new_exe = b"new exe bytes".to_vec();
+    let hex: String = pab_core::hashing::sha256(&new_exe).iter().map(|b| format!("{b:02x}")).collect();
+    let base = format!("https://github.com/{}/{}/releases", crate::REPO_OWNER, crate::REPO_NAME);
+    let manifest = format!(
+        r#"{{"version":"99.0.0","tag":"v99.0.0","assets":[{{"name":"PtcglAutoBattleLog.exe","url":"{base}/download/v99.0.0/PtcglAutoBattleLog.exe","size":{},"sha256":"{hex}"}}]}}"#,
+        new_exe.len()
+    );
+    let net = Arc::new(move |url: &str, _download: bool| -> std::io::Result<Box<dyn std::io::Read>> {
+        let body = if url.ends_with("update.json") { manifest.clone().into_bytes() } else { new_exe.clone() };
+        Ok(Box::new(std::io::Cursor::new(body)))
+    });
+    let (tx, rx) = mpsc::channel();
+    let started = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+    let st = started.clone();
+    s.update(|x| x.auto_update = false);
+    let updates = Updates::start(s.clone(), net, move |e| tx.send(e).unwrap(), || true, move |_exe: &Path, args: &[String]| {
+        *crate::lock(&st) = args.to_vec();
+        Ok(())
+    })
+    .unwrap();
+    let next = || rx.recv_timeout(Duration::from_secs(10)).unwrap();
+
+    updates.check_now();
+    assert_eq!(next(), UpdateEvent::AvailableChanged);
+    assert!(matches!(next(), UpdateEvent::Notify { click: Some(Click::Install), .. }), "autoUpdate off: offered");
+    assert_eq!(updates.available().unwrap().version, "99.0.0");
+
+    updates.install_available();
+    assert_eq!(next(), UpdateEvent::Restart);
+    assert_eq!(std::fs::read(&exe).unwrap(), b"new exe bytes");
+    assert_eq!(*crate::lock(&started), ["--updated-from", crate::VERSION, "--portable"], "forced portable passes --portable on");
+
+    assert!(updates.skip_available(&s) && s.read(|x| x.skipped_version.as_deref() == Some("99.0.0")));
+}

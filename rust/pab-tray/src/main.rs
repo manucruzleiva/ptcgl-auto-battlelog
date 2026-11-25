@@ -16,6 +16,7 @@ mod status_icons;
 mod sys;
 #[cfg(test)]
 mod tests;
+mod updates;
 #[cfg(windows)]
 mod win;
 
