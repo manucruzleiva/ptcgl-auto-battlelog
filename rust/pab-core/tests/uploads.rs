@@ -22,10 +22,17 @@ fn logs() -> (tempfile::TempDir, PathBuf) {
     (tmp, to)
 }
 
+/// A copy written now: on Windows fs::copy keeps the source's mtime (the checkout's), which would
+/// make "written in the last 2 minutes" depend on how long the build took.
+fn copy_fresh(from: &Path, to: &Path) {
+    fs::copy(from, to).unwrap();
+    fs::File::options().write(true).open(to).unwrap().set_modified(std::time::SystemTime::now()).unwrap();
+}
+
 fn copy_dir(from: &Path, to: &Path) {
     fs::create_dir_all(to).unwrap();
     for e in fs::read_dir(from).unwrap().flatten() {
-        if e.path().is_dir() { copy_dir(&e.path(), &to.join(e.file_name())) } else { fs::copy(e.path(), to.join(e.file_name())).unwrap(); }
+        if e.path().is_dir() { copy_dir(&e.path(), &to.join(e.file_name())) } else { copy_fresh(&e.path(), &to.join(e.file_name())) }
     }
 }
 
