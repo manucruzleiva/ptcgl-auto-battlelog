@@ -15,8 +15,8 @@ use pab_core::settings::{BETA_CHANNEL, STABLE_CHANNEL};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-#[derive(Clone)]
-enum Action {
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum Action {
     OpenLogs,
     OpenLast,
     ChooseGameFolder,
@@ -42,6 +42,7 @@ enum Action {
     Account(AccountAction),
     Uninstall,
     Consent,
+    ShowWindow,
     ViewDisclaimer,
     Licenses,
     Exit,
@@ -49,8 +50,8 @@ enum Action {
 
 /// Collects items, giving each action an id.
 #[derive(Default)]
-struct Builder {
-    actions: Vec<Action>,
+pub(super) struct Builder {
+    pub actions: Vec<Action>,
 }
 
 impl Builder {
@@ -69,38 +70,81 @@ impl Builder {
     }
 }
 
+/// The menu's items, also laid out by the status window.
+pub(super) struct Parts {
+    pub consent: Option<Item>,
+    pub choose_game: Option<Item>,
+    pub open_logs: Item,
+    pub open_last: Item,
+    /// Under the status: last saved, where settings are kept.
+    pub lines: Vec<String>,
+    pub update: Option<Item>,
+    /// The tcgkb and Pokematch submenus.
+    pub accounts: [Item; 2],
+    pub settings: Vec<Item>,
+    pub updates: Vec<Item>,
+    pub help: Vec<Item>,
+}
+
 impl Tray {
     pub(super) fn show_menu(&self) {
         let s = &self.session;
-        let game = s.game();
         let last = self.last.borrow().clone();
         let mut b = Builder::default();
+        let p = self.menu_parts(&mut b);
 
         let mut items = vec![
             Item::label(format!("{PRODUCT_NAME} v{VERSION}{}", if s.portable() { " (portable)" } else { "" })),
             Item::label(crate::clip(last.as_ref().map_or("Starting...", |r| r.decision.summary.as_str()), 90)),
         ];
-        if !s.consent() {
-            items.push(Item::bold(b.id(Action::Consent), "Review the disclaimer..."));
+        items.extend(p.consent);
+        items.extend(p.lines.iter().map(|l| Item::label(crate::clip(l, 90))));
+        items.extend(p.choose_game);
+        items.extend([
+            Item::Separator,
+            // What a click on the tray icon opens.
+            Item::Action { id: b.id(Action::ShowWindow), text: "Status and settings...".into(), checked: false, enabled: true, default: true },
+            p.open_logs,
+            p.open_last,
+        ]);
+        items.extend(p.update);
+        items.push(Item::Separator);
+        items.extend(p.accounts);
+        items.extend([
+            Item::Separator,
+            Item::Sub { text: "Settings".into(), items: p.settings },
+            Item::Sub { text: "Updates".into(), items: p.updates },
+            Item::Sub { text: "Help".into(), items: p.help },
+            Item::Separator,
+            b.item("Exit", Action::Exit),
+        ]);
+
+        let hwnd = self.icon.borrow().hwnd;
+        let chosen = popup::show(hwnd, &items).and_then(|id| b.actions.get(id as usize - 1).cloned());
+        if let Some(a) = chosen {
+            self.run(a);
         }
+    }
+
+    pub(super) fn menu_parts(&self, b: &mut Builder) -> Parts {
+        let s = &self.session;
+        let game = s.game();
+        let consent = (!s.consent()).then(|| Item::bold(b.id(Action::Consent), "Review the disclaimer..."));
+        let mut lines = Vec::new();
         if let Some((_, label)) = self.last_saved.borrow().as_ref() {
-            items.push(Item::label(crate::clip(&format!("Last saved: {label}"), 90)));
+            lines.push(format!("Last saved: {label}"));
         }
         if s.paths().uses_fallback_data {
-            items.push(Item::label(format!("Settings kept in {} (this folder is read-only)", shell::friendly(&s.paths().root))));
+            lines.push(format!("Settings kept in {} (this folder is read-only)", shell::friendly(&s.paths().root)));
         }
-        if game.is_none() {
-            items.push(b.item("Choose the game folder...", Action::ChooseGameFolder));
-        }
+        let choose_game = game.is_none().then(|| b.item("Choose the game folder...", Action::ChooseGameFolder));
         let has_last = self.find_last_log().is_some();
-        items.extend([Item::Separator, Item::Action { id: b.id(Action::OpenLogs), text: "Open logs folder".into(), checked: false, enabled: true, default: true }]);
-        items.push(b.enabled("Open last log", has_last, Action::OpenLast));
-        if let Some(m) = self.updates.as_ref().and_then(|u| u.available()) {
-            items.push(Item::Sub {
-                text: format!("Update v{} available", m.version),
-                items: vec![b.item("Install now", Action::InstallUpdate), b.item("What's new", Action::WhatsNew), b.item("Skip this version", Action::SkipUpdate)],
-            });
-        }
+        let open_logs = b.item("Open logs folder", Action::OpenLogs);
+        let open_last = b.enabled("Open last log", has_last, Action::OpenLast);
+        let update = self.updates.as_ref().and_then(|u| u.available()).map(|m| Item::Sub {
+            text: format!("Update v{} available", m.version),
+            items: vec![b.item("Install now", Action::InstallUpdate), b.item("What's new", Action::WhatsNew), b.item("Skip this version", Action::SkipUpdate)],
+        });
 
         let accounts = self.account_menus(&mut |text, enabled, checked, a| Item::Action {
             id: b.id(Action::Account(a)),
@@ -109,8 +153,6 @@ impl Tray {
             enabled,
             default: false,
         });
-        items.push(Item::Separator);
-        items.extend(accounts);
 
         let folder = s.logs_folder(game.as_ref());
         let mut settings = vec![
@@ -169,25 +211,11 @@ impl Tray {
             Item::Separator,
             b.item(if s.portable() { "Remove mod from game..." } else { "Uninstall..." }, Action::Uninstall),
         ];
-
-        // shortcut: the status window comes with phase 4b.
-        items.extend([
-            Item::Separator,
-            Item::Sub { text: "Settings".into(), items: settings },
-            Item::Sub { text: "Updates".into(), items: updates },
-            Item::Sub { text: "Help".into(), items: help },
-            Item::Separator,
-            b.item("Exit", Action::Exit),
-        ]);
-
-        let hwnd = self.icon.borrow().hwnd;
-        let chosen = popup::show(hwnd, &items).and_then(|id| b.actions.get(id as usize - 1).cloned());
-        if let Some(a) = chosen {
-            self.run(a);
-        }
+        Parts { consent, choose_game, open_logs, open_last, lines, update, accounts, settings, updates, help }
     }
 
-    fn run(&self, a: Action) {
+
+    pub(super) fn run(&self, a: Action) {
         let s = &self.session;
         match a {
             Action::OpenLogs => self.open_folder(&game_setup::ensure_logs_folder(s)),
@@ -301,6 +329,7 @@ impl Tray {
             }
             Action::Account(a) => self.run_account(a),
             Action::Consent => self.ask_consent(),
+            Action::ShowWindow => self.show_window(),
             Action::ViewDisclaimer if !s.consent() => self.ask_consent(),
             Action::ViewDisclaimer => {
                 self.window(|_| crate::ui::show_text("Disclaimer", &format!("The terms you accepted when you installed {PRODUCT_NAME}."), crate::embedded::disclaimer_text()));

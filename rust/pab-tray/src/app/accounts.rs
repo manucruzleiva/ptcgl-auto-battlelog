@@ -12,7 +12,7 @@ use pab_core::tokens::PokematchToken;
 use std::rc::Rc;
 use std::time::Duration;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub(super) enum AccountAction {
     TcgkbSignIn,
     TcgkbAuto,
@@ -133,7 +133,7 @@ impl Tray {
     /// Sign-in is the only step: every PTCGL account in this computer's sealed logs is taken as the
     /// player's (tcgkb claims it with the first upload) and uploads are on by default.
     pub(super) fn sign_in_tcgkb(&self) {
-        if self.uploads.clients.tcgkb.is_connected() || crate::ui::busy() {
+        if self.uploads.clients.tcgkb.is_connected() || !self.can_open_window() {
             return;
         }
         let text = "Sign in to tcgkb.app to upload your matches?\n\n\
@@ -149,6 +149,7 @@ impl Tray {
             if crate::ui::connect_tcgkb(clients).is_some() {
                 p.post(super::Event::Run(Box::new(|t: &Tray| {
                     log::info(&format!("Signed in to tcgkb; automatic match upload {}.", if uploads::tcgkb_auto(&t.session) { "on" } else { "off" }));
+                    t.refresh_standing(true);
                     t.uploads.upload_tcgkb(true);
                 })));
             }
