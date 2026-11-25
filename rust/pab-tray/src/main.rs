@@ -9,9 +9,13 @@ mod app;
 mod daemon;
 mod embedded;
 mod game_setup;
+#[cfg(windows)]
+mod installer;
 mod log;
 mod logs_watcher;
 mod session;
+#[cfg(windows)]
+mod setup;
 mod status_icons;
 mod sys;
 #[cfg(test)]
@@ -115,11 +119,17 @@ fn run() -> i32 {
     if !cli.unknown.is_empty() {
         log::info(&format!("Ignored arguments: {}", cli.unknown.join(" ")));
     }
-    // shortcut: --uninstall and the installer come in phase 3c; until then only a portable copy
-    // (or one already at the install path) runs.
-    if cli.uninstall || (!session.portable() && !win::registry::same_path(&exe.to_string_lossy(), &session.paths().installed_exe.to_string_lossy())) {
-        log::info("Installing and uninstalling are not in the Rust tray yet; run it with --portable.");
+    // shortcut: --uninstall comes in the next phase-3c step.
+    if cli.uninstall {
+        log::info("Uninstalling is not in the Rust tray yet.");
         return 1;
+    }
+    if !session.portable() && !win::registry::same_path(&exe.to_string_lossy(), &session.paths().installed_exe.to_string_lossy()) {
+        if cli.background {
+            log::info("--background from outside the install folder: nothing to do.");
+            return 0;
+        }
+        return installer::run(&session);
     }
 
     let wait = Duration::from_secs(if cli.updated() { 10 } else if cli.first_run { 5 } else { 0 });
@@ -143,18 +153,32 @@ fn run() -> i32 {
         }
         r
     };
+    let mut first_run = cli.first_run;
+    if !cli.background && !cli.updated() && !session.consent() {
+        if !setup::ensure_accepted(&session, false) {
+            return 1;
+        }
+        first_run = true;
+    }
     commit(&session);
     if exit_requested() {
         return 0;
     }
     pab_core::self_update::cleanup_old(&session.paths().installed_exe);
-    let mut first_run = cli.first_run;
+    setup::migrate_legacy(&session);
+    if exit_requested() {
+        return 0;
+    }
     if session.portable() {
         if session.consent() {
             win::process::unblock(&session.exe_path);
         }
         if session.game().is_none() && !cli.background && !cli.updated() {
-            if game_setup::locate(&session).is_some() {
+            let found = setup::locate_or_ask(&session).is_some();
+            if exit_requested() {
+                return 0;
+            }
+            if found {
                 game_setup::try_repair(&session);
             }
             first_run = true;

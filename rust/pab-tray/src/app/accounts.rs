@@ -129,7 +129,7 @@ impl Tray {
         self.balloon(&n.title, &n.text, if n.warning { BalloonIcon::Warning } else { BalloonIcon::Info }, click);
     }
 
-    // shortcut: the tcgkb sign-in, the Pokematch token box and the disclaimer are egui windows
+    // shortcut: the tcgkb sign-in and the Pokematch token box are egui windows
     // (phase 4); until then these say so. A tray signed in by 1.6.x keeps uploading meanwhile.
     fn not_in_this_build(&self, what: &str) {
         self.modal(|| dialogs::info(self.owner(), &format!("{what} is not in this test build of {PRODUCT_NAME} yet. It comes with the app window.")));
@@ -141,10 +141,6 @@ impl Tray {
 
     fn set_pokematch_token(&self) {
         self.not_in_this_build("Setting the Pokematch API token");
-    }
-
-    fn ask_consent(&self) {
-        self.not_in_this_build("The disclaimer window");
     }
 
     /// Nothing goes to Pokematch before the disclaimer that covers it is accepted.

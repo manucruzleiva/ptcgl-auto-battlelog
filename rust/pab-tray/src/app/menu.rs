@@ -9,7 +9,6 @@ use crate::win::popup::{self, Item};
 use crate::win::{registry, shell};
 use crate::{log, GAME_NAME, PRODUCT_NAME, VERSION};
 use pab_core::game_install::{GameInstall, InstallError, DEFAULT_SEAL_MODE, SEAL_MODES};
-use pab_core::game_locator::{self, GAME_EXE};
 use pab_core::log_file_name;
 use pab_core::plugin_status::PluginStatus;
 use pab_core::settings::{BETA_CHANNEL, STABLE_CHANNEL};
@@ -41,6 +40,7 @@ enum Action {
     Repair,
     ProjectPage,
     Account(AccountAction),
+    Consent,
     Exit,
 }
 
@@ -78,7 +78,7 @@ impl Tray {
             Item::label(crate::clip(last.as_ref().map_or("Starting...", |r| r.decision.summary.as_str()), 90)),
         ];
         if !s.consent() {
-            items.push(Item::label("Please accept the disclaimer (coming in this version's status window)"));
+            items.push(Item::bold(b.id(Action::Consent), "Review the disclaimer..."));
         }
         if let Some((_, label)) = self.last_saved.borrow().as_ref() {
             items.push(Item::label(crate::clip(&format!("Last saved: {label}"), 90)));
@@ -294,6 +294,7 @@ impl Tray {
                 shell::open(&crate::project_url());
             }
             Action::Account(a) => self.run_account(a),
+            Action::Consent => self.ask_consent(),
             Action::Exit => self.exit(),
         }
     }
@@ -343,7 +344,7 @@ impl Tray {
     }
 
     fn choose_game_folder(&self) {
-        let dir = self.modal(|| ask_for_game_folder(self.owner(), self.session.game_dir().as_deref().map(Path::new)));
+        let dir = self.modal(|| crate::setup::ask_for_game_folder(self.owner(), self.session.game_dir().as_deref().map(Path::new)));
         let Some(dir) = dir else { return };
         game_setup::adopt(&self.session, &dir);
         self.daemon.poke();
@@ -509,13 +510,12 @@ impl Tray {
         if self.session.game().is_none() {
             return self.choose_game_folder();
         }
-        // shortcut: ConsentPending opens the disclaimer in C#; it comes with the egui window (phase 4).
         let (title, text, icon, click): (String, String, BalloonIcon, Option<Click>) = match self.daemon.repair_now() {
             RepairOutcome::Done(p) => ("Mod repaired".into(), format!("Put back: {}.", game_setup::names(&p)), BalloonIcon::Info, None),
             RepairOutcome::NothingToDo => ("Nothing to repair".into(), "The mod and BepInEx are in place.".into(), BalloonIcon::Info, None),
             RepairOutcome::GameRunning => (format!("Close {GAME_NAME} first"), "The mod is repaired while the game is closed.".into(), BalloonIcon::Warning, None),
             RepairOutcome::NoGame => return self.choose_game_folder(),
-            RepairOutcome::ConsentPending => ("Please accept the disclaimer".into(), "Nothing is written into the game before that.".into(), BalloonIcon::Warning, None),
+            RepairOutcome::ConsentPending => return self.ask_consent(),
             RepairOutcome::Failed(e) => (
                 "Repair failed".into(),
                 format!("{e} Details are in the app log."),
@@ -539,20 +539,4 @@ fn battle_logs(folder: &Path) -> Vec<PathBuf> {
         .map(|e| e.path())
         .filter(|p| p.extension().is_some_and(|x| x.eq_ignore_ascii_case("txt")) && log_file_name::parse(&p.to_string_lossy()).is_some())
         .collect()
-}
-
-/// A folder picker that only accepts the game's folder (GameSetup.AskForFolder); None when cancelled.
-pub(super) fn ask_for_game_folder(owner: windows_sys::Win32::Foundation::HWND, initial: Option<&Path>) -> Option<PathBuf> {
-    let mut initial = initial.map(Path::to_path_buf);
-    loop {
-        let picked = dialogs::pick_folder(owner, &format!("Select the {GAME_NAME} folder (the one that contains \"{GAME_EXE}\")."), initial.as_deref(), false)?;
-        let inside = picked.join("Pokemon TCG Live");
-        if let Some(dir) = game_locator::find([picked.to_string_lossy().as_ref(), inside.to_string_lossy().as_ref()]) {
-            return Some(dir);
-        }
-        if !dialogs::retry_cancel(owner, &format!("\"{GAME_EXE}\" is not in that folder.\n\n{}", picked.display())) {
-            return None;
-        }
-        initial = Some(picked);
-    }
 }
