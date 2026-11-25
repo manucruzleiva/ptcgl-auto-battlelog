@@ -88,6 +88,45 @@ static class Program
         };
         File.WriteAllText(Path.Combine(outDir, "escape.json"), Json.Write(tricky), FileOps.Utf8NoBom);
 
+        // BepInEx cfg strings as the C# tray reads and writes them (its tests check this against the real BepInEx.dll).
+        var cfgInputs = new[]
+        {
+            @"C:\Users\Ash\Documents\PTCGL Battle Logs", "C:\\Users\\Jos\u00e9\\Pok\u00e9mon logs", @"C:\trailing\", "relative\\dir", "C:/forward/slashes",
+            @"C:\a = b\[x]", @"C:\#notacomment", @"C:\new\tab", @"Z:\", @"E:\Logs (2026) & more!",
+            @"\\server\share\PTCGL Logs", @"C:\Users\O'Brien\Documents\PTCGL Battle Logs", @"D:\My ""quoted"" logs", @"\\?\C:\long", "relative\\new", " C:\\x", "C:\\x\ny",
+            @"D:\""quoted""", @"\Logs", @"\server\share", "a\\b\"c'd\te\nf\r\0\a\b\v\f", @"\\srv\s", "plain", "",
+            @"C:\\a\\b", @"""C:\x", @"\\\\srv\\s", @"a\qb\", @"C:\a\\b", @"D:\Ash\'s", "x\\ty", "\u00e9:\\x", "C:\\x\\\\y\nz",
+        };
+        var cfg = cfgInputs.Select(v =>
+        {
+            string serialized;
+            try { serialized = BepInExConfig.Serialize(v); } catch (ArgumentException) { serialized = null; }
+            return new Dictionary<string, string>
+            {
+                ["value"] = v, ["escape"] = BepInExConfig.Escape(v), ["convertToObject"] = BepInExConfig.ConvertToObject(v),
+                ["unescape"] = BepInExConfig.Unescape(v), ["serialize"] = serialized, ["whyPluginRefuses"] = GameInstall.WhyPluginRefuses(v),
+            };
+        }).ToList();
+        File.WriteAllText(Path.Combine(outDir, "bepinex-config.json"),
+            System.Text.Json.JsonSerializer.Serialize(cfg, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+        // plugin-status.json as the plugin's own writer makes it, with strings the tray must read back exactly.
+        var emoji = char.ConvertFromUtf32(0x1F525);
+        var nasty = "C:\\Users\\Zo\u00eb \"Q\" \u65e5\u672c\u8a9e " + emoji + "\\PTCGL\tBattle\nLogs\r" + (char)1 + (char)0x1F + "\u2028\u2029/end\\";
+        var lone = "A" + (char)0xD800 + "B" + (char)0xDC00 + "C" + (char)0xDBFF;
+        var beat = new DateTime(2026, 10, 19, 21, 35, 0, 123, DateTimeKind.Utc);
+        foreach (var (name, folder, message, last) in new[]
+        {
+            ("plain", @"C:\Users\Ash\Documents\PTCGL Battle Logs", "Watching for matches.", @"C:\Users\Ash\Documents\PTCGL Battle Logs\2026-10-19 21.34.05 - VICTORY vs Gary.txt"),
+            ("nasty", nasty, "line 1\nline \"2\"\t\\ end", nasty + "\\x.txt"),
+            ("lone-surrogates", lone, lone, lone),
+            ("nulls", null, null, null),
+        })
+        {
+            var file = Path.Combine(outDir, "plugin-status-" + name + ".json");
+            new PluginStatusWriter(file, "1.1.0", folder, 4242).Update(beat, PluginStatusWriter.Ok, message, 3, last, last == null ? (DateTime?)null : beat.AddSeconds(-55));
+        }
+
         try { Directory.Delete(work, true); } catch { }
         Console.WriteLine("goldens written to " + outDir);
         return 0;

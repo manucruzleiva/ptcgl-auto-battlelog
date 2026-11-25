@@ -14,7 +14,7 @@ command-line arguments the 1.6.x updater passes, `update.json`, and the tcgkb an
 | Phase | What | State |
 |---|---|---|
 | 1 | `pab-core`: logic without UI, ported with the C# tests. Log names, seal reading, updates, settings, paths, token files + DPAPI, tcgkb and Pokematch clients | done |
-| 2 | Daemon: watch logs, upload, repair/install the plugin, self-update | |
+| 2 | Upload queues (2a, done); plugin install/repair, BepInEx cfg, plugin status (2b, done); watcher, daemon, self-update (2c) | in progress |
 | 3 | Tray, menu, notifications, disclaimer, installer/uninstaller, portable | |
 | 4 | Status window (egui) | |
 | 5 | `2.0.0-beta.1` on the beta channel, then stable | |
@@ -23,3 +23,8 @@ command-line arguments the 1.6.x updater passes, `update.json`, and the tcgkb an
 cd rust
 cargo test
 ```
+
+`pab-core/tests/golden` is written by the C# code itself (`tests/RustGoldens`, .NET 8, run with
+TZ=UTC); the Rust tests compare against it byte for byte. Regenerate it there, never by hand:
+`dotnet run --project tests/RustGoldens -c Release -- <folder>`, then copy the files you need (a
+full run re-seals the logs with a new key).
