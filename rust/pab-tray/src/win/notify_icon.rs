@@ -234,7 +234,7 @@ impl Icon {
                 return None;
             }
             let dst = std::slice::from_raw_parts_mut(bits as *mut u8, rgba.len());
-            for (d, s) in dst.chunks_exact_mut(4).zip(rgba.chunks_exact(4)) {
+            for (d, s) in dst.as_chunks_mut::<4>().0.iter_mut().zip(rgba.as_chunks::<4>().0) {
                 d.copy_from_slice(&[s[2], s[1], s[0], s[3]]); // BGRA
             }
             let mask_bits = vec![0u8; (size.div_ceil(16) * 2 * size) as usize];
