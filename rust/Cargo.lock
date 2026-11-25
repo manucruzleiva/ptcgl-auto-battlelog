@@ -2251,6 +2251,7 @@ dependencies = [
  "notify",
  "pab-core",
  "png",
+ "raw-window-handle",
  "tempfile",
  "ureq",
  "windows-sys 0.59.0",

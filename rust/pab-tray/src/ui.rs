@@ -97,11 +97,28 @@ fn run(options: eframe::NativeOptions, title: &str, draw: impl FnMut(&mut egui::
         options,
         Box::new(move |cc| {
             cc.egui_ctx.set_visuals(egui::Visuals::dark());
+            taskbar_icon(cc);
             Ok(Box::new(App(draw)))
         }),
     );
     if let Err(e) = result {
         log::error(&format!("Could not open the window \"{title}\""), e);
+    }
+}
+
+/// winit gives the window only its small icon; without the big one the taskbar shows a blank page.
+fn taskbar_icon(cc: &eframe::CreationContext) {
+    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{SendMessageW, ICON_BIG, WM_SETICON};
+    static ICON: OnceLock<usize> = OnceLock::new();
+    let icon = *ICON.get_or_init(|| {
+        let rgba = crate::status_icons::draw(crate::embedded::APP_ICON, 48, None);
+        // Kept for the whole process: every window uses it.
+        rgba.and_then(|p| crate::win::notify_icon::Icon::from_rgba(48, &p)).map_or(0, |i| std::mem::ManuallyDrop::new(i).0 as usize)
+    });
+    let Ok(handle) = cc.window_handle() else { return };
+    if let (RawWindowHandle::Win32(w), true) = (handle.as_raw(), icon != 0) {
+        unsafe { SendMessageW(w.hwnd.get() as _, WM_SETICON, ICON_BIG as usize, icon as isize) };
     }
 }
 
