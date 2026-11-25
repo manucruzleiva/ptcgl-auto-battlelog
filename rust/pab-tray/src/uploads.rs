@@ -225,6 +225,14 @@ impl Uploads {
         }
     }
 
+    /// The disclaimer was accepted: what was waiting for it goes now.
+    pub fn consent_given(&self) {
+        self.upload_tcgkb(false);
+        if pokematch_auto_on(&self.session, &self.clients) && !lock(&self.status).pokematch_token_rejected {
+            self.pokematch_in(Duration::from_secs(5));
+        }
+    }
+
     /// The token was removed: nothing more goes to Pokematch.
     pub fn pokematch_token_removed(&self) {
         let mut s = lock(&self.status);

@@ -356,10 +356,52 @@ impl Tray {
                 self.balloon(&format!("{PRODUCT_NAME} is ready"), &format!("Every match is saved to {folder}. Right-click this icon for options.{game}"), BalloonIcon::Info, open);
             }
         }
-        // shortcut: the disclaimer dialog comes with the egui window (phase 4); until then it is
-        // asked by a balloon only and the daemon keeps the game untouched (consent_pending).
+        // --background and --updated-from never show the disclaimer: if it was never accepted, ask with a balloon.
         if !self.session.consent() {
-            self.balloon("Please accept the disclaimer", &format!("Accept it once to keep using {PRODUCT_NAME}."), BalloonIcon::Warning, None);
+            self.balloon(
+                "Please accept the disclaimer",
+                &format!("Accept it once to keep using {PRODUCT_NAME}. Click to read it."),
+                BalloonIcon::Warning,
+                Some(Rc::new(|t: &Tray| t.ask_consent())),
+            );
+        }
+    }
+
+    /// The disclaimer, asked from the running tray. Until it is accepted nothing is written into
+    /// the game. Declining stops the app for good (the Run value goes) and offers to take the mod
+    /// out of the game.
+    fn ask_consent(&self) {
+        if self.session.consent() || self.modal.load(Ordering::SeqCst) > 0 {
+            return;
+        }
+        if self.modal(|| crate::setup::ensure_accepted(&self.session, false)) {
+            self.daemon.poke(); // repairs and updates the mod again
+            self.uploads.consent_given();
+            return;
+        }
+        if let Err(e) = crate::win::registry::remove_start_with_windows(&self.session.paths().installed_exe) {
+            log::error("Could not turn off Start with Windows", e);
+        }
+        let text = format!(
+            "You did not accept the disclaimer, so {PRODUCT_NAME} closes now and no longer starts with Windows.\n\nThe mod is still in {GAME_NAME} and keeps saving battle logs. Remove it from the game too?"
+        );
+        if self.modal(|| crate::win::dialogs::confirm(self.icon.borrow().hwnd, &text, false)) {
+            // The --uninstall process asks once more, waits for the game and stops this tray.
+            self.uninstall();
+        }
+        self.exit();
+    }
+
+    /// Runs this exe with --uninstall, as Apps & Features would: one code path for both.
+    fn uninstall(&self) {
+        let s = &self.session;
+        let mut args = vec![pab_core::command_line::UNINSTALL];
+        if s.portable() && s.portable_forced {
+            args.push(pab_core::command_line::PORTABLE);
+        }
+        let exe = if s.portable() { s.exe_path.clone() } else { s.paths().installed_exe };
+        if let Err(e) = std::process::Command::new(exe).args(args).current_dir(std::env::temp_dir()).spawn() {
+            log::error("Could not start the uninstaller", e);
         }
     }
 }

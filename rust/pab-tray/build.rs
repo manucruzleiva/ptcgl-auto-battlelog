@@ -26,4 +26,33 @@ fn main() {
     for var in ["PAB_REQUIRE_PAYLOAD", "PAB_VERSION", "PAB_REPO_OWNER", "PAB_REPO_NAME"] {
         println!("cargo:rerun-if-env-changed={var}");
     }
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
+        resources(&repo, require);
+    }
+}
+
+/// The exe's icon, manifest (asInvoker, DPI aware, common controls v6) and version: Explorer, the
+/// shortcuts and Apps & Features show them, and an older download reads the installed ProductVersion.
+fn resources(repo: &std::path::Path, require: bool) {
+    let version = env::var("PAB_VERSION").unwrap_or_else(|_| env::var("CARGO_PKG_VERSION").unwrap());
+    let icon = repo.join("src/Tray/app.ico");
+    let manifest = repo.join("src/Tray/app.manifest");
+    println!("cargo:rerun-if-changed={}", icon.display());
+    println!("cargo:rerun-if-changed={}", manifest.display());
+    let mut res = winresource::WindowsResource::new();
+    res.set_icon(&icon.to_string_lossy())
+        .set_manifest_file(&manifest.to_string_lossy())
+        .set("ProductName", "PTCGL Auto Battle Log")
+        .set("FileDescription", "PTCGL Auto Battle Log")
+        .set("CompanyName", "manucruzleiva")
+        .set("ProductVersion", &version)
+        .set("FileVersion", &version)
+        .set("OriginalFilename", "PtcglAutoBattleLog.exe");
+    if let Err(e) = res.compile() {
+        // Only a check from another OS (no resource compiler): a release build must have them.
+        if require {
+            panic!("Windows resources: {e}");
+        }
+        println!("cargo:warning=Windows resources not embedded: {e}");
+    }
 }
