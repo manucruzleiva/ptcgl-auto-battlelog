@@ -173,14 +173,14 @@ pub enum PollState {
     Expired,
 }
 
-pub type SendFn<'a> = dyn Fn(&Request) -> std::result::Result<Response, String> + Sync + 'a;
+pub type SendFn<'a> = dyn Fn(&Request) -> std::result::Result<Response, String> + Send + Sync + 'a;
 
 pub struct TcgkbApi<'a> {
     send: Box<SendFn<'a>>,
 }
 
 impl<'a> TcgkbApi<'a> {
-    pub fn new(send: impl Fn(&Request) -> std::result::Result<Response, String> + Sync + 'a) -> Self {
+    pub fn new(send: impl Fn(&Request) -> std::result::Result<Response, String> + Send + Sync + 'a) -> Self {
         TcgkbApi { send: Box::new(send) }
     }
 
@@ -307,12 +307,12 @@ impl<'a> TcgkbApi<'a> {
 pub struct TcgkbConnection<'a> {
     pub api: TcgkbApi<'a>,
     store: TokenStore<TcgkbTokens>,
-    now: Box<dyn Fn() -> DateTime<Utc> + Sync + 'a>,
+    now: Box<dyn Fn() -> DateTime<Utc> + Send + Sync + 'a>,
     lock: Mutex<()>,
 }
 
 impl<'a> TcgkbConnection<'a> {
-    pub fn new(api: TcgkbApi<'a>, store: TokenStore<TcgkbTokens>, now: impl Fn() -> DateTime<Utc> + Sync + 'a) -> Self {
+    pub fn new(api: TcgkbApi<'a>, store: TokenStore<TcgkbTokens>, now: impl Fn() -> DateTime<Utc> + Send + Sync + 'a) -> Self {
         TcgkbConnection { api, store, now: Box::new(now), lock: Mutex::new(()) }
     }
 

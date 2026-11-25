@@ -152,3 +152,49 @@ fn updates_offer_install_and_restart() {
 
     assert!(updates.skip_available(&s) && s.read(|x| x.skipped_version.as_deref() == Some("99.0.0")));
 }
+
+#[test]
+fn uploads_send_sealed_matches_to_tcgkb() {
+    use crate::uploads::{Clients, Uploads};
+    use pab_core::tokens::TcgkbTokens;
+    let tmp = tempfile::tempdir().unwrap();
+    let s = Arc::new(session(tmp.path(), false));
+    s.update(|x| x.disclaimer_accepted = pab_core::disclaimer::VERSION);
+    std::fs::create_dir_all(s.paths().root).unwrap();
+    let golden = Path::new(env!("CARGO_MANIFEST_DIR")).join("../pab-core/tests/golden/logs");
+    let logs = s.logs_folder(None);
+    for dir in [golden.clone(), golden.join("decks")] {
+        let to = logs.join(dir.strip_prefix(&golden).unwrap());
+        std::fs::create_dir_all(&to).unwrap();
+        for e in std::fs::read_dir(&dir).unwrap().flatten().filter(|e| e.path().is_file()) {
+            std::fs::copy(e.path(), to.join(e.file_name())).unwrap();
+        }
+    }
+
+    let sent = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let seen = sent.clone();
+    let http = move |method: &str, url: &str, headers: &[(&str, &str)], _body: Option<&str>, _t: Duration| {
+        seen.lock().unwrap().push(format!("{method} {url} {}", headers.contains(&("Authorization", "Bearer a1"))));
+        Ok((200, r#"{"added":true,"playerDeck":"Dragapult ex","opponentDeck":"Alakazam"}"#.to_string()))
+    };
+    let same = |d: &[u8], _: &[u8]| Ok(d.to_vec());
+    let clients = Clients::new(&s, Arc::new(http), same, same);
+    let now = chrono::Utc::now();
+    clients
+        .tcgkb
+        .store()
+        .save(&TcgkbTokens { access_token: Some("a1".into()), access_expires_utc: now + chrono::TimeDelta::hours(1), refresh_token: Some("r1".into()), user_name: Some("Manu".into()), connected_utc: now })
+        .unwrap();
+    assert!(!clients.has_pokematch_token());
+
+    let (tx, rx) = mpsc::channel();
+    let uploads = Uploads::start(s.clone(), Arc::new(clients), move |n| tx.send(n).unwrap());
+    uploads.upload_tcgkb(true);
+    let n = rx.recv_timeout(Duration::from_secs(20)).unwrap();
+    // The start-up run and the announced one race; between them the 3 tracked matches go once.
+    assert!(n.title == "Matches uploaded to tcgkb" || n.title == "tcgkb is up to date", "{n:?}");
+    let sent = sent.lock().unwrap().clone();
+    assert_eq!(sent.len(), 3, "{sent:?}");
+    assert!(sent.iter().all(|r| r == "POST https://tcgkb.app/api/ptcgl/logs true"), "{sent:?}");
+    assert!(uploads.status().tcgkb_last.unwrap().starts_with("Dragapult ex vs Alakazam, "));
+}
