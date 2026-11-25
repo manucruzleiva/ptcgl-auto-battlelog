@@ -771,7 +771,7 @@ fn step(ui: &mut egui::Ui, done: bool, title: &str, detail: &str, progress: Opti
         mark(ui, done);
         ui.vertical(|ui| {
             ui.label(title);
-            ui.label(RichText::new(detail).color(SECONDARY));
+            ui.add(egui::Label::new(RichText::new(detail).color(SECONDARY)).wrap());
             if let Some(p) = progress.filter(|_| !done) {
                 ui.add_space(4.0);
                 ui.scope(|ui| {
@@ -809,7 +809,7 @@ fn account_row(ui: &mut egui::Ui, a: &Account) {
                 Some(DISPUTED) => "Another tcgkb user claims it too: it counts for no one until one of you has a verified match",
                 _ => "Verified once an opponent on tcgkb uploads the same match",
             };
-            ui.label(RichText::new(detail).color(SECONDARY));
+            ui.add(egui::Label::new(RichText::new(detail).color(SECONDARY)).wrap());
         });
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| chip(ui, status_word(a), a.status.as_deref() == Some(VERIFIED)));
     });
