@@ -91,8 +91,9 @@ pub fn recycle(paths: &[PathBuf], owner: windows_sys::Win32::Foundation::HWND) -
     unsafe { SHFileOperationW(&mut op) == 0 && op.fAnyOperationsAborted == 0 }
 }
 
-/// Writes a .lnk file. mslnk writes the format itself: no COM, no WScript.Shell.
-pub fn create_shortcut(lnk: &Path, target: &Path, working_dir: Option<&Path>, description: &str, icon: Option<&str>) -> Result<(), String> {
+/// Writes a .lnk file. mslnk writes the format itself: no COM, no WScript.Shell. `icon` is a file
+/// path only: the .lnk keeps the icon index apart (0), and "exe,0" made the taskbar show a blank page.
+pub fn create_shortcut(lnk: &Path, target: &Path, working_dir: Option<&Path>, description: &str, icon: Option<&Path>) -> Result<(), String> {
     if let Some(dir) = lnk.parent() {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     }
@@ -102,7 +103,7 @@ pub fn create_shortcut(lnk: &Path, target: &Path, working_dir: Option<&Path>, de
         link.set_working_dir(Some(d.to_string_lossy().into_owned()));
     }
     if let Some(i) = icon {
-        link.set_icon_location(Some(i.to_string()));
+        link.set_icon_location(Some(i.to_string_lossy().into_owned()));
     }
     link.create_lnk(lnk).map_err(|e| e.to_string())
 }
