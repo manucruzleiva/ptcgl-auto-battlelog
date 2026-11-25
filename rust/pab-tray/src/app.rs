@@ -5,6 +5,7 @@ use crate::daemon::{Daemon, DaemonReport};
 use crate::logs_watcher::LogsWatcher;
 use crate::session::Session;
 use crate::updates::{self, UpdateEvent, Updates};
+use crate::uploads::{Clients, Notice, Uploads};
 use crate::win::instance::{self, TraySignals};
 use crate::win::notify_icon::{self, BalloonIcon, Icon, NotifyIcon, TrayMsg, Waker};
 use crate::win::{process, shell};
@@ -22,10 +23,12 @@ use std::sync::{Arc, Mutex};
 /// NotifyIcon tooltips stay short; the C# tray clipped at 63.
 const MAX_TIP: usize = 63;
 
+mod accounts;
 mod menu;
 
 enum Event {
     Update(UpdateEvent),
+    Upload(Notice),
     Report(Box<DaemonReport>),
     Saved(PathBuf, &'static str, Option<String>),
     Show,
@@ -61,6 +64,7 @@ struct Tray {
     balloon_click: RefCell<Option<Click>>,
     exiting: std::cell::Cell<bool>,
     updates: Option<Updates>,
+    uploads: Uploads,
     /// Open dialogs: an update must not restart the app under one.
     modal: Arc<AtomicUsize>,
 }
@@ -107,6 +111,9 @@ pub fn run(session: Arc<Session>, cli: &CommandLine, first_run: bool, signals: &
     )
     .map_err(|e| log::error("Updates are off", e))
     .ok();
+    let clients = Clients::new(&session, Arc::new(crate::win::http::send), pab_core::dpapi::protect, pab_core::dpapi::unprotect);
+    let upload_poster = poster.clone();
+    let uploads = Uploads::start(session.clone(), Arc::new(clients), move |n| upload_poster.post(Event::Upload(n)));
     let t = Rc::new(Tray {
         daemon: Daemon::new(session.clone()),
         session: session.clone(),
@@ -119,6 +126,7 @@ pub fn run(session: Arc<Session>, cli: &CommandLine, first_run: bool, signals: &
         balloon_click: RefCell::new(None),
         exiting: std::cell::Cell::new(false),
         updates,
+        uploads,
         modal,
     });
     *tray.borrow_mut() = Some(t.clone());
@@ -189,6 +197,7 @@ impl Tray {
     fn on_event(&self, e: Event) {
         match e {
             Event::Update(e) => self.on_update(e),
+            Event::Upload(n) => self.on_upload_notice(n),
             Event::Report(r) => self.on_report(*r),
             Event::Saved(path, result, opponent) => self.on_saved(path, result, opponent),
             // shortcut: the status window comes in phase 4; until then "show" opens the menu.
@@ -294,6 +303,8 @@ impl Tray {
     fn on_saved(&self, path: PathBuf, result: &str, opponent: Option<String>) {
         let vs = opponent.map(|o| format!(" vs {o}")).unwrap_or_default();
         *self.last_saved.borrow_mut() = Some((path.clone(), format!("{result}{vs}, {}", chrono::Local::now().format("%H:%M"))));
+        self.uploads.upload_tcgkb(false);
+        self.uploads.saved();
         if !self.session.read(|s| s.notify_on_save) {
             return;
         }

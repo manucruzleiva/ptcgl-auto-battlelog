@@ -88,14 +88,14 @@ pub struct Match {
     pub tags: Option<Vec<String>>,
 }
 
-pub type SendFn<'a> = dyn Fn(&Request) -> std::result::Result<Response, String> + Sync + 'a;
+pub type SendFn<'a> = dyn Fn(&Request) -> std::result::Result<Response, String> + Send + Sync + 'a;
 
 pub struct PokematchApi<'a> {
     send: Box<SendFn<'a>>,
 }
 
 impl<'a> PokematchApi<'a> {
-    pub fn new(send: impl Fn(&Request) -> std::result::Result<Response, String> + Sync + 'a) -> Self {
+    pub fn new(send: impl Fn(&Request) -> std::result::Result<Response, String> + Send + Sync + 'a) -> Self {
         PokematchApi { send: Box::new(send) }
     }
 

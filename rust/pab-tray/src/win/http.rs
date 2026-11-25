@@ -40,15 +40,20 @@ pub fn open_url(url: &str, download: bool) -> io::Result<Box<dyn Read>> {
     Ok(Box::new(response.into_body().into_reader()))
 }
 
-/// One API request: status and body text. Err only when no answer came back.
-pub fn send(method: &str, url: &str, headers: &[(&str, &str)], body: Option<&str>) -> Result<(u16, String), String> {
+/// One API request for tcgkb or Pokematch: status and body text (at most 1 MB). Err only when no
+/// answer came back. Redirects are not followed: the bearer token goes to its own host and nowhere else.
+pub fn send(method: &str, url: &str, headers: &[(&str, &str)], body: Option<&str>, timeout: Duration) -> Result<(u16, String), String> {
     let mut b = ureq::http::Request::builder().method(method).uri(url);
     for (k, v) in headers {
         b = b.header(*k, *v);
     }
     let request = b.body(body.unwrap_or("").to_string()).map_err(|e| e.to_string())?;
-    let mut response = SHORT.run(request).map_err(|e| e.to_string())?;
+    let request = SHORT.configure_request(request).timeout_global(Some(timeout)).max_redirects(0).build();
+    let mut response = SHORT.run(request).map_err(|e| match e {
+        ureq::Error::Timeout(_) => format!("no answer within {} seconds", timeout.as_secs()),
+        e => e.to_string(),
+    })?;
     let status = response.status().as_u16();
-    let text = response.body_mut().with_config().limit(16 * 1024 * 1024).read_to_string().map_err(|e| e.to_string())?;
+    let text = response.body_mut().with_config().limit(1024 * 1024).read_to_string().map_err(|e| e.to_string())?;
     Ok((status, text))
 }

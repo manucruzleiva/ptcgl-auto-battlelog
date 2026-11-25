@@ -17,6 +17,7 @@ mod sys;
 #[cfg(test)]
 mod tests;
 mod updates;
+mod uploads;
 #[cfg(windows)]
 mod win;
 

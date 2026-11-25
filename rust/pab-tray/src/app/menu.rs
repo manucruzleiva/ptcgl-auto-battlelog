@@ -1,5 +1,6 @@
 //! The tray menu and what each item does (TrayApplicationContext.Menu.cs). Built fresh at every
 //! opening, so it always shows the current state.
+use super::accounts::AccountAction;
 use super::{Click, Tray};
 use crate::game_setup::{self, RepairOutcome};
 use crate::win::dialogs;
@@ -39,6 +40,7 @@ enum Action {
     CopyDiagnostics,
     Repair,
     ProjectPage,
+    Account(AccountAction),
     Exit,
 }
 
@@ -97,6 +99,16 @@ impl Tray {
             });
         }
 
+        let accounts = self.account_menus(&mut |text, enabled, checked, a| Item::Action {
+            id: b.id(Action::Account(a)),
+            text: text.into(),
+            checked,
+            enabled,
+            default: false,
+        });
+        items.push(Item::Separator);
+        items.extend(accounts);
+
         let folder = s.logs_folder(game.as_ref());
         let mut settings = vec![
             b.check("Notify when a log is saved", s.read(|x| x.notify_on_save), Action::ToggleNotify),
@@ -151,7 +163,7 @@ impl Tray {
             b.item("Project page", Action::ProjectPage),
         ];
 
-        // shortcut: tcgkb, Pokematch, the status window, the disclaimer, licenses and uninstall come
+        // shortcut: the status window, the disclaimer, licenses and uninstall come
         // with the egui window (phase 4) and the installer (phase 3c).
         items.extend([
             Item::Separator,
@@ -281,6 +293,7 @@ impl Tray {
             Action::ProjectPage => {
                 shell::open(&crate::project_url());
             }
+            Action::Account(a) => self.run_account(a),
             Action::Exit => self.exit(),
         }
     }
@@ -291,7 +304,7 @@ impl Tray {
         self.balloon("Something went wrong", &format!("{}: {error}", what.trim_end_matches('.')), BalloonIcon::Warning, None);
     }
 
-    fn owner(&self) -> windows_sys::Win32::Foundation::HWND {
+    pub(super) fn owner(&self) -> windows_sys::Win32::Foundation::HWND {
         self.icon.borrow().hwnd
     }
 
