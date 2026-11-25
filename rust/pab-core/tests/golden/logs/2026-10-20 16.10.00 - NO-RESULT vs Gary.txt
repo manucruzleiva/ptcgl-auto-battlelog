@@ -1,0 +1,7 @@
+﻿Setup
+Turn 4 - Ash played
+
+-----BEGIN PTCGL-ABL SEAL v2-----
+{"v":2,"app":"PTCGL Auto Battle Log","pluginVersion":"1.6.3","gameVersion":"1.43.0","capture":"auto","matchId":"m-4","startedUtc":"2026-10-20T16:00:00Z","endedUtc":"2026-10-20T16:10:00Z","result":"NO-RESULT","winner":null,"mySeat":1,"player":{"name":"Ash","accountHash":null},"opponent":{"name":"Gary","accountHash":"6f33195c90e7c428069b092687c8a3bb5b3042e71ace6c6fcfa71e60dcf2ef22"},"deck":null,"deckSha256":null,"queue":null,"format":null,"logSha256":"146e531a425e6776a40b2556ec26ee0122090cffb41bd340066c41ca733be89a","logChars":25,"sealedUtc":"2026-11-25T17:04:24Z","seq":4,"prev":"2dbcdb79689bd70b43321dad13d2b93aecfde86a6e27d4db3d41dce280d69621","keyId":"j0_n1eLDT9iX_MM64aqDpYrBmlCV_FvAmP1azqAKGTg","publicKey":{"kty":"RSA","n":"yKgXUexEepgovcRcfl4L_fN6XjrD0bizrpC95y7ElJ_kGXqTkzQ-0ZXrva88SgfHbnrg_IT1weKBbLHqzuRypYpPbT4HaxvJqlEAogxsSt6kCyQfnOFwVkwbQ_O_RZE0SSVIcv09TiznGxTMHf83N4zLxo6eJ5-74Fok0eCVpPTIxFqv6lStqB_9pZ9Wt9n4hpotzWmWHlpzVPypNNyKWiC4-q3UJKnZGuevkgLQ9ulk_DR9X1wQ25vMqOE1rUSx6hp16zqMTC_e6QBPiLbQ-ybWtsXsamv-jO4sdtxTEwWzVDHkRaocMDyF8jwcZdUR-W8nf-bkBRusckHChxJCWQ","e":"AQAB"}}
+QWQWsxZdqn0RjiJLqyLTqQvPac1SU4w4ali0EDaFZGzHmofAI88uvEAzkYJah9M//iN9TFyqLTMlxWMch+72CRg2NnPGckeOja8UOoMhsJd2s1rAkRIS7mSEJzaV4x1IQyoMkD/O0kiic7GxXNrgJRRvkbCCD0uRdLNBXpnRl2uKubcw7fbAZU1UWTAZXvV3CDzzymazRLW3syGe0A10/vQ3CeWMlDPJvcuu+wVRBeb3+7pZXBP4D9ItrLTRWYZENfbRt3L1m2/1m6uYlDjIVE7gnbQ1jxJKii7zFh46twTxMVtFydqJ5MpfZFxi/8j9dxv1FptaVUnlICKTE0ngTg==
+-----END PTCGL-ABL SEAL v2-----

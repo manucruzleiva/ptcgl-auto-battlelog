@@ -1,0 +1,19 @@
+{
+  "activeDeck": {
+    "name": "Dragapult ex"
+  },
+  "opponentDeck": "Unknown",
+  "format": "Bo1",
+  "games": [
+    {
+      "result": "win"
+    }
+  ],
+  "date": "2026-10-20",
+  "notes": "Added by PTCGL Auto Battle Log.",
+  "tags": [
+    "ptcgl-auto-battle-log",
+    "ranked",
+    "standard"
+  ]
+}

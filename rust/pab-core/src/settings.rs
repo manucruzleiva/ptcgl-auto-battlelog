@@ -1,5 +1,5 @@
 //! settings.json (Settings.cs). Loading never fails: a missing field takes its default and a
-//! corrupt file is set aside (settings.json.corrupt) and replaced by defaults. Saved in the C#
+//! corrupt file is set aside (settings.json.corrupt) and replaced by defaults. Saved byte for byte as the C#
 //! tray's field order and layout, so 1.6.x and 2.x read each other's file.
 
 use std::path::Path;
@@ -87,7 +87,7 @@ impl Settings {
 
     /// Atomic: written beside, then swapped in. UTF-8 without BOM, indented.
     pub fn save(&self, path: &Path) -> std::io::Result<()> {
-        file_ops::write_atomic(path, serde_json::to_string_pretty(self).expect("settings serialize").as_bytes())
+        file_ops::write_atomic(path, crate::net_json::to_string(self).as_bytes())
     }
 }
 

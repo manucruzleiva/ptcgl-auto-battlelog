@@ -1,0 +1,13 @@
+{
+  "gameDir": "C:\\Games\\PTCGL",
+  "bepInExInstalledByUs": false,
+  "autoUpdate": true,
+  "notifyOnSave": true,
+  "lastUpdateCheckUtc": null,
+  "skippedVersion": null,
+  "disclaimerAccepted": 5,
+  "tcgkbAutoUpload": true,
+  "pokematchAutoUpload": false,
+  "pokematchSinceUtc": null,
+  "updateChannel": "stable"
+}
