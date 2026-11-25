@@ -4,7 +4,15 @@
 // shortcut: the Windows layer lands before the tray that calls it; drop this once phase 3 wires it up.
 #![allow(dead_code)]
 
+mod daemon;
 mod embedded;
+mod game_setup;
+mod log;
+mod logs_watcher;
+mod session;
+mod sys;
+#[cfg(test)]
+mod tests;
 #[cfg(windows)]
 mod win;
 
@@ -27,6 +35,11 @@ pub const REPO_NAME: &str = match option_env!("PAB_REPO_NAME") {
 
 pub fn project_url() -> String {
     format!("https://github.com/{REPO_OWNER}/{REPO_NAME}")
+}
+
+/// A lock that survives a panic elsewhere: the tray keeps running on the data as it was.
+pub fn lock<T>(m: &std::sync::Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    m.lock().unwrap_or_else(|p| p.into_inner())
 }
 
 /// Where Pokémon TCG Live is, from every Windows source GameLocator ranks (GameFinder).

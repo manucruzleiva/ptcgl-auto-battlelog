@@ -11,6 +11,8 @@ path = "src/main.rs"
 
 [dependencies]
 pab-core = { path = "../pab-core" }
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+notify = { version = "9", default-features = false }
 
 [target.'cfg(windows)'.dependencies]
 mslnk = "0.1.8"
@@ -29,3 +31,4 @@ windows-sys = { version = "0.59", features = [
 
 [dev-dependencies]
 tempfile = "3"
+zip = { version = "9.8.2", default-features = false, features = ["deflate"] }
