@@ -1,0 +1,11 @@
+{
+  "pluginVersion": "1.1.0",
+  "state": "ok",
+  "message": "A\ud800B\udc00C\udbff",
+  "logsFolder": "A\ud800B\udc00C\udbff",
+  "savedThisSession": 3,
+  "lastFile": "A\ud800B\udc00C\udbff",
+  "lastSavedUtc": "2026-10-19T21:34:05Z",
+  "heartbeatUtc": "2026-10-19T21:35:00Z",
+  "processId": 4242
+}

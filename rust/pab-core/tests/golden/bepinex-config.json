@@ -1,0 +1,266 @@
+[
+  {
+    "value": "C:\\Users\\Ash\\Documents\\PTCGL Battle Logs",
+    "escape": "C:\\Users\\Ash\\Documents\\PTCGL Battle Logs",
+    "convertToObject": "C:\\Users\\Ash\\Documents\\PTCGL Battle Logs",
+    "unescape": "C:\\Users\\Ash\\Documents\\PTCGL Battle Logs",
+    "serialize": "C:\\Users\\Ash\\Documents\\PTCGL Battle Logs",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\Users\\Jos\u00E9\\Pok\u00E9mon logs",
+    "escape": "C:\\Users\\Jos\u00E9\\Pok\u00E9mon logs",
+    "convertToObject": "C:\\Users\\Jos\u00E9\\Pok\u00E9mon logs",
+    "unescape": "C:\\Users\\Jos\u00E9\\Pok\u00E9mon logs",
+    "serialize": "C:\\Users\\Jos\u00E9\\Pok\u00E9mon logs",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\trailing\\",
+    "escape": "C:\\trailing\\",
+    "convertToObject": "C:\\trailing\\",
+    "unescape": "C:\trailing\\",
+    "serialize": "C:\\trailing\\",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "relative\\dir",
+    "escape": "relative\\dir",
+    "convertToObject": "relative\\dir",
+    "unescape": "relative\\dir",
+    "serialize": "relative\\dir",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:/forward/slashes",
+    "escape": "C:/forward/slashes",
+    "convertToObject": "C:/forward/slashes",
+    "unescape": "C:/forward/slashes",
+    "serialize": "C:/forward/slashes",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\a = b\\[x]",
+    "escape": "C:\\a = b\\[x]",
+    "convertToObject": "C:\\a = b\\[x]",
+    "unescape": "C:\u0007 = b\\[x]",
+    "serialize": "C:\\a = b\\[x]",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\#notacomment",
+    "escape": "C:\\#notacomment",
+    "convertToObject": "C:\\#notacomment",
+    "unescape": "C:\\#notacomment",
+    "serialize": "C:\\#notacomment",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\new\\tab",
+    "escape": "C:\\new\\tab",
+    "convertToObject": "C:\\new\\tab",
+    "unescape": "C:\new\tab",
+    "serialize": "C:\\new\\tab",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "Z:\\",
+    "escape": "Z:\\",
+    "convertToObject": "Z:\\",
+    "unescape": "Z:\\",
+    "serialize": "Z:\\",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "E:\\Logs (2026) \u0026 more!",
+    "escape": "E:\\Logs (2026) \u0026 more!",
+    "convertToObject": "E:\\Logs (2026) \u0026 more!",
+    "unescape": "E:\\Logs (2026) \u0026 more!",
+    "serialize": "E:\\Logs (2026) \u0026 more!",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "\\\\server\\share\\PTCGL Logs",
+    "escape": "\\\\server\\share\\PTCGL Logs",
+    "convertToObject": "\\server\\share\\PTCGL Logs",
+    "unescape": "\\server\\share\\PTCGL Logs",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "C:\\Users\\O\u0027Brien\\Documents\\PTCGL Battle Logs",
+    "escape": "C:\\Users\\O\\\u0027Brien\\Documents\\PTCGL Battle Logs",
+    "convertToObject": "C:\\Users\\O\u0027Brien\\Documents\\PTCGL Battle Logs",
+    "unescape": "C:\\Users\\O\u0027Brien\\Documents\\PTCGL Battle Logs",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "D:\\My \u0022quoted\u0022 logs",
+    "escape": "D:\\My \\\u0022quoted\\\u0022 logs",
+    "convertToObject": "D:\\My \u0022quoted\u0022 logs",
+    "unescape": "D:\\My \u0022quoted\u0022 logs",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx cannot keep \u0027 or \u0022 in a folder path"
+  },
+  {
+    "value": "\\\\?\\C:\\long",
+    "escape": "\\\\?\\C:\\long",
+    "convertToObject": "\\?\\C:\\long",
+    "unescape": "\\?\\C:\\long",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "relative\\new",
+    "escape": "relative\\new",
+    "convertToObject": "relative\new",
+    "unescape": "relative\new",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": " C:\\x",
+    "escape": " C:\\x",
+    "convertToObject": " C:\\x",
+    "unescape": " C:\\x",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "C:\\x\ny",
+    "escape": "C:\\x\\ny",
+    "convertToObject": "C:\\x\ny",
+    "unescape": "C:\\x\ny",
+    "serialize": null,
+    "whyPluginRefuses": "control characters"
+  },
+  {
+    "value": "D:\\\u0022quoted\u0022",
+    "escape": "D:\\\\\u0022quoted\\\u0022",
+    "convertToObject": "D:\\\u0022quoted\u0022",
+    "unescape": "D:\u0022quoted\u0022",
+    "serialize": "D:\\\\\u0022quoted\\\u0022",
+    "whyPluginRefuses": "BepInEx cannot keep \u0027 or \u0022 in a folder path"
+  },
+  {
+    "value": "\\Logs",
+    "escape": "\\Logs",
+    "convertToObject": "\\Logs",
+    "unescape": "\\Logs",
+    "serialize": "\\Logs",
+    "whyPluginRefuses": "a network path garbled by BepInEx"
+  },
+  {
+    "value": "\\server\\share",
+    "escape": "\\server\\share",
+    "convertToObject": "\\server\\share",
+    "unescape": "\\server\\share",
+    "serialize": "\\server\\share",
+    "whyPluginRefuses": "a network path garbled by BepInEx"
+  },
+  {
+    "value": "a\\b\u0022c\u0027d\te\nf\r\u0000\u0007\b\u000B\f",
+    "escape": "a\\b\\\u0022c\\\u0027d\\te\\nf\\r\\0\\a\\b\\v\\f",
+    "convertToObject": "a\b\u0022c\u0027d\te\nf\r\u0000\u0007\b\u000B\f",
+    "unescape": "a\b\u0022c\u0027d\te\nf\r\u0000\u0007\b\u000B\f",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx cannot keep \u0027 or \u0022 in a folder path"
+  },
+  {
+    "value": "\\\\srv\\s",
+    "escape": "\\\\srv\\s",
+    "convertToObject": "\\srv\\s",
+    "unescape": "\\srv\\s",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "plain",
+    "escape": "plain",
+    "convertToObject": "plain",
+    "unescape": "plain",
+    "serialize": "plain",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "",
+    "escape": "",
+    "convertToObject": "",
+    "unescape": "",
+    "serialize": "",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\\\a\\\\b",
+    "escape": "C:\\\\a\\\\b",
+    "convertToObject": "C:\\a\\b",
+    "unescape": "C:\\a\\b",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "\u0022C:\\x",
+    "escape": "\\\u0022C:\\x",
+    "convertToObject": "\u0022C:\\x",
+    "unescape": "\u0022C:\\x",
+    "serialize": "\\\u0022C:\\x",
+    "whyPluginRefuses": "BepInEx cannot keep \u0027 or \u0022 in a folder path"
+  },
+  {
+    "value": "\\\\\\\\srv\\\\s",
+    "escape": "\\\\\\\\srv\\\\s",
+    "convertToObject": "\\\\srv\\s",
+    "unescape": "\\\\srv\\s",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "a\\qb\\",
+    "escape": "a\\qb\\",
+    "convertToObject": "a\\qb\\",
+    "unescape": "a\\qb\\",
+    "serialize": "a\\qb\\",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\a\\\\b",
+    "escape": "C:\\a\\\\b",
+    "convertToObject": "C:\u0007\\b",
+    "unescape": "C:\u0007\\b",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "D:\\Ash\\\u0027s",
+    "escape": "D:\\Ash\\\\\u0027s",
+    "convertToObject": "D:\\Ash\\\u0027s",
+    "unescape": "D:\\Ash\u0027s",
+    "serialize": "D:\\Ash\\\\\u0027s",
+    "whyPluginRefuses": "BepInEx cannot keep \u0027 or \u0022 in a folder path"
+  },
+  {
+    "value": "x\\ty",
+    "escape": "x\\ty",
+    "convertToObject": "x\ty",
+    "unescape": "x\ty",
+    "serialize": null,
+    "whyPluginRefuses": "BepInEx would change it in its cfg"
+  },
+  {
+    "value": "\u00E9:\\x",
+    "escape": "\u00E9:\\x",
+    "convertToObject": "\u00E9:\\x",
+    "unescape": "\u00E9:\\x",
+    "serialize": "\u00E9:\\x",
+    "whyPluginRefuses": null
+  },
+  {
+    "value": "C:\\x\\\\y\nz",
+    "escape": "C:\\x\\\\y\\nz",
+    "convertToObject": "C:\\x\\y\nz",
+    "unescape": "C:\\x\\y\nz",
+    "serialize": null,
+    "whyPluginRefuses": "control characters"
+  }
+]
