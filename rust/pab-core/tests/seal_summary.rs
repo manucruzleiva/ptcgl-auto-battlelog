@@ -97,3 +97,15 @@ fn reads_the_deck_only_when_its_hash_matches() {
     fs::write(&deck_path, b"changed").unwrap();
     assert!(s.read_deck().is_none(), "edited deck file: None");
 }
+
+#[test]
+fn evidence_is_the_files_as_on_disk() {
+    use base64::Engine;
+    let tmp = tempfile::tempdir().unwrap();
+    let body = format!("\u{feff}x\n\n{}", block(BEGIN, &json_v2("\"Ash\"", None, "VICTORY", None), END));
+    let log = write(tmp.path(), "e.txt", &body);
+    let e = pab_core::tcgkb::build_evidence(&SealSummary::try_read(&log).unwrap(), true).unwrap();
+    assert_eq!(e.file_name, "e.txt");
+    assert_eq!(base64::engine::general_purpose::STANDARD.decode(e.log).unwrap(), body.as_bytes(), "BOM and footer included");
+    assert!(e.seal.is_none() && e.deck.is_none());
+}

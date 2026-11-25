@@ -10,5 +10,6 @@ pub mod log_file_name;
 pub mod paths;
 pub mod seal_summary;
 pub mod settings;
+pub mod tcgkb;
 pub mod tokens;
 pub mod update;
