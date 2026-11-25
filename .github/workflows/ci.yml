@@ -83,6 +83,24 @@ jobs:
         shell: powershell
         run: .\build.ps1
 
+      # The Rust tray (rust/) with the payload build.ps1 just built, to test the rewrite on a real
+      # PC before it ships. Never released from here.
+      - name: Build the Rust tray (test build)
+        working-directory: rust
+        env:
+          PAB_REQUIRE_PAYLOAD: '1'
+          PAB_VERSION: 2.0.0-dev
+          PAB_REPO_OWNER: ${{ github.repository_owner }}
+          PAB_REPO_NAME: ${{ github.event.repository.name }}
+        run: cargo build --release --locked
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: PtcglAutoBattleLog-rust-${{ github.sha }}
+          path: rust/target/release/PtcglAutoBattleLog.exe
+          if-no-files-found: error
+          retention-days: 30
+
   rust:
     # The Rust rewrite of the tray (rust/): tests and clippy, on Windows (its target) and Linux.
     name: rust (${{ matrix.os }})
