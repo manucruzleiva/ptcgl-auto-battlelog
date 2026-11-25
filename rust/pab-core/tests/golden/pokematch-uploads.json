@@ -1,0 +1,21 @@
+{
+  "uploads": [
+    {
+      "key": "match:m-1",
+      "status": "uploaded",
+      "id": "65f0",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "file": "x.txt",
+      "utc": "\/Date(1792497600000)\/"
+    },
+    {
+      "key": "file:y.txt",
+      "status": "rejected",
+      "id": null,
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "file": "y.txt",
+      "utc": "\/Date(1792497600000)\/",
+      "error": "Pokematch refused"
+    }
+  ]
+}

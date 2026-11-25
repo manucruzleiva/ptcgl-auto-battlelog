@@ -4,7 +4,7 @@
 //!
 //! The C# tray wrote these with DataContractJsonSerializer, whose dates are "\/Date(ms)\/" (UTC
 //! milliseconds, maybe followed by a "+hhmm" offset that does not change the instant). Both are
-//! read here, and written the same way so a downgrade to 1.6.x still reads them.
+//! read here, and written the same way (net_json escapes '/') so a downgrade to 1.6.x still reads them.
 
 use std::path::{Path, PathBuf};
 
@@ -88,7 +88,7 @@ impl<T: Serialize + for<'de> Deserialize<'de>> TokenStore<T> {
         if !(self.valid)(value) {
             return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "invalid token"));
         }
-        let json = net_date::escape(&serde_json::to_string(value).expect("token serialize"));
+        let json = crate::net_json::to_string(value);
         file_ops::write_atomic(&self.path, &(self.protect)(json.as_bytes())?)
     }
 
@@ -137,11 +137,6 @@ pub mod net_date {
         let end = inner.char_indices().skip(1).find(|&(_, c)| c == '+' || c == '-').map_or(inner.len(), |(i, _)| i);
         DateTime::from_timestamp_millis(inner[..end].parse().ok()?)
     }
-
-    /// serde_json writes "/Date(", .NET writes "\/Date(": the escaped form, which it requires to read a date.
-    pub fn escape(json: &str) -> String {
-        json.replace("\"/Date(", "\"\\/Date(").replace(")/\"", ")\\/\"")
-    }
 }
 
 #[cfg(test)]
@@ -179,7 +174,7 @@ mod tests {
         };
         store.save(&t).unwrap();
         let raw: Vec<u8> = std::fs::read(store.file_path()).unwrap().iter().map(|x| x ^ 0x5A).collect();
-        assert!(String::from_utf8(raw).unwrap().contains(r#""accessExpiresUtc":"\/Date(1764072000000)\/""#), "written as .NET writes it");
+        assert!(String::from_utf8(raw).unwrap().contains(r#""accessExpiresUtc": "\/Date(1764072000000)\/""#), "written as .NET writes it");
         assert_eq!(store.load(), Some(t.clone()));
         assert!(store.save(&TcgkbTokens { refresh_token: None, ..t }).is_err(), "no refresh token: refused");
 

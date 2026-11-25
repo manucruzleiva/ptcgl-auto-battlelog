@@ -145,7 +145,7 @@ impl<'a> PokematchApi<'a> {
 }
 
 fn to_json(m: &Match) -> String {
-    serde_json::to_string_pretty(m).expect("match serialize")
+    crate::net_json::to_string(m)
 }
 
 /// The new match's id: "id" or "_id" (a string or a number), at the top or under "match" or "data".

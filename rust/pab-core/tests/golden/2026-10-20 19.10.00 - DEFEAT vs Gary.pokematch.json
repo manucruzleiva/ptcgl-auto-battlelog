@@ -1,0 +1,17 @@
+{
+  "activeDeck": {
+    "name": "Unknown"
+  },
+  "opponentDeck": "Unknown",
+  "format": "Bo1",
+  "games": [
+    {
+      "result": "loss"
+    }
+  ],
+  "date": "2026-10-20",
+  "notes": "Added by PTCGL Auto Battle Log.",
+  "tags": [
+    "ptcgl-auto-battle-log"
+  ]
+}

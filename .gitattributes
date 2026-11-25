@@ -31,3 +31,6 @@ licenses/*.txt text eol=lf
 *.exe binary
 *.zip binary
 *.pdb binary
+
+# Golden fixtures written by the C# tray (tests/RustGoldens): the Rust port must match these exact bytes.
+rust/pab-core/tests/golden/** -text

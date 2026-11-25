@@ -276,7 +276,7 @@ impl<'a> TcgkbApi<'a> {
     /// Uploads one sealed battle log. tcgkb checks the seal; a log it already has is accepted again.
     pub fn upload_log(&self, access_token: &str, log: &ClaimEvidence) -> Result<UploadResponse> {
         assert!(!log.log.is_empty(), "a battle log is required");
-        let body = serde_json::to_string_pretty(log).expect("evidence serialize");
+        let body = crate::net_json::to_string(log);
         let r = self.send(Request {
             method: "POST",
             path: "/api/ptcgl/logs",
