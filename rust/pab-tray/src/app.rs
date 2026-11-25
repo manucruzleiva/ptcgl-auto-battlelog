@@ -2,27 +2,30 @@
 //! repair daemon and the logs watcher. Everything that touches UI runs on the UI thread; the daemon,
 //! the watcher and the cross-process signals send events here and wake it.
 use crate::daemon::{Daemon, DaemonReport};
-use crate::game_setup::{self, RepairOutcome};
 use crate::logs_watcher::LogsWatcher;
 use crate::session::Session;
+use crate::updates::{self, UpdateEvent, Updates};
 use crate::win::instance::{self, TraySignals};
 use crate::win::notify_icon::{self, BalloonIcon, Icon, NotifyIcon, TrayMsg, Waker};
-use crate::win::popup::{self, Item};
-use crate::win::{process, registry, shell};
+use crate::win::{process, shell};
 use crate::{log, status_icons, GAME_NAME, PRODUCT_NAME, VERSION};
 use pab_core::command_line::CommandLine;
 use pab_core::daemon_monitor::{DaemonNotice, TrayHealth};
 use pab_core::game_install::InstallPiece;
 use std::cell::RefCell;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 /// NotifyIcon tooltips stay short; the C# tray clipped at 63.
 const MAX_TIP: usize = 63;
 
+mod menu;
+
 enum Event {
+    Update(UpdateEvent),
     Report(Box<DaemonReport>),
     Saved(PathBuf, &'static str, Option<String>),
     Show,
@@ -44,17 +47,6 @@ impl Poster {
     }
 }
 
-// Menu item ids.
-const OPEN_LOGS: u32 = 1;
-const OPEN_LAST: u32 = 2;
-const NOTIFY_ON_SAVE: u32 = 3;
-const START_WITH_WINDOWS: u32 = 4;
-const REPAIR_NOW: u32 = 5;
-const OPEN_TRAY_LOG: u32 = 6;
-const OPEN_BEPINEX_LOG: u32 = 7;
-const PROJECT_PAGE: u32 = 8;
-const EXIT: u32 = 9;
-
 type Click = Rc<dyn Fn(&Tray)>;
 
 struct Tray {
@@ -68,6 +60,9 @@ struct Tray {
     last_saved: RefCell<Option<(PathBuf, String)>>,
     balloon_click: RefCell<Option<Click>>,
     exiting: std::cell::Cell<bool>,
+    updates: Option<Updates>,
+    /// Open dialogs: an update must not restart the app under one.
+    modal: Arc<AtomicUsize>,
 }
 
 fn health_index(h: TrayHealth) -> usize {
@@ -98,6 +93,20 @@ pub fn run(session: Arc<Session>, cli: &CommandLine, first_run: bool, signals: &
 
     let saved_poster = poster.clone();
     let watcher = LogsWatcher::new(Arc::new(move |p, r, o| saved_poster.post(Event::Saved(p, r, o))));
+    let modal = Arc::new(AtomicUsize::new(0));
+    let update_poster = poster.clone();
+    let m = modal.clone();
+    let updates = Updates::start(
+        session.clone(),
+        Arc::new(|url: &str, download: bool| crate::win::http::open_url(url, download)),
+        move |e| update_poster.post(Event::Update(e)),
+        move || m.load(Ordering::SeqCst) == 0,
+        |exe: &std::path::Path, args: &[String]| {
+            std::process::Command::new(exe).args(args).current_dir(exe.parent().unwrap_or(exe)).spawn().map(|_| ())
+        },
+    )
+    .map_err(|e| log::error("Updates are off", e))
+    .ok();
     let t = Rc::new(Tray {
         daemon: Daemon::new(session.clone()),
         session: session.clone(),
@@ -109,6 +118,8 @@ pub fn run(session: Arc<Session>, cli: &CommandLine, first_run: bool, signals: &
         last_saved: RefCell::new(None),
         balloon_click: RefCell::new(None),
         exiting: std::cell::Cell::new(false),
+        updates,
+        modal,
     });
     *tray.borrow_mut() = Some(t.clone());
 
@@ -177,6 +188,7 @@ impl Tray {
 
     fn on_event(&self, e: Event) {
         match e {
+            Event::Update(e) => self.on_update(e),
             Event::Report(r) => self.on_report(*r),
             Event::Saved(path, result, opponent) => self.on_saved(path, result, opponent),
             // shortcut: the status window comes in phase 4; until then "show" opens the menu.
@@ -208,6 +220,36 @@ impl Tray {
         // later from the notification center.
         *self.balloon_click.borrow_mut() = click;
         self.icon.borrow().balloon(title, text, icon);
+    }
+
+    fn on_update(&self, e: UpdateEvent) {
+        match e {
+            UpdateEvent::Notify { title, text, click } => {
+                let click: Option<Click> = click.map(|c| -> Click {
+                    match c {
+                        updates::Click::Install => Rc::new(|t: &Tray| {
+                            if let Some(u) = &t.updates {
+                                u.install_available();
+                            }
+                        }),
+                        updates::Click::OpenReleases => Rc::new(|_: &Tray| {
+                            shell::open(&format!("{}/releases", crate::project_url()));
+                        }),
+                    }
+                });
+                self.balloon(&title, &text, BalloonIcon::Info, click);
+            }
+            UpdateEvent::AvailableChanged => {}
+            UpdateEvent::Restart => self.exit(),
+        }
+    }
+
+    /// Counts an open dialog while `f` runs: an update must not restart the app under it.
+    fn modal<T>(&self, f: impl FnOnce() -> T) -> T {
+        self.modal.fetch_add(1, Ordering::SeqCst);
+        let r = f();
+        self.modal.fetch_sub(1, Ordering::SeqCst);
+        r
     }
 
     fn on_report(&self, r: DaemonReport) {
@@ -308,93 +350,5 @@ impl Tray {
         if !self.session.consent() {
             self.balloon("Please accept the disclaimer", &format!("Accept it once to keep using {PRODUCT_NAME}."), BalloonIcon::Warning, None);
         }
-    }
-
-    fn open_logs_folder(&self) {
-        let folder = self.watcher.borrow().folder().map(Path::to_path_buf).unwrap_or_else(|| game_setup::ensure_logs_folder(&self.session));
-        let _ = std::fs::create_dir_all(&folder);
-        shell::open(&folder.to_string_lossy());
-    }
-
-    fn open_bepinex_log(&self) {
-        if let Some(g) = self.session.game() {
-            if g.bepinex_log_path.is_file() {
-                shell::open_text(&g.bepinex_log_path);
-            }
-        }
-    }
-
-    fn show_menu(&self) {
-        let summary = self.last.borrow().as_ref().map(|r| r.decision.summary.clone()).unwrap_or_else(|| "Starting…".into());
-        let exe = self.session.paths().installed_exe;
-        let mut items = vec![Item::label(summary), Item::Separator, Item::bold(OPEN_LOGS, "Open battle logs folder")];
-        if let Some((_, label)) = self.last_saved.borrow().as_ref() {
-            items.push(Item::action(OPEN_LAST, format!("Last saved: {label}")));
-        }
-        items.extend([
-            Item::Separator,
-            Item::check(NOTIFY_ON_SAVE, "Notify when a battle log is saved", self.session.read(|s| s.notify_on_save)),
-            Item::check(START_WITH_WINDOWS, "Start with Windows", registry::is_start_with_windows(&exe)),
-            Item::Separator,
-            Item::Sub {
-                text: "Help".into(),
-                items: vec![
-                    Item::action(REPAIR_NOW, "Repair the mod now"),
-                    Item::action(OPEN_TRAY_LOG, "Open the app's log"),
-                    Item::action(OPEN_BEPINEX_LOG, "Open the BepInEx log"),
-                    Item::action(PROJECT_PAGE, format!("Project page (v{VERSION})")),
-                ],
-            },
-            Item::Separator,
-            Item::action(EXIT, "Exit"),
-        ]);
-        let hwnd = self.icon.borrow().hwnd;
-        match popup::show(hwnd, &items) {
-            Some(OPEN_LOGS) => self.open_logs_folder(),
-            Some(OPEN_LAST) => {
-                if let Some((p, _)) = self.last_saved.borrow().as_ref() {
-                    shell::open_text(p);
-                }
-            }
-            Some(NOTIFY_ON_SAVE) => self.session.update(|s| s.notify_on_save = !s.notify_on_save),
-            Some(START_WITH_WINDOWS) => {
-                let on = !registry::is_start_with_windows(&exe);
-                let command = self.session.run_command();
-                if let Err(e) = registry::set_start_with_windows(on.then_some(command.as_str())) {
-                    log::error("Could not change Start with Windows", e);
-                }
-            }
-            Some(REPAIR_NOW) => self.repair_now(),
-            Some(OPEN_TRAY_LOG) => {
-                if let Some(p) = log::file_path() {
-                    shell::open_text(&p);
-                }
-            }
-            Some(OPEN_BEPINEX_LOG) => self.open_bepinex_log(),
-            Some(PROJECT_PAGE) => {
-                shell::open(&crate::project_url());
-            }
-            Some(EXIT) => self.exit(),
-            _ => {}
-        }
-    }
-
-    fn repair_now(&self) {
-        let open_log: Click = Rc::new(|_: &Tray| {
-            if let Some(p) = log::file_path() {
-                shell::open_text(&p);
-            }
-        });
-        // shortcut: NoGame and ConsentPending open the folder picker and the disclaimer in C#;
-        // both come with the egui window (phase 4), a balloon says it until then.
-        let (title, text, icon, click) = match self.daemon.repair_now() {
-            RepairOutcome::Done(p) => ("Mod repaired".to_string(), format!("Put back: {}.", game_setup::names(&p)), BalloonIcon::Info, None),
-            RepairOutcome::NothingToDo => ("Nothing to repair".into(), "The mod and BepInEx are in place.".into(), BalloonIcon::Info, None),
-            RepairOutcome::GameRunning => (format!("Close {GAME_NAME} first"), "The mod is repaired while the game is closed.".into(), BalloonIcon::Warning, None),
-            RepairOutcome::NoGame => ("Game not found".into(), format!("{GAME_NAME} was not found."), BalloonIcon::Warning, None),
-            RepairOutcome::ConsentPending => ("Please accept the disclaimer".into(), "Nothing is written into the game before that.".into(), BalloonIcon::Warning, None),
-            RepairOutcome::Failed(e) => ("Repair failed".into(), format!("{e} Details are in the app log."), BalloonIcon::Error, Some(open_log)),
-        };
-        self.balloon(&title, &text, icon, click);
     }
 }

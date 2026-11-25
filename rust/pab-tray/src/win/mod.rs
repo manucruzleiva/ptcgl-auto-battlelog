@@ -1,4 +1,6 @@
 //! Everything that talks to Windows itself. The logic behind it is in pab-core.
+pub mod dialogs;
+pub mod http;
 pub mod instance;
 pub mod notify_icon;
 pub mod popup;
