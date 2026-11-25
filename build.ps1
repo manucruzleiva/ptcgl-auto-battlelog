@@ -13,6 +13,7 @@
     Works in Windows PowerShell 5.1 and PowerShell 7.
 
     Environment: VERSION, REPO_OWNER, REPO_NAME, DOTNET, PYTHON, SOURCE_DATE_EPOCH (see build.sh).
+    PAB_TRAY=rust packages the Rust tray (rust/, needs cargo) instead of the C# one.
 
 .PARAMETER Version
     X.Y.Z or X.Y.Z-beta.N. Default: the VERSION environment variable, else Directory.Build.props.
@@ -293,6 +294,19 @@ try {
     if (-not (Test-Path -LiteralPath $exe)) { throw "$exe was not produced" }
     # The BepInEx zip is embedded, so a smaller exe means the payload is missing.
     if ((Get-Item -LiteralPath $exe).Length -le (Get-Item -LiteralPath $zipPath).Length) { throw "$exe is too small to contain its payload" }
+
+    if ($env:PAB_TRAY -eq 'rust') {
+        # The Rust tray (rust/) ships instead, with the plugin just built and the same BepInEx zip.
+        Write-Step "Building the Rust tray $ExeName v$Version"
+        $env:PAB_REQUIRE_PAYLOAD = '1'
+        $env:PAB_VERSION = $Version
+        $env:PAB_REPO_OWNER = $owner
+        $env:PAB_REPO_NAME = $repo
+        $env:PAB_BEPINEX_ZIP = $zipPath
+        Invoke-Tool 'cargo' @('build', '--release', '--locked', '--manifest-path', (P $Root 'rust' 'Cargo.toml')) | Out-Null
+        $exe = P $Root 'rust' 'target' 'release' $ExeName
+        if ((Get-Item -LiteralPath $exe).Length -le (Get-Item -LiteralPath $zipPath).Length) { throw "$exe is too small to contain its payload" }
+    }
 
     # --------------------------------------------------------------------------------- package
 
