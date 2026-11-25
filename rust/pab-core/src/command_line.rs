@@ -91,3 +91,16 @@ pub fn run_command(exe: &str, append_portable: bool) -> String {
     let args: &[&str] = if append_portable { &[BACKGROUND, PORTABLE] } else { &[BACKGROUND] };
     format!("\"{exe}\" {}", join(args))
 }
+
+/// The exe a Run key value starts: the quoted first token, or everything up to the first space
+/// (WindowsIntegration.RunValuePointsTo). None for an empty value.
+pub fn run_value_target(command: &str) -> Option<&str> {
+    let c = command.trim();
+    if c.is_empty() {
+        return None;
+    }
+    Some(match c.strip_prefix('"') {
+        Some(rest) => rest.find('"').filter(|&i| i > 0).map_or(rest, |i| &rest[..i]),
+        None => c.find(' ').filter(|&i| i > 0).map_or(c, |i| &c[..i]),
+    })
+}

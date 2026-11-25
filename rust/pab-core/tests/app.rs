@@ -113,6 +113,13 @@ fn command_line() {
     for arg in ["plain", "with space", "trail\\", "trail space\\", "q\"uote", "\\\\server\\share", "a\\\\\"b", ""] {
         assert_eq!(parse_windows_args(&command_line::quote(arg)), [arg], "round trip by Windows rules: {arg}");
     }
+    let target = command_line::run_value_target;
+    assert_eq!(target(" \"C:\\A B\\x.exe\" --background "), Some("C:\\A B\\x.exe"));
+    assert_eq!(target("C:\\x.exe --background"), Some("C:\\x.exe"));
+    assert_eq!(target("C:\\x.exe"), Some("C:\\x.exe"));
+    assert_eq!(target("\"C:\\unclosed.exe"), Some("C:\\unclosed.exe"));
+    assert_eq!(target("\"\"x"), Some("\"x"));
+    assert_eq!(target("  "), None);
 }
 
 #[test]
