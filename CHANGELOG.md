@@ -9,6 +9,21 @@ The section of a version becomes the top of its GitHub release notes, so add one
 
 ## [Unreleased]
 
+## [2.0.0-beta.1] - 2026-11-25
+
+### Changed
+
+- **The tray app is rewritten in Rust.** It is a single small exe that starts fast, and the
+  status window now opens in under a second. Your settings, tcgkb and Pokematch sign-ins, saved
+  logs and the game plugin are kept: install it over 1.6.3 and everything carries over.
+
+- **New status window.** Home, Matches, tcgkb, Settings, Updates and Help pages replace most of
+  the tray menu. Left-click the tray icon to open it.
+
+### Fixed
+
+- **The Start menu and desktop shortcuts show the app's icon** in the taskbar.
+
 ## [1.6.3] - 2026-11-21
 
 ### Changed
